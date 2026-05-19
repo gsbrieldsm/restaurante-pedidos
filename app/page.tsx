@@ -1,46 +1,109 @@
 import Link from 'next/link'
-import { UtensilsCrossed, LayoutDashboard } from 'lucide-react'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-teal-50 flex flex-col items-center justify-center p-8 gap-6">
-      <div className="text-center">
-        <div className="mx-auto mb-4 w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center">
-          <UtensilsCrossed className="w-9 h-9 text-white" />
-        </div>
-        <h1 className="text-3xl font-black text-slate-800">Meu Menu+</h1>
-        <p className="text-slate-500 mt-1">Restaurante</p>
-      </div>
+    <div className="relative min-h-screen bg-black overflow-hidden flex flex-col items-center justify-center px-6">
 
-      <div className="flex flex-col gap-3 w-full max-w-xs">
+      {/* Glow teal — centro */}
+      <div
+        className="pointer-events-none absolute"
+        style={{
+          top: '30%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '700px',
+          height: '700px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(26,155,138,0.35) 0%, rgba(26,155,138,0.08) 50%, transparent 70%)',
+          filter: 'blur(40px)',
+        }}
+      />
+
+      {/* Glow coral — canto direito */}
+      <div
+        className="pointer-events-none absolute"
+        style={{
+          top: '60%',
+          right: '-10%',
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(240,90,79,0.2) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+        }}
+      />
+
+      {/* Conteúdo */}
+      <div className="relative z-10 flex flex-col items-center text-center gap-10 w-full max-w-lg">
+
+        {/* Logo marca */}
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0f3d35, #1A9B8A)' }}
+          >
+            <span className="text-2xl font-black text-white tracking-tighter">M+</span>
+          </div>
+          <div>
+            <p className="text-white/30 text-xs font-bold tracking-[0.3em] uppercase">Sistema de Gestão</p>
+          </div>
+        </div>
+
+        {/* Headline */}
+        <div className="space-y-3">
+          <h1
+            className="text-5xl sm:text-6xl font-black text-white leading-[1.05] tracking-tight"
+            style={{ textShadow: '0 0 80px rgba(26,155,138,0.4)' }}
+          >
+            Bem-vindo ao<br />
+            <span style={{ color: '#1A9B8A' }}>Controle</span><br />
+            Absoluto.
+          </h1>
+          <p className="text-white/40 text-base font-light tracking-wide">
+            Nada do que fazemos existe por acaso.
+          </p>
+        </div>
+
+        {/* Botão principal */}
         <Link
           href="/admin"
-          className="flex items-center gap-3 bg-slate-800 text-white rounded-xl px-5 py-4 hover:bg-slate-700 transition-colors"
+          className="group relative w-full flex items-center justify-between px-6 py-4 rounded-2xl overflow-hidden transition-all duration-300"
+          style={{ background: 'linear-gradient(135deg, #0f3d35 0%, #1A9B8A 100%)' }}
         >
-          <LayoutDashboard className="w-5 h-5 text-teal-400" />
-          <div>
-            <p className="font-semibold">Painel de Gestão</p>
-            <p className="text-xs text-slate-400">Dashboard completo</p>
+          <div className="text-left">
+            <p className="text-white font-bold text-base">Painel de Gestão</p>
+            <p className="text-teal-300/70 text-xs">Dashboard completo</p>
           </div>
+          <span className="text-white/60 text-xl group-hover:translate-x-1 transition-transform">→</span>
         </Link>
 
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { href: '/estacao/cozinha',  emoji: '🍳', label: 'Cozinha'  },
-            { href: '/estacao/bar',      emoji: '🍺', label: 'Bar'      },
-            { href: '/estacao/drinks',   emoji: '🍹', label: 'Drinks'   },
-            { href: '/estacao/chopeira', emoji: '🍻', label: 'Chopeira' },
-          ].map((e) => (
-            <Link
-              key={e.href}
-              href={e.href}
-              className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-3 hover:bg-teal-50 hover:border-teal-200 transition-colors"
-            >
-              <span className="text-xl">{e.emoji}</span>
-              <span className="font-medium text-slate-700 text-sm">{e.label}</span>
-            </Link>
-          ))}
+        {/* Estações */}
+        <div className="w-full space-y-2">
+          <p className="text-white/20 text-xs font-bold uppercase tracking-widest text-center">Estações de trabalho</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { href: '/estacao/cozinha',  emoji: '🍳', label: 'Cozinha',  cor: 'rgba(255,255,255,0.04)' },
+              { href: '/estacao/bar',      emoji: '🍺', label: 'Bar',      cor: 'rgba(255,255,255,0.04)' },
+              { href: '/estacao/drinks',   emoji: '🍹', label: 'Drinks',   cor: 'rgba(255,255,255,0.04)' },
+              { href: '/estacao/chopeira', emoji: '🍻', label: 'Chopeira', cor: 'rgba(255,255,255,0.04)' },
+            ].map((e) => (
+              <Link
+                key={e.href}
+                href={e.href}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/8 hover:border-teal-500/40 hover:bg-teal-950/30 transition-all duration-200"
+                style={{ background: e.cor }}
+              >
+                <span className="text-lg">{e.emoji}</span>
+                <span className="text-white/70 text-sm font-medium">{e.label}</span>
+              </Link>
+            ))}
+          </div>
         </div>
+
+        {/* Rodapé */}
+        <p className="text-white/15 text-xs tracking-widest uppercase">
+          Meu Menu+ · {new Date().getFullYear()}
+        </p>
       </div>
     </div>
   )
