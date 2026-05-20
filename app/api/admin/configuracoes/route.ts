@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 export async function POST(req: Request) {
   const cookieStore = await cookies()
   const authCookie = cookieStore.get('admin_auth')?.value
-  if (!authCookie || authCookie !== process.env.ADMIN_PASSWORD) {
+  if (!authCookie || authCookie !== 'mmu-admin-v1') {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 export async function GET() {
   const cookieStore = await cookies()
   const authCookie = cookieStore.get('admin_auth')?.value
-  if (!authCookie || authCookie !== process.env.ADMIN_PASSWORD) {
+  if (!authCookie || authCookie !== 'mmu-admin-v1') {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
