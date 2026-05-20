@@ -1,18 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  Plus, Pencil, Trash2, ToggleLeft, ToggleRight,
-  Loader2, ImagePlus, X
-} from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, ImagePlus, X } from 'lucide-react'
 import type { CardapioItem, EstacaoTipo } from '@/lib/supabase/types'
 
 const ESTACOES: EstacaoTipo[] = ['cozinha', 'bar', 'drinks', 'chopeira']
@@ -33,6 +28,7 @@ export default function CardapioAdminPage() {
   const [form, setForm] = useState(FORM_VAZIO)
   const [salvando, setSalvando] = useState(false)
   const [filtroEstacao, setFiltroEstacao] = useState<string>('todas')
+  const [togglendoId, setTogglendoId] = useState<string | null>(null)
 
   // imagem
   const [imagemAtual, setImagemAtual] = useState<string | null>(null) // url já salva
@@ -42,13 +38,9 @@ export default function CardapioAdminPage() {
   const inputFileRef = useRef<HTMLInputElement>(null)
 
   async function buscarItens() {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('cardapio_itens')
-      .select('*')
-      .order('categoria')
-      .order('ordem')
-    setItens(data || [])
+    const res = await fetch('/api/admin/cardapio')
+    const data = await res.json()
+    setItens(data.itens || [])
     setLoading(false)
   }
 
@@ -142,12 +134,17 @@ export default function CardapioAdminPage() {
   }
 
   async function toggleDisponivel(item: CardapioItem) {
+    setTogglendoId(item.id)
+    // Optimistic update
+    setItens((prev) =>
+      prev.map((i) => i.id === item.id ? { ...i, disponivel: !i.disponivel } : i)
+    )
     await fetch(`/api/cardapio/${item.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ disponivel: !item.disponivel }),
     })
-    buscarItens()
+    setTogglendoId(null)
   }
 
   async function deletar(item: CardapioItem) {
@@ -213,16 +210,12 @@ export default function CardapioAdminPage() {
               {itensFiltrados
                 .filter((i) => i.categoria === cat)
                 .map((item) => (
-                  <Card key={item.id} className={!item.disponivel ? 'opacity-50' : ''}>
+                  <Card key={item.id} className={`transition-opacity ${!item.disponivel ? 'opacity-60' : ''}`}>
                     <CardContent className="p-3 flex items-center gap-3">
                       {/* Thumbnail */}
                       <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-slate-100 flex items-center justify-center">
                         {item.imagem_url ? (
-                          <img
-                            src={item.imagem_url}
-                            alt={item.nome}
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={item.imagem_url} alt={item.nome} className="w-full h-full object-cover" />
                         ) : (
                           <span className="text-2xl">{ESTACAO_EMOJI[item.estacao]}</span>
                         )}
@@ -230,7 +223,14 @@ export default function CardapioAdminPage() {
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-slate-800 truncate">{item.nome}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-slate-800 truncate">{item.nome}</p>
+                          {!item.disponivel && (
+                            <span className="shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded bg-red-100 text-red-600">
+                              Indisponível
+                            </span>
+                          )}
+                        </div>
                         {item.descricao && (
                           <p className="text-xs text-slate-400 truncate">{item.descricao}</p>
                         )}
@@ -245,18 +245,24 @@ export default function CardapioAdminPage() {
 
                       {/* Ações */}
                       <div className="flex items-center gap-2 shrink-0">
-                        <Badge
-                          variant={item.disponivel ? 'default' : 'secondary'}
-                          className={item.disponivel ? 'bg-green-500' : ''}
+                        {/* Toggle visibilidade */}
+                        <button
+                          onClick={() => toggleDisponivel(item)}
+                          disabled={togglendoId === item.id}
+                          title={item.disponivel ? 'Desativar item' : 'Ativar item'}
+                          className={`relative w-11 h-6 rounded-full transition-colors disabled:opacity-50 ${
+                            item.disponivel ? 'bg-teal-500' : 'bg-slate-300'
+                          }`}
                         >
-                          {item.disponivel ? 'Ativo' : 'Inativo'}
-                        </Badge>
-                        <button onClick={() => toggleDisponivel(item)} className="p-1.5 rounded hover:bg-slate-100">
-                          {item.disponivel
-                            ? <ToggleRight className="w-5 h-5 text-green-500" />
-                            : <ToggleLeft className="w-5 h-5 text-slate-400" />
-                          }
+                          {togglendoId === item.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin text-white absolute top-1.5 left-1.5" />
+                          ) : (
+                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                              item.disponivel ? 'translate-x-5' : 'translate-x-0'
+                            }`} />
+                          )}
                         </button>
+
                         <button onClick={() => abrirEditar(item)} className="p-1.5 rounded hover:bg-slate-100">
                           <Pencil className="w-4 h-4 text-slate-500" />
                         </button>
