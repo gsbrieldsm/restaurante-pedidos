@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, ImagePlus, X, Settings2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, ImagePlus, X, Settings2 } from 'lucide-react'
 import type { CardapioItem, EstacaoTipo, GrupoOpcao } from '@/lib/supabase/types'
 
 const ESTACOES: EstacaoTipo[] = ['cozinha', 'bar', 'drinks', 'chopeira']
@@ -370,170 +370,179 @@ export default function CardapioAdminPage() {
         ))
       )}
 
-      {/* ── Modal Opcionais ── */}
-      <Dialog open={!!modalOpcionaisItem} onOpenChange={(v) => { if (!v) setModalOpcionaisItem(null) }}>
-        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Settings2 className="w-4 h-4 text-teal-600" />
-              Opcionais — {modalOpcionaisItem?.nome}
-            </DialogTitle>
-          </DialogHeader>
+      {/* ── Painel lateral de Opcionais (overlay custom, sem Dialog) ── */}
+      {!!modalOpcionaisItem && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40" onClick={() => setModalOpcionaisItem(null)} />
 
-          {loadingGrupos ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="w-5 h-5 animate-spin text-teal-600" />
+          {/* Painel lateral direito */}
+          <div className="relative ml-auto w-full max-w-lg bg-white flex flex-col shadow-2xl">
+            {/* Cabeçalho */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
+              <div className="flex items-center gap-2">
+                <Settings2 className="w-4 h-4 text-teal-600" />
+                <div>
+                  <p className="font-bold text-slate-800 text-sm">Opcionais</p>
+                  <p className="text-xs text-slate-500 truncate max-w-[280px]">{modalOpcionaisItem.nome}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setModalOpcionaisItem(null)}
+                className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4 text-slate-600" />
+              </button>
             </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
 
-              {grupos.length === 0 && !novoGrupoAberto && (
-                <p className="text-sm text-slate-400 text-center py-6">
-                  Nenhum grupo de opcionais ainda.<br />Clique em "Novo grupo" para começar.
-                </p>
-              )}
+            {/* Conteúdo com scroll */}
+            {loadingGrupos ? (
+              <div className="flex-1 flex justify-center items-center">
+                <Loader2 className="w-5 h-5 animate-spin text-teal-600" />
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-5 space-y-4">
 
-              {/* Lista de grupos existentes */}
-              {grupos.map((grupo) => {
-                const opcaoForm = novaOpcaoForm[grupo.id] ?? { nome: '', preco: '' }
-                return (
-                  <div key={grupo.id} className="border border-slate-200 rounded-xl overflow-hidden">
-                    {/* Cabeçalho do grupo */}
-                    <div className="flex items-center justify-between px-4 py-3 bg-slate-50">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="font-semibold text-slate-800 text-sm truncate">{grupo.nome}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          grupo.obrigatorio ? 'bg-red-100 text-red-600' : 'bg-slate-200 text-slate-500'
-                        }`}>
-                          {grupo.obrigatorio ? 'Obrigatório' : 'Opcional'}
-                        </span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-600 font-medium">
-                          {grupo.multiplo ? 'Múltipla escolha' : 'Escolha única'}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => deletarGrupo(grupo.id)}
-                        className="p-1.5 rounded hover:bg-red-50 shrink-0 ml-2"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                      </button>
-                    </div>
+                {grupos.length === 0 && !novoGrupoAberto && (
+                  <p className="text-sm text-slate-400 text-center py-6">
+                    Nenhum grupo de opcionais ainda.<br />Clique em "Novo grupo" para começar.
+                  </p>
+                )}
 
-                    {/* Opções do grupo */}
-                    <div className="divide-y divide-slate-100">
-                      {grupo.opcoes.length === 0 && (
-                        <p className="text-xs text-slate-400 px-4 py-2">Nenhuma opção ainda.</p>
-                      )}
-                      {grupo.opcoes.map((opcao) => (
-                        <div key={opcao.id} className="flex items-center justify-between px-4 py-2.5">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-sm text-slate-700 truncate">{opcao.nome}</span>
-                            {opcao.preco_adicional > 0 && (
-                              <span className="text-xs text-teal-600 font-medium shrink-0">
-                                +R$ {opcao.preco_adicional.toFixed(2).replace('.', ',')}
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => deletarOpcao(opcao.id)}
-                            className="p-1 rounded hover:bg-red-50 shrink-0 ml-2"
-                          >
-                            <X className="w-3.5 h-3.5 text-slate-400 hover:text-red-400" />
-                          </button>
+                {/* Grupos existentes */}
+                {grupos.map((grupo) => {
+                  const opcaoForm = novaOpcaoForm[grupo.id] ?? { nome: '', preco: '' }
+                  return (
+                    <div key={grupo.id} className="border border-slate-200 rounded-xl overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-3 bg-slate-50">
+                        <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
+                          <span className="font-semibold text-slate-800 text-sm truncate">{grupo.nome}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${grupo.obrigatorio ? 'bg-red-100 text-red-600' : 'bg-slate-200 text-slate-500'}`}>
+                            {grupo.obrigatorio ? 'Obrigatório' : 'Opcional'}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-600 font-medium">
+                            {grupo.multiplo ? 'Múltipla escolha' : 'Escolha única'}
+                          </span>
                         </div>
-                      ))}
-
-                      {/* Form nova opção */}
-                      <div className="flex items-center gap-2 px-4 py-2.5 bg-teal-50/50">
-                        <input
-                          className="flex-1 min-w-0 text-sm border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:border-teal-400"
-                          placeholder="Nome da opção"
-                          value={opcaoForm.nome}
-                          onChange={(e) => setNovaOpcaoForm((p) => ({ ...p, [grupo.id]: { ...opcaoForm, nome: e.target.value } }))}
-                          onKeyDown={(e) => { if (e.key === 'Enter') adicionarOpcao(grupo.id) }}
-                        />
-                        <input
-                          className="w-24 shrink-0 text-sm border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:border-teal-400"
-                          placeholder="+ R$ 0,00"
-                          type="number"
-                          step="0.50"
-                          min="0"
-                          value={opcaoForm.preco}
-                          onChange={(e) => setNovaOpcaoForm((p) => ({ ...p, [grupo.id]: { ...opcaoForm, preco: e.target.value } }))}
-                          onKeyDown={(e) => { if (e.key === 'Enter') adicionarOpcao(grupo.id) }}
-                        />
-                        <button
-                          onClick={() => adicionarOpcao(grupo.id)}
-                          disabled={!opcaoForm.nome.trim() || salvandoOpcao === grupo.id}
-                          className="shrink-0 p-1.5 rounded-lg bg-teal-600 text-white disabled:opacity-40 hover:bg-teal-700"
-                        >
-                          {salvandoOpcao === grupo.id
-                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            : <Plus className="w-3.5 h-3.5" />}
+                        <button onClick={() => deletarGrupo(grupo.id)} className="p-1.5 rounded hover:bg-red-50 shrink-0 ml-2">
+                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
                         </button>
                       </div>
+
+                      <div className="divide-y divide-slate-100">
+                        {grupo.opcoes.length === 0 && (
+                          <p className="text-xs text-slate-400 px-4 py-2">Nenhuma opção ainda.</p>
+                        )}
+                        {grupo.opcoes.map((opcao) => (
+                          <div key={opcao.id} className="flex items-center justify-between px-4 py-2.5">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <span className="text-sm text-slate-700 truncate">{opcao.nome}</span>
+                              {opcao.preco_adicional > 0 && (
+                                <span className="text-xs text-teal-600 font-medium shrink-0">
+                                  +R$ {opcao.preco_adicional.toFixed(2).replace('.', ',')}
+                                </span>
+                              )}
+                            </div>
+                            <button onClick={() => deletarOpcao(opcao.id)} className="p-1 rounded hover:bg-red-50 shrink-0 ml-2">
+                              <X className="w-3.5 h-3.5 text-slate-400 hover:text-red-400" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Form nova opção */}
+                        <div className="flex items-center gap-2 px-4 py-2.5 bg-teal-50/50">
+                          <input
+                            className="flex-1 min-w-0 text-sm border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:border-teal-400"
+                            placeholder="Nome da opção"
+                            value={opcaoForm.nome}
+                            onChange={(e) => setNovaOpcaoForm((p) => ({ ...p, [grupo.id]: { ...opcaoForm, nome: e.target.value } }))}
+                            onKeyDown={(e) => { if (e.key === 'Enter') adicionarOpcao(grupo.id) }}
+                          />
+                          <input
+                            className="w-24 shrink-0 text-sm border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:border-teal-400"
+                            placeholder="+ R$ 0,00"
+                            type="number"
+                            step="0.50"
+                            min="0"
+                            value={opcaoForm.preco}
+                            onChange={(e) => setNovaOpcaoForm((p) => ({ ...p, [grupo.id]: { ...opcaoForm, preco: e.target.value } }))}
+                            onKeyDown={(e) => { if (e.key === 'Enter') adicionarOpcao(grupo.id) }}
+                          />
+                          <button
+                            onClick={() => adicionarOpcao(grupo.id)}
+                            disabled={!opcaoForm.nome.trim() || salvandoOpcao === grupo.id}
+                            className="shrink-0 p-1.5 rounded-lg bg-teal-600 text-white disabled:opacity-40 hover:bg-teal-700"
+                          >
+                            {salvandoOpcao === grupo.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {/* Form novo grupo */}
+                {novoGrupoAberto ? (
+                  <div className="border-2 border-dashed border-teal-300 rounded-xl p-4 space-y-3 bg-teal-50/30">
+                    <p className="text-sm font-semibold text-teal-700">Novo grupo</p>
+                    <input
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-teal-400"
+                      placeholder="Nome do grupo (ex: Tamanho, Acompanhamento)"
+                      value={novoGrupoForm.nome}
+                      onChange={(e) => setNovoGrupoForm((p) => ({ ...p, nome: e.target.value }))}
+                      autoFocus
+                    />
+                    <div className="flex gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setNovoGrupoForm((p) => ({ ...p, obrigatorio: !p.obrigatorio }))}
+                        className="flex items-center gap-2 cursor-pointer select-none"
+                      >
+                        <div className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${novoGrupoForm.obrigatorio ? 'bg-red-500' : 'bg-slate-300'}`}>
+                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${novoGrupoForm.obrigatorio ? 'translate-x-4' : ''}`} />
+                        </div>
+                        <span className="text-sm text-slate-600">Obrigatório</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNovoGrupoForm((p) => ({ ...p, multiplo: !p.multiplo }))}
+                        className="flex items-center gap-2 cursor-pointer select-none"
+                      >
+                        <div className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${novoGrupoForm.multiplo ? 'bg-teal-500' : 'bg-slate-300'}`}>
+                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${novoGrupoForm.multiplo ? 'translate-x-4' : ''}`} />
+                        </div>
+                        <span className="text-sm text-slate-600">Múltipla escolha</span>
+                      </button>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => setNovoGrupoAberto(false)}>
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="flex-1 bg-teal-600 hover:bg-teal-700"
+                        disabled={!novoGrupoForm.nome.trim() || salvandoGrupo}
+                        onClick={salvarNovoGrupo}
+                      >
+                        {salvandoGrupo ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar grupo'}
+                      </Button>
                     </div>
                   </div>
-                )
-              })}
-
-              {/* Form novo grupo */}
-              {novoGrupoAberto ? (
-                <div className="border-2 border-dashed border-teal-300 rounded-xl p-4 space-y-3 bg-teal-50/30">
-                  <p className="text-sm font-semibold text-teal-700">Novo grupo</p>
-                  <input
-                    className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-teal-400"
-                    placeholder="Nome do grupo (ex: Tamanho, Acompanhamento)"
-                    value={novoGrupoForm.nome}
-                    onChange={(e) => setNovoGrupoForm((p) => ({ ...p, nome: e.target.value }))}
-                    autoFocus
-                  />
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <div
-                        onClick={() => setNovoGrupoForm((p) => ({ ...p, obrigatorio: !p.obrigatorio }))}
-                        className={`w-9 h-5 rounded-full transition-colors relative ${novoGrupoForm.obrigatorio ? 'bg-red-500' : 'bg-slate-300'}`}
-                      >
-                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${novoGrupoForm.obrigatorio ? 'translate-x-4' : ''}`} />
-                      </div>
-                      <span className="text-sm text-slate-600">Obrigatório</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <div
-                        onClick={() => setNovoGrupoForm((p) => ({ ...p, multiplo: !p.multiplo }))}
-                        className={`w-9 h-5 rounded-full transition-colors relative ${novoGrupoForm.multiplo ? 'bg-teal-500' : 'bg-slate-300'}`}
-                      >
-                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${novoGrupoForm.multiplo ? 'translate-x-4' : ''}`} />
-                      </div>
-                      <span className="text-sm text-slate-600">Múltipla escolha</span>
-                    </label>
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => setNovoGrupoAberto(false)}>
-                      Cancelar
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-teal-600 hover:bg-teal-700"
-                      disabled={!novoGrupoForm.nome.trim() || salvandoGrupo}
-                      onClick={salvarNovoGrupo}
-                    >
-                      {salvandoGrupo ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar grupo'}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setNovoGrupoAberto(true)}
-                  className="w-full border-2 border-dashed border-slate-200 rounded-xl py-3 text-sm text-slate-400 hover:border-teal-400 hover:text-teal-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-4 h-4" /> Novo grupo de opcionais
-                </button>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setNovoGrupoAberto(true)}
+                    className="w-full border-2 border-dashed border-slate-200 rounded-xl py-3 text-sm text-slate-400 hover:border-teal-400 hover:text-teal-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" /> Novo grupo de opcionais
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modal novo/editar */}
       <Dialog open={modalAberto} onOpenChange={setModalAberto}>
