@@ -339,24 +339,25 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* ── Status das mesas (mini) ── */}
-      {!loading && mesas.length > 0 && (
+      {/* ── Mesas ocupadas (mini pills) ── */}
+      {!loading && mesas.filter((m) => m.status !== 'livre').length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Mesas</h2>
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
+            Mesas ocupadas
+          </h2>
           <div className="flex flex-wrap gap-2">
-            {mesas.map((mesa) => (
-              <div
-                key={mesa.id}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border ${
-                  mesa.status === 'livre'
-                    ? 'bg-slate-50 border-slate-200 text-slate-400'
-                    : 'bg-teal-50 border-teal-300 text-teal-700'
-                }`}
-              >
-                <span className="font-bold">{mesa.numero}</span>
-                <span className="text-xs opacity-70">{mesa.status === 'livre' ? 'livre' : 'ocupada'}</span>
-              </div>
-            ))}
+            {mesas
+              .filter((m) => m.status !== 'livre')
+              .sort((a, b) => a.numero - b.numero)
+              .map((mesa) => (
+                <div
+                  key={mesa.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border bg-teal-50 border-teal-300 text-teal-700"
+                >
+                  <span className="font-bold">{mesa.numero}</span>
+                  <span className="text-xs opacity-70">ocupada</span>
+                </div>
+              ))}
           </div>
         </div>
       )}

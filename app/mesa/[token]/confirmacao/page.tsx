@@ -26,6 +26,7 @@ export default function ConfirmacaoPage() {
 
   const [pedido, setPedido] = useState<Pedido & { pedido_itens: PedidoItem[] } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [countdown, setCountdown] = useState(6)
 
   useEffect(() => {
     const pedidoId = sessionStorage.getItem('ultimo_pedido_id')
@@ -34,17 +35,23 @@ export default function ConfirmacaoPage() {
       return
     }
 
-    function buscarPedido() {
-      fetch(`/api/pedidos/${pedidoId}`)
-        .then((r) => r.json())
-        .then(({ pedido }) => setPedido(pedido))
-        .finally(() => setLoading(false))
-    }
+    fetch(`/api/pedidos/${pedidoId}`)
+      .then((r) => r.json())
+      .then(({ pedido }) => setPedido(pedido))
+      .finally(() => setLoading(false))
 
-    buscarPedido()
-    // Atualizar a cada 15 segundos
-    const interval = setInterval(buscarPedido, 15000)
-    return () => clearInterval(interval)
+    // Redireciona para /conta após 6s — lá o cliente acompanha todos os pedidos
+    const tick = setInterval(() => {
+      setCountdown((n) => {
+        if (n <= 1) {
+          clearInterval(tick)
+          router.push(`/mesa/${token}/conta`)
+        }
+        return n - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(tick)
   }, [token, router])
 
   if (loading) {
@@ -68,11 +75,16 @@ export default function ConfirmacaoPage() {
             <div className="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center shrink-0 shadow-lg">
               <CheckCircle2 className="w-6 h-6 text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-white font-black text-2xl leading-tight">Pedido Enviado!</h1>
               <p className="text-teal-300 text-sm font-medium">
                 Olá, <span className="text-white font-bold">{pedido?.cliente_nome}</span>!
               </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+                <span className="text-white font-black text-sm">{countdown}</span>
+              </div>
             </div>
           </div>
         </div>
