@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import {
   ShoppingCart, Plus, Minus, Trash2, ChevronRight,
@@ -433,89 +432,111 @@ export default function CardapioPage() {
         </div>
       )}
 
-      {/* Drawer do carrinho */}
-      <Sheet open={carrinhoAberto} onOpenChange={setCarrinhoAberto}>
-        <SheetContent
-          side="bottom"
-          className="flex flex-col rounded-t-3xl"
-          style={{ maxHeight: '88vh', paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
-        >
-          {/* Cabeçalho fixo */}
-          <SheetHeader className="shrink-0 pb-3 border-b border-slate-100">
-            <SheetTitle className="flex items-center gap-2 text-lg">
-              <ShoppingCart className="w-5 h-5 text-teal-600" />
-              Meu Pedido
-            </SheetTitle>
-          </SheetHeader>
+      {/* Drawer do carrinho — custom, sem dependência do Sheet */}
+      {carrinhoAberto && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setCarrinhoAberto(false)}
+          />
 
-          {/* Lista — scroll independente */}
-          <div className="flex-1 overflow-y-auto py-3 space-y-3 min-h-0">
-            {carrinho.length === 0 && (
-              <p className="text-center text-slate-400 mt-8">Carrinho vazio.</p>
-            )}
-            {carrinho.map((c) => (
-              <div key={c.item.id} className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => removerItem(c.item.id)}
-                      className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center"
-                    >
-                      {c.quantidade === 1 ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
-                    </button>
-                    <span className="font-bold text-base w-5 text-center">{c.quantidade}</span>
-                    <button
-                      onClick={() => adicionarItem(c.item)}
-                      className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-base text-slate-800 leading-snug">{c.item.nome}</p>
-                    <p className="text-sm text-slate-500 mt-0.5">
-                      R$ {(c.item.preco * c.quantidade).toFixed(2).replace('.', ',')}
-                    </p>
-                  </div>
-                </div>
-                <input
-                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none focus:border-teal-400"
-                  placeholder="Alguma observação? (ex: sem cebola)"
-                  value={observacoes[c.item.id] || ''}
-                  onChange={(e) =>
-                    setObservacoes((prev) => ({ ...prev, [c.item.id]: e.target.value }))
-                  }
-                />
-                <Separator />
-              </div>
-            ))}
-          </div>
-
-          {/* Rodapé fixo — nunca some da tela */}
-          {carrinho.length > 0 && (
-            <div className="shrink-0 pt-3 space-y-3 border-t border-slate-100">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-lg text-slate-800">Total</span>
-                <span className="font-black text-xl text-teal-700">
-                  R$ {totalCarrinho.toFixed(2).replace('.', ',')}
-                </span>
-              </div>
-              <Button
-                onClick={finalizarPedido}
-                className="w-full h-13 text-base font-bold text-black hover:opacity-90"
-                style={{ background: '#1A9B8A', height: '52px' }}
-                disabled={enviando}
-              >
-                {enviando ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</>
-                ) : (
-                  <>Confirmar Pedido <ChevronRight className="w-5 h-5 ml-1" /></>
-                )}
-              </Button>
+          {/* Painel */}
+          <div
+            className="relative bg-white rounded-t-3xl flex flex-col w-full"
+            style={{
+              maxHeight: '82vh',
+              paddingBottom: 'env(safe-area-inset-bottom, 12px)',
+            }}
+          >
+            {/* Alça */}
+            <div className="shrink-0 flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
             </div>
-          )}
-        </SheetContent>
-      </Sheet>
+
+            {/* Cabeçalho */}
+            <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-teal-600" />
+                <span className="font-bold text-lg text-slate-800">Meu Pedido</span>
+              </div>
+              <button
+                onClick={() => setCarrinhoAberto(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Lista com scroll próprio */}
+            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4 min-h-0">
+              {carrinho.length === 0 && (
+                <p className="text-center text-slate-400 mt-8">Carrinho vazio.</p>
+              )}
+              {carrinho.map((c) => (
+                <div key={c.item.id} className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => removerItem(c.item.id)}
+                        className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center"
+                      >
+                        {c.quantidade === 1 ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                      </button>
+                      <span className="font-bold text-base w-5 text-center">{c.quantidade}</span>
+                      <button
+                        onClick={() => adicionarItem(c.item)}
+                        className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-base text-slate-800 leading-snug">{c.item.nome}</p>
+                      <p className="text-sm text-teal-700 font-medium mt-0.5">
+                        R$ {(c.item.preco * c.quantidade).toFixed(2).replace('.', ',')}
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none focus:border-teal-400"
+                    placeholder="Alguma observação? (ex: sem cebola)"
+                    value={observacoes[c.item.id] || ''}
+                    onChange={(e) =>
+                      setObservacoes((prev) => ({ ...prev, [c.item.id]: e.target.value }))
+                    }
+                  />
+                  <Separator />
+                </div>
+              ))}
+            </div>
+
+            {/* Rodapé — sempre visível, nunca scrollável */}
+            {carrinho.length > 0 && (
+              <div className="shrink-0 px-5 pt-3 pb-2 border-t border-slate-100 space-y-3 bg-white">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-lg text-slate-800">Total</span>
+                  <span className="font-black text-2xl text-teal-700">
+                    R$ {totalCarrinho.toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+                <button
+                  onClick={finalizarPedido}
+                  disabled={enviando}
+                  className="w-full flex items-center justify-center gap-2 font-bold text-base text-black rounded-2xl disabled:opacity-50"
+                  style={{ background: '#1A9B8A', height: '52px' }}
+                >
+                  {enviando ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>
+                  ) : (
+                    <>Confirmar Pedido <ChevronRight className="w-5 h-5" /></>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
