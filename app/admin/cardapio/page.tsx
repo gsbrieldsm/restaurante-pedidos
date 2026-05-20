@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -32,11 +32,14 @@ export default function CardapioAdminPage() {
 
   // — Opcionais —
   const [modalOpcionaisItem, setModalOpcionaisItem] = useState<CardapioItem | null>(null)
+  const modalOpcionaisItemRef = useRef<CardapioItem | null>(null)
   const [grupos, setGrupos] = useState<GrupoOpcao[]>([])
   const [loadingGrupos, setLoadingGrupos] = useState(false)
   const [novoGrupoAberto, setNovoGrupoAberto] = useState(false)
   const [novoGrupoForm, setNovoGrupoForm] = useState({ nome: '', obrigatorio: false, multiplo: false })
+  const novoGrupoFormRef = useRef({ nome: '', obrigatorio: false, multiplo: false })
   const [salvandoGrupo, setSalvandoGrupo] = useState(false)
+  const [erroGrupo, setErroGrupo] = useState<string | null>(null)
   // opcao nova por grupo: Record<grupoId, { nome, preco }>
   const [novaOpcaoForm, setNovaOpcaoForm] = useState<Record<string, { nome: string; preco: string }>>({})
   const [salvandoOpcao, setSalvandoOpcao] = useState<string | null>(null)
@@ -164,52 +167,73 @@ export default function CardapioAdminPage() {
     buscarItens()
   }
 
+  async function recarregarGrupos(itemId: string) {
+    const res = await fetch(`/api/admin/cardapio/${itemId}/opcoes`)
+    const data = await res.json()
+    setGrupos(data.grupos ?? [])
+  }
+
   async function abrirOpcionais(item: CardapioItem) {
+    modalOpcionaisItemRef.current = item
     setModalOpcionaisItem(item)
     setLoadingGrupos(true)
     setNovoGrupoAberto(false)
-    setNovoGrupoForm({ nome: '', obrigatorio: false, multiplo: false })
-    const res = await fetch(`/api/admin/cardapio/${item.id}/opcoes`)
-    const data = await res.json()
-    setGrupos(data.grupos ?? [])
+    setErroGrupo(null)
+    const novoForm = { nome: '', obrigatorio: false, multiplo: false }
+    novoGrupoFormRef.current = novoForm
+    setNovoGrupoForm(novoForm)
+    await recarregarGrupos(item.id)
     setLoadingGrupos(false)
   }
 
   async function salvarNovoGrupo() {
-    if (!modalOpcionaisItem || !novoGrupoForm.nome.trim()) return
+    const item = modalOpcionaisItemRef.current
+    const form = novoGrupoFormRef.current
+    if (!item || !form.nome.trim()) return
     setSalvandoGrupo(true)
-    await fetch(`/api/admin/cardapio/${modalOpcionaisItem.id}/opcoes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(novoGrupoForm),
-    })
+    setErroGrupo(null)
+    try {
+      const res = await fetch(`/api/admin/cardapio/${item.id}/opcoes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setErroGrupo(data.error ?? 'Erro ao criar grupo')
+        setSalvandoGrupo(false)
+        return
+      }
+      setNovoGrupoAberto(false)
+      const novoForm = { nome: '', obrigatorio: false, multiplo: false }
+      novoGrupoFormRef.current = novoForm
+      setNovoGrupoForm(novoForm)
+      await recarregarGrupos(item.id)
+    } catch (e) {
+      setErroGrupo('Erro de conexão')
+    }
     setSalvandoGrupo(false)
-    setNovoGrupoAberto(false)
-    setNovoGrupoForm({ nome: '', obrigatorio: false, multiplo: false })
-    const res = await fetch(`/api/admin/cardapio/${modalOpcionaisItem.id}/opcoes`)
-    const data = await res.json()
-    setGrupos(data.grupos ?? [])
   }
 
   async function deletarGrupo(grupoId: string) {
-    if (!modalOpcionaisItem) return
+    const item = modalOpcionaisItemRef.current
+    if (!item) return
     if (!confirm('Remover este grupo e todas as suas opções?')) return
-    await fetch(`/api/admin/cardapio/${modalOpcionaisItem.id}/opcoes`, {
+    await fetch(`/api/admin/cardapio/${item.id}/opcoes`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ grupo_id: grupoId }),
     })
-    const res = await fetch(`/api/admin/cardapio/${modalOpcionaisItem.id}/opcoes`)
-    const data = await res.json()
-    setGrupos(data.grupos ?? [])
+    await recarregarGrupos(item.id)
   }
 
   async function adicionarOpcao(grupoId: string) {
-    if (!modalOpcionaisItem) return
+    const item = modalOpcionaisItemRef.current
+    if (!item) return
     const form = novaOpcaoForm[grupoId]
     if (!form?.nome.trim()) return
     setSalvandoOpcao(grupoId)
-    await fetch(`/api/admin/cardapio/${modalOpcionaisItem.id}/opcoes`, {
+    await fetch(`/api/admin/cardapio/${item.id}/opcoes`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -221,21 +245,18 @@ export default function CardapioAdminPage() {
     })
     setSalvandoOpcao(null)
     setNovaOpcaoForm((prev) => ({ ...prev, [grupoId]: { nome: '', preco: '' } }))
-    const res = await fetch(`/api/admin/cardapio/${modalOpcionaisItem.id}/opcoes`)
-    const data = await res.json()
-    setGrupos(data.grupos ?? [])
+    await recarregarGrupos(item.id)
   }
 
   async function deletarOpcao(opcaoId: string) {
-    if (!modalOpcionaisItem) return
-    await fetch(`/api/admin/cardapio/${modalOpcionaisItem.id}/opcoes`, {
+    const item = modalOpcionaisItemRef.current
+    if (!item) return
+    await fetch(`/api/admin/cardapio/${item.id}/opcoes`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ acao: 'deletar_opcao', opcao_id: opcaoId }),
     })
-    const res = await fetch(`/api/admin/cardapio/${modalOpcionaisItem.id}/opcoes`)
-    const data = await res.json()
-    setGrupos(data.grupos ?? [])
+    await recarregarGrupos(item.id)
   }
 
   const itensFiltrados = filtroEstacao === 'todas'
@@ -487,13 +508,21 @@ export default function CardapioAdminPage() {
                       className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-teal-400"
                       placeholder="Nome do grupo (ex: Tamanho, Acompanhamento)"
                       value={novoGrupoForm.nome}
-                      onChange={(e) => setNovoGrupoForm((p) => ({ ...p, nome: e.target.value }))}
+                      onChange={(e) => {
+                        const novo = { ...novoGrupoFormRef.current, nome: e.target.value }
+                        novoGrupoFormRef.current = novo
+                        setNovoGrupoForm(novo)
+                      }}
                       autoFocus
                     />
                     <div className="flex gap-4">
                       <button
                         type="button"
-                        onClick={() => setNovoGrupoForm((p) => ({ ...p, obrigatorio: !p.obrigatorio }))}
+                        onClick={() => {
+                          const novo = { ...novoGrupoFormRef.current, obrigatorio: !novoGrupoFormRef.current.obrigatorio }
+                          novoGrupoFormRef.current = novo
+                          setNovoGrupoForm(novo)
+                        }}
                         className="flex items-center gap-2 cursor-pointer select-none"
                       >
                         <div className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${novoGrupoForm.obrigatorio ? 'bg-red-500' : 'bg-slate-300'}`}>
@@ -503,7 +532,11 @@ export default function CardapioAdminPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setNovoGrupoForm((p) => ({ ...p, multiplo: !p.multiplo }))}
+                        onClick={() => {
+                          const novo = { ...novoGrupoFormRef.current, multiplo: !novoGrupoFormRef.current.multiplo }
+                          novoGrupoFormRef.current = novo
+                          setNovoGrupoForm(novo)
+                        }}
                         className="flex items-center gap-2 cursor-pointer select-none"
                       >
                         <div className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${novoGrupoForm.multiplo ? 'bg-teal-500' : 'bg-slate-300'}`}>
@@ -512,19 +545,25 @@ export default function CardapioAdminPage() {
                         <span className="text-sm text-slate-600">Múltipla escolha</span>
                       </button>
                     </div>
+                    {erroGrupo && (
+                      <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{erroGrupo}</p>
+                    )}
                     <div className="flex gap-2 pt-1">
-                      <Button variant="outline" size="sm" className="flex-1" onClick={() => setNovoGrupoAberto(false)}>
-                        Cancelar
-                      </Button>
-                      <Button
+                      <button
                         type="button"
-                        size="sm"
-                        className="flex-1 bg-teal-600 hover:bg-teal-700"
+                        className="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50"
+                        onClick={() => { setNovoGrupoAberto(false); setErroGrupo(null) }}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-1 h-9 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold disabled:opacity-40 flex items-center justify-center"
                         disabled={!novoGrupoForm.nome.trim() || salvandoGrupo}
                         onClick={salvarNovoGrupo}
                       >
                         {salvandoGrupo ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar grupo'}
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ) : (
