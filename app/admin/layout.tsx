@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 
 export const metadata: Metadata = {
@@ -10,15 +10,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const headersList = await headers()
   const pathname = headersList.get('x-pathname') ?? ''
 
-  // Na página de login o middleware não define x-pathname (retorna cedo)
-  // então pathname fica vazio — renderiza sem sidebar
   if (!pathname) {
     return <>{children}</>
   }
 
+  const cookieStore = await cookies()
+  const cargo = (cookieStore.get('mmu_cargo')?.value ?? 'admin') as 'admin' | 'operador'
+
   return (
     <div className="flex min-h-screen bg-slate-100">
-      <AdminSidebar />
+      <AdminSidebar cargo={cargo} />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>
   )

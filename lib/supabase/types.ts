@@ -155,8 +155,37 @@ export interface ViewFilaEstacao {
   minutos_em_preparo: number | null
 }
 
+export interface OpcaoItem {
+  id: string
+  grupo_id: string
+  nome: string
+  preco_adicional: number
+  ordem: number
+}
+
+export interface GrupoOpcao {
+  id: string
+  item_id: string
+  nome: string
+  obrigatorio: boolean
+  multiplo: boolean
+  ordem: number
+  opcoes: OpcaoItem[]
+}
+
+export interface OpcaoSelecionada {
+  grupo_id: string
+  grupo_nome: string
+  opcao_id: string
+  opcao_nome: string
+  preco_adicional: number
+}
+
 export interface ItemCarrinho {
+  carrinhoKey: string         // item.id para itens sem opcionais, uuid único para com opcionais
   item: CardapioItem
   quantidade: number
   observacao: string
+  opcoes_selecionadas: OpcaoSelecionada[]
+  preco_unitario: number      // preco base + soma dos adicionais
 }

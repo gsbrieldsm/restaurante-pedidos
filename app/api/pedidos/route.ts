@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   const mesa = (sessao as any).mesas
 
   const total = itens.reduce(
-    (acc, i) => acc + i.item.preco * i.quantidade,
+    (acc, i) => acc + i.preco_unitario * i.quantidade,
     0
   )
 
@@ -60,12 +60,13 @@ export async function POST(req: Request) {
     pedido_id: pedido.id,
     item_id: i.item.id,
     item_nome: i.item.nome,
-    item_preco: i.item.preco,
+    item_preco: i.preco_unitario,
     quantidade: i.quantidade,
     observacao: i.observacao || null,
     estacao: i.item.estacao,
     tempo_preparo_estimado: i.item.tempo_preparo_estimado,
     status: 'aguardando' as const,
+    opcoes_selecionadas: i.opcoes_selecionadas ?? [],
   }))
 
   const { error: itensError } = await supabase

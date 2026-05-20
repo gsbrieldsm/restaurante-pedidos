@@ -10,13 +10,13 @@ import {
 import { useRouter } from 'next/navigation'
 
 const NAV = [
-  { href: '/admin',            label: 'Visão ao Vivo', icon: LayoutDashboard },
-  { href: '/admin/clientes',   label: 'Clientes',      icon: Users           },
-  { href: '/admin/tempo',      label: 'Performance',   icon: Clock           },
-  { href: '/admin/faturamento',label: 'Financeiro',    icon: DollarSign      },
-  { href: '/admin/cardapio',   label: 'Cardápio',      icon: BookOpen        },
-  { href: '/admin/mesas',         label: 'Mesas & QR',    icon: QrCode    },
-  { href: '/admin/configuracoes', label: 'Configurações', icon: Settings  },
+  { href: '/admin',                label: 'Visão ao Vivo', icon: LayoutDashboard, apenasAdmin: false },
+  { href: '/admin/clientes',       label: 'Clientes',      icon: Users,           apenasAdmin: true  },
+  { href: '/admin/tempo',          label: 'Performance',   icon: Clock,           apenasAdmin: true  },
+  { href: '/admin/faturamento',    label: 'Financeiro',    icon: DollarSign,      apenasAdmin: true  },
+  { href: '/admin/cardapio',       label: 'Cardápio',      icon: BookOpen,        apenasAdmin: true  },
+  { href: '/admin/mesas',          label: 'Mesas & QR',    icon: QrCode,          apenasAdmin: true  },
+  { href: '/admin/configuracoes',  label: 'Configurações', icon: Settings,        apenasAdmin: true  },
 ]
 
 const OPERACOES = [
@@ -27,10 +27,12 @@ const OPERACOES = [
   { href: '/estacao/chopeira',emoji: '🍻', label: 'Chopeira'         },
 ]
 
-export function AdminSidebar() {
+export function AdminSidebar({ cargo }: { cargo: 'admin' | 'operador' }) {
   const pathname = usePathname()
   const router = useRouter()
   const [operacoesAberto, setOperacoesAberto] = useState(false)
+
+  const navFiltrado = NAV.filter((n) => !n.apenasAdmin || cargo === 'admin')
 
   async function sair() {
     await fetch('/api/admin/auth', { method: 'DELETE' })
@@ -55,7 +57,7 @@ export function AdminSidebar() {
       </div>
 
       <nav className="flex-1 py-3 px-2 space-y-0.5">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {navFiltrado.map(({ href, label, icon: Icon }) => {
           const ativo = pathname === href
           return (
             <Link

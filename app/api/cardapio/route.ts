@@ -6,7 +6,13 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('cardapio_itens')
-    .select('*')
+    .select(`
+      *,
+      grupos_opcao:cardapio_grupos_opcao (
+        id, nome, obrigatorio, multiplo, ordem,
+        opcoes:cardapio_opcoes ( id, nome, preco_adicional, ordem )
+      )
+    `)
     .eq('disponivel', true)
     .order('categoria')
     .order('ordem')
@@ -15,7 +21,18 @@ export async function GET() {
     return NextResponse.json({ error: 'Erro ao buscar cardápio' }, { status: 500 })
   }
 
-  return NextResponse.json({ itens: data })
+  // Ordena as opções dentro de cada grupo
+  const itens = (data ?? []).map((item) => ({
+    ...item,
+    grupos_opcao: (item.grupos_opcao ?? [])
+      .sort((a: { ordem: number }, b: { ordem: number }) => a.ordem - b.ordem)
+      .map((g: { opcoes: { ordem: number }[] }) => ({
+        ...g,
+        opcoes: [...g.opcoes].sort((a, b) => a.ordem - b.ordem),
+      })),
+  }))
+
+  return NextResponse.json({ itens })
 }
 
 export async function POST(req: Request) {

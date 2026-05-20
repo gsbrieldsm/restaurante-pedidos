@@ -10,7 +10,7 @@ import {
   ShoppingCart, Plus, Minus, Trash2, ChevronRight,
   Clock, Loader2, Search, Receipt, ConciergeBell, CheckCircle2, X
 } from 'lucide-react'
-import type { CardapioItem, ItemCarrinho } from '@/lib/supabase/types'
+import type { CardapioItem, GrupoOpcao, OpcaoSelecionada, ItemCarrinho } from '@/lib/supabase/types'
 
 const ESTACAO_EMOJI: Record<string, string> = {
   cozinha: '🍳',
@@ -31,6 +31,11 @@ export default function CardapioPage() {
   const [loading, setLoading] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [observacoes, setObservacoes] = useState<Record<string, string>>({})
+  // — bottom sheet de opcionais —
+  const [itemOpcionais, setItemOpcionais] = useState<(CardapioItem & { grupos_opcao: GrupoOpcao[] }) | null>(null)
+  const [selecoes, setSelecoes] = useState<Record<string, string[]>>({}) // grupoId → [opcaoId]
+  const [obsOpcional, setObsOpcional] = useState('')
+
   const [chamandoGarcom, setChamandoGarcom] = useState(false)
   const [garcomChamado, setGarcomChamado] = useState(false)
   const [banner, setBanner] = useState<{
@@ -80,24 +85,117 @@ export default function CardapioPage() {
     return lista
   }, [itens, categoriaAtiva, busca])
 
-  const totalCarrinho = carrinho.reduce((acc, i) => acc + i.item.preco * i.quantidade, 0)
+  const totalCarrinho = carrinho.reduce((acc, i) => acc + i.preco_unitario * i.quantidade, 0)
   const qtdCarrinho = carrinho.reduce((acc, i) => acc + i.quantidade, 0)
 
-  function adicionarItem(item: CardapioItem) {
+  function abrirOpcionais(item: CardapioItem & { grupos_opcao?: GrupoOpcao[] }) {
+    const grupos = item.grupos_opcao ?? []
+    if (grupos.length === 0) {
+      // sem opcionais: adiciona direto
+      adicionarSemOpcional(item)
+      return
+    }
+    setItemOpcionais(item as CardapioItem & { grupos_opcao: GrupoOpcao[] })
+    setSelecoes({})
+    setObsOpcional('')
+  }
+
+  function adicionarSemOpcional(item: CardapioItem) {
     setCarrinho((prev) => {
-      const idx = prev.findIndex((c) => c.item.id === item.id)
+      const idx = prev.findIndex((c) => c.carrinhoKey === item.id)
       if (idx >= 0) {
         const novo = [...prev]
         novo[idx] = { ...novo[idx], quantidade: novo[idx].quantidade + 1 }
         return novo
       }
-      return [...prev, { item, quantidade: 1, observacao: '' }]
+      return [...prev, {
+        carrinhoKey: item.id,
+        item,
+        quantidade: 1,
+        observacao: '',
+        opcoes_selecionadas: [],
+        preco_unitario: item.preco,
+      }]
     })
   }
 
-  function removerItem(itemId: string) {
+  function adicionarItem(item: CardapioItem) {
+    abrirOpcionais(item as CardapioItem & { grupos_opcao?: GrupoOpcao[] })
+  }
+
+  function confirmarOpcionais() {
+    if (!itemOpcionais) return
+    const grupos = itemOpcionais.grupos_opcao ?? []
+
+    // valida obrigatórios
+    for (const g of grupos) {
+      if (g.obrigatorio && (!selecoes[g.id] || selecoes[g.id].length === 0)) return
+    }
+
+    const opcoesSelecionadas: OpcaoSelecionada[] = grupos.flatMap((g) =>
+      (selecoes[g.id] ?? []).map((opcaoId) => {
+        const opcao = g.opcoes.find((o) => o.id === opcaoId)!
+        return {
+          grupo_id: g.id,
+          grupo_nome: g.nome,
+          opcao_id: opcaoId,
+          opcao_nome: opcao.nome,
+          preco_adicional: opcao.preco_adicional,
+        }
+      })
+    )
+
+    const adicional = opcoesSelecionadas.reduce((acc, o) => acc + o.preco_adicional, 0)
+    const preco_unitario = itemOpcionais.preco + adicional
+    const carrinhoKey = crypto.randomUUID()
+
+    setCarrinho((prev) => [...prev, {
+      carrinhoKey,
+      item: itemOpcionais,
+      quantidade: 1,
+      observacao: obsOpcional,
+      opcoes_selecionadas: opcoesSelecionadas,
+      preco_unitario,
+    }])
+
+    setItemOpcionais(null)
+  }
+
+  function toggleSelecao(grupo: GrupoOpcao, opcaoId: string) {
+    setSelecoes((prev) => {
+      const atual = prev[grupo.id] ?? []
+      if (grupo.multiplo) {
+        // checkbox: toggle
+        return {
+          ...prev,
+          [grupo.id]: atual.includes(opcaoId)
+            ? atual.filter((id) => id !== opcaoId)
+            : [...atual, opcaoId],
+        }
+      } else {
+        // radio: seleciona um só
+        return { ...prev, [grupo.id]: [opcaoId] }
+      }
+    })
+  }
+
+  function precoOpcionalAtual(): number {
+    if (!itemOpcionais) return 0
+    return itemOpcionais.grupos_opcao.flatMap((g) =>
+      (selecoes[g.id] ?? []).map((id) => g.opcoes.find((o) => o.id === id)?.preco_adicional ?? 0)
+    ).reduce((a, b) => a + b, 0)
+  }
+
+  function opcionaisValidos(): boolean {
+    if (!itemOpcionais) return false
+    return itemOpcionais.grupos_opcao
+      .filter((g) => g.obrigatorio)
+      .every((g) => (selecoes[g.id] ?? []).length > 0)
+  }
+
+  function removerItem(carrinhoKey: string) {
     setCarrinho((prev) => {
-      const idx = prev.findIndex((c) => c.item.id === itemId)
+      const idx = prev.findIndex((c) => c.carrinhoKey === carrinhoKey)
       if (idx < 0) return prev
       const novo = [...prev]
       if (novo[idx].quantidade > 1) {
@@ -109,8 +207,18 @@ export default function CardapioPage() {
     })
   }
 
+  function adicionarMaisNoCarrinho(carrinhoKey: string) {
+    setCarrinho((prev) => {
+      const idx = prev.findIndex((c) => c.carrinhoKey === carrinhoKey)
+      if (idx < 0) return prev
+      const novo = [...prev]
+      novo[idx] = { ...novo[idx], quantidade: novo[idx].quantidade + 1 }
+      return novo
+    })
+  }
+
   function qtdNoCarrinho(itemId: string) {
-    return carrinho.find((c) => c.item.id === itemId)?.quantidade || 0
+    return carrinho.filter((c) => c.item.id === itemId).reduce((acc, c) => acc + c.quantidade, 0)
   }
 
   async function finalizarPedido() {
@@ -121,7 +229,7 @@ export default function CardapioPage() {
 
     const itensComObs = carrinho.map((c) => ({
       ...c,
-      observacao: observacoes[c.item.id] || '',
+      observacao: c.opcoes_selecionadas.length > 0 ? c.observacao : (observacoes[c.item.id] || ''),
     }))
 
     const resp = await fetch('/api/pedidos', {
@@ -432,6 +540,123 @@ export default function CardapioPage() {
         </div>
       )}
 
+      {/* ── Bottom sheet de opcionais ── */}
+      {itemOpcionais && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setItemOpcionais(null)} />
+          <div
+            className="relative bg-white rounded-t-3xl flex flex-col w-full"
+            style={{ maxHeight: '88vh', paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+          >
+            {/* Alça */}
+            <div className="shrink-0 flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+
+            {/* Cabeçalho */}
+            <div className="shrink-0 px-5 pt-2 pb-4 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-black text-slate-800 text-lg leading-snug">{itemOpcionais.nome}</p>
+                  {itemOpcionais.descricao && (
+                    <p className="text-sm text-slate-500 mt-0.5">{itemOpcionais.descricao}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setItemOpcionais(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0"
+                >
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Grupos com scroll */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6 min-h-0">
+              {itemOpcionais.grupos_opcao.map((grupo) => (
+                <div key={grupo.id}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <p className="font-bold text-slate-800 text-sm">{grupo.nome}</p>
+                    {grupo.obrigatorio ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-medium">Obrigatório</span>
+                    ) : (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">Opcional</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {grupo.opcoes.map((opcao) => {
+                      const selecionado = (selecoes[grupo.id] ?? []).includes(opcao.id)
+                      return (
+                        <button
+                          key={opcao.id}
+                          onClick={() => toggleSelecao(grupo, opcao.id)}
+                          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all ${
+                            selecionado
+                              ? 'border-teal-500 bg-teal-50'
+                              : 'border-slate-200 bg-white hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`shrink-0 flex items-center justify-center transition-colors ${
+                              grupo.multiplo
+                                ? `w-5 h-5 rounded border-2 ${selecionado ? 'border-teal-500 bg-teal-500' : 'border-slate-300'}`
+                                : `w-5 h-5 rounded-full border-2 ${selecionado ? 'border-teal-500' : 'border-slate-300'}`
+                            }`}>
+                              {selecionado && (
+                                grupo.multiplo
+                                  ? <span className="text-white text-xs font-black">✓</span>
+                                  : <div className="w-2.5 h-2.5 rounded-full bg-teal-500" />
+                              )}
+                            </div>
+                            <span className={`text-sm font-medium ${selecionado ? 'text-teal-800' : 'text-slate-700'}`}>
+                              {opcao.nome}
+                            </span>
+                          </div>
+                          {opcao.preco_adicional > 0 && (
+                            <span className={`text-sm font-bold shrink-0 ${selecionado ? 'text-teal-700' : 'text-slate-500'}`}>
+                              +R$ {opcao.preco_adicional.toFixed(2).replace('.', ',')}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              {/* Observação */}
+              <div>
+                <p className="font-bold text-slate-800 text-sm mb-2">Observação</p>
+                <input
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none focus:border-teal-400"
+                  placeholder="Alguma observação? (ex: sem cebola)"
+                  value={obsOpcional}
+                  onChange={(e) => setObsOpcional(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Botão confirmar */}
+            <div className="shrink-0 px-5 pt-3 pb-2 border-t border-slate-100 bg-white">
+              <button
+                onClick={confirmarOpcionais}
+                disabled={!opcionaisValidos()}
+                className="w-full flex items-center justify-center gap-2 font-bold text-base text-white rounded-2xl disabled:opacity-40 transition-opacity"
+                style={{ background: '#1A9B8A', height: '52px' }}
+              >
+                Adicionar
+                {precoOpcionalAtual() > 0
+                  ? ` — R$ ${(itemOpcionais.preco + precoOpcionalAtual()).toFixed(2).replace('.', ',')}`
+                  : ` — R$ ${itemOpcionais.preco.toFixed(2).replace('.', ',')}`}
+              </button>
+              {itemOpcionais.grupos_opcao.some((g) => g.obrigatorio && (!selecoes[g.id] || selecoes[g.id].length === 0)) && (
+                <p className="text-center text-xs text-slate-400 mt-2">Selecione as opções obrigatórias para continuar</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Drawer do carrinho — custom, sem dependência do Sheet */}
       {carrinhoAberto && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -474,18 +699,18 @@ export default function CardapioPage() {
                 <p className="text-center text-slate-400 mt-8">Carrinho vazio.</p>
               )}
               {carrinho.map((c) => (
-                <div key={c.item.id} className="space-y-2">
+                <div key={c.carrinhoKey} className="space-y-2">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 shrink-0">
                       <button
-                        onClick={() => removerItem(c.item.id)}
+                        onClick={() => removerItem(c.carrinhoKey)}
                         className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center"
                       >
                         {c.quantidade === 1 ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                       </button>
                       <span className="font-bold text-base w-5 text-center">{c.quantidade}</span>
                       <button
-                        onClick={() => adicionarItem(c.item)}
+                        onClick={() => adicionarMaisNoCarrinho(c.carrinhoKey)}
                         className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center"
                       >
                         <Plus className="w-4 h-4" />
@@ -493,19 +718,29 @@ export default function CardapioPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-base text-slate-800 leading-snug">{c.item.nome}</p>
+                      {c.opcoes_selecionadas.length > 0 && (
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {c.opcoes_selecionadas.map((o) => o.opcao_nome).join(' · ')}
+                        </p>
+                      )}
                       <p className="text-sm text-teal-700 font-medium mt-0.5">
-                        R$ {(c.item.preco * c.quantidade).toFixed(2).replace('.', ',')}
+                        R$ {(c.preco_unitario * c.quantidade).toFixed(2).replace('.', ',')}
                       </p>
                     </div>
                   </div>
-                  <input
-                    className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none focus:border-teal-400"
-                    placeholder="Alguma observação? (ex: sem cebola)"
-                    value={observacoes[c.item.id] || ''}
-                    onChange={(e) =>
-                      setObservacoes((prev) => ({ ...prev, [c.item.id]: e.target.value }))
-                    }
-                  />
+                  {c.opcoes_selecionadas.length === 0 && (
+                    <input
+                      className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none focus:border-teal-400"
+                      placeholder="Alguma observação? (ex: sem cebola)"
+                      value={observacoes[c.item.id] || ''}
+                      onChange={(e) =>
+                        setObservacoes((prev) => ({ ...prev, [c.item.id]: e.target.value }))
+                      }
+                    />
+                  )}
+                  {c.observacao && c.opcoes_selecionadas.length > 0 && (
+                    <p className="text-xs text-orange-600 bg-orange-50 rounded-lg px-3 py-1.5">⚠️ {c.observacao}</p>
+                  )}
                   <Separator />
                 </div>
               ))}

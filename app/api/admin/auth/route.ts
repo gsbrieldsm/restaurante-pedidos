@@ -10,6 +10,15 @@ const COOKIE_OPTS = {
   path:     '/',
 }
 
+// Cargo cookie não precisa ser httpOnly — não é segredo, middleware lê normalmente
+const CARGO_OPTS = {
+  httpOnly: false,
+  secure:   process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  maxAge:   60 * 60 * 24 * 7,
+  path:     '/',
+}
+
 // POST — login com email + senha (ou senha legada via env var)
 export async function POST(req: Request) {
   const { email, senha } = await req.json() as { email?: string; senha: string }
@@ -38,6 +47,7 @@ export async function POST(req: Request) {
 
     const resp = NextResponse.json({ ok: true, nome: usuario.nome, cargo: usuario.cargo })
     resp.cookies.set('admin_auth', `mmu:${usuario.id}`, COOKIE_OPTS)
+    resp.cookies.set('mmu_cargo', usuario.cargo, CARGO_OPTS)
     return resp
   }
 
@@ -59,6 +69,7 @@ export async function POST(req: Request) {
 
   const resp = NextResponse.json({ ok: true, nome: 'Admin', cargo: 'admin' })
   resp.cookies.set('admin_auth', 'mmu-admin-v1', COOKIE_OPTS)
+  resp.cookies.set('mmu_cargo', 'admin', CARGO_OPTS)
   return resp
 }
 
@@ -66,5 +77,6 @@ export async function POST(req: Request) {
 export async function DELETE() {
   const resp = NextResponse.json({ ok: true })
   resp.cookies.delete('admin_auth')
+  resp.cookies.delete('mmu_cargo')
   return resp
 }

@@ -271,34 +271,32 @@ export default function GarcomPage() {
                   </Button>
                 </div>
 
-                <div className="divide-y divide-slate-50">
+                <div className="grid grid-cols-2 gap-3 p-3">
                   {grupo.itens.map((item) => {
                     const isEntregando = entregando.has(item.id)
                     const espera = tempoEspera(item.pronto_em)
                     return (
-                      <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                      <div key={item.id} className="bg-slate-50 rounded-xl p-3 flex flex-col gap-2 border border-slate-100">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-800 text-sm">{item.quantidade}× {item.item_nome}</span>
-                            <span className="text-xs text-slate-400">{ESTACAO_LABEL[item.estacao]}</span>
-                          </div>
+                          <p className="font-black text-slate-800 text-sm leading-tight">{item.quantidade}× {item.item_nome}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{ESTACAO_LABEL[item.estacao]}</p>
                           {item.observacao && (
-                            <p className="text-xs text-orange-700 bg-orange-50 rounded px-2 py-0.5 mt-1 inline-block">
+                            <p className="text-xs text-orange-700 bg-orange-50 rounded px-2 py-0.5 mt-1">
                               ⚠️ {item.observacao}
                             </p>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          {espera && (
+                        <div className="flex items-center justify-between gap-2">
+                          {espera ? (
                             <span className="flex items-center gap-1 text-xs text-slate-400">
                               <Clock className="w-3 h-3" />{espera}
                             </span>
-                          )}
+                          ) : <span />}
                           <Button
                             onClick={() => marcarEntregue(item)}
                             disabled={isEntregando}
                             size="sm"
-                            className="h-8 px-3 text-xs font-bold text-white hover:opacity-90"
+                            className="h-8 px-3 text-xs font-bold text-white hover:opacity-90 shrink-0"
                             style={{ background: '#F05A4F' }}
                           >
                             {isEntregando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Entregar'}
