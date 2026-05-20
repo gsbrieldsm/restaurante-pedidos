@@ -4,9 +4,184 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Trash2, RefreshCw, Users, ClipboardList,
   DollarSign, Bell, TableProperties, AlertTriangle, CheckCircle2, Loader2, ShieldAlert,
-  Megaphone, Save, Eye, EyeOff, ImagePlus, X, Upload
+  Megaphone, Save, Eye, EyeOff, ImagePlus, X, Upload,
+  UserPlus, Pencil, Shield, UserCog
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
+// ─────────────────────────────────────────────
+// Tipos e componentes de Usuários
+// ─────────────────────────────────────────────
+interface Usuario {
+  id: string
+  nome: string
+  email: string
+  cargo: 'admin' | 'operador'
+  ativo: boolean
+  criado_em: string
+}
+
+const CARGO_CONFIG = {
+  admin:    { label: 'Admin',    cor: 'bg-purple-100 text-purple-700' },
+  operador: { label: 'Operador', cor: 'bg-slate-100 text-slate-600'   },
+}
+
+function ModalUsuario({
+  usuario,
+  onClose,
+  onSalvo,
+}: {
+  usuario: Usuario | null   // null = novo
+  onClose: () => void
+  onSalvo: () => void
+}) {
+  const editando = !!usuario
+  const [nome,  setNome]  = useState(usuario?.nome  ?? '')
+  const [email, setEmail] = useState(usuario?.email ?? '')
+  const [cargo, setCargo] = useState<'admin' | 'operador'>(usuario?.cargo ?? 'operador')
+  const [senha, setSenha] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
+  const [salvando, setSalvando] = useState(false)
+  const [erro, setErro] = useState('')
+
+  async function salvar(e: React.FormEvent) {
+    e.preventDefault()
+    setErro('')
+    setSalvando(true)
+
+    let resp: Response
+    if (editando) {
+      const body: Record<string, unknown> = { nome, email, cargo }
+      if (senha) body.senha = senha
+      resp = await fetch(`/api/admin/usuarios/${usuario.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    } else {
+      resp = await fetch('/api/admin/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, senha, cargo }),
+      })
+    }
+
+    setSalvando(false)
+    const data = await resp.json()
+    if (!resp.ok) { setErro(data.error ?? 'Erro ao salvar'); return }
+    onSalvo()
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl w-full max-w-md mx-4 p-6 shadow-2xl space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-slate-800 text-lg">
+            {editando ? 'Editar usuário' : 'Novo usuário'}
+          </h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={salvar} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Nome</label>
+            <input
+              autoFocus
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Ex: João Silva"
+              required
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-teal-400 transition-colors"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="joao@restaurante.com"
+              required
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-teal-400 transition-colors"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Senha {editando && <span className="font-normal text-slate-400">(deixe em branco para manter)</span>}
+            </label>
+            <div className="relative">
+              <input
+                type={mostrarSenha ? 'text' : 'password'}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder={editando ? '••••••••' : 'Mínimo 6 caracteres'}
+                required={!editando}
+                minLength={6}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 pr-10 text-sm outline-none focus:border-teal-400 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarSenha(!mostrarSenha)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Cargo</label>
+            <div className="flex gap-2">
+              {(['operador', 'admin'] as const).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCargo(c)}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
+                    cargo === c
+                      ? c === 'admin'
+                        ? 'border-purple-500 bg-purple-50 text-purple-700'
+                        : 'border-teal-500 bg-teal-50 text-teal-700'
+                      : 'border-slate-200 text-slate-400 hover:border-slate-300'
+                  }`}
+                >
+                  {c === 'admin' ? '🛡️ Admin' : '👤 Operador'}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400">
+              {cargo === 'admin'
+                ? 'Acesso completo: painel, financeiro e configurações.'
+                : 'Acesso às estações de trabalho e cardápio.'}
+            </p>
+          </div>
+
+          {erro && (
+            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{erro}</p>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
+            <Button
+              type="submit"
+              disabled={salvando}
+              className="flex-1 text-white"
+              style={{ background: '#1A9B8A' }}
+            >
+              {salvando ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Salvando...</> : 'Salvar'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 
 interface BannerConfig {
   banner_ativo:      boolean
@@ -118,6 +293,46 @@ const NIVEL_CONFIG = {
 }
 
 export default function ConfiguracoesPage() {
+  // --- Usuários state ---
+  const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [usuariosLoading, setUsuariosLoading] = useState(true)
+  const [modalUsuario, setModalUsuario] = useState<Usuario | null | 'novo'>(null)
+  const [deletandoId, setDeletandoId] = useState<string | null>(null)
+  const [togglendoId, setTogglendoId] = useState<string | null>(null)
+
+  useEffect(() => {
+    carregarUsuarios()
+  }, [])
+
+  async function carregarUsuarios() {
+    setUsuariosLoading(true)
+    const res = await fetch('/api/admin/usuarios')
+    const data = await res.json()
+    setUsuarios(data.usuarios ?? [])
+    setUsuariosLoading(false)
+  }
+
+  async function toggleAtivo(usuario: Usuario) {
+    setTogglendoId(usuario.id)
+    await fetch(`/api/admin/usuarios/${usuario.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ativo: !usuario.ativo }),
+    })
+    await carregarUsuarios()
+    setTogglendoId(null)
+  }
+
+  async function deletarUsuario(id: string) {
+    if (!confirm('Tem certeza que deseja remover este usuário?')) return
+    setDeletandoId(id)
+    const resp = await fetch(`/api/admin/usuarios/${id}`, { method: 'DELETE' })
+    const data = await resp.json()
+    if (!resp.ok) { alert(data.error); setDeletandoId(null); return }
+    await carregarUsuarios()
+    setDeletandoId(null)
+  }
+
   // --- Banner state ---
   const [banner, setBanner] = useState<BannerConfig>({
     banner_ativo:      false,
@@ -215,6 +430,130 @@ export default function ConfiguracoesPage() {
 
   return (
     <div className="p-6 space-y-8 max-w-3xl">
+
+      {/* ── Controle de Acesso ── */}
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-xs font-bold tracking-widest uppercase text-teal-600">Configurações</p>
+        </div>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+              <UserCog className="w-6 h-6 text-teal-600" />
+              Controle de Acesso
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Gerencie quem pode acessar o painel, estações e configurações.
+            </p>
+          </div>
+          <Button
+            onClick={() => setModalUsuario('novo')}
+            className="flex items-center gap-2 text-white shrink-0"
+            style={{ background: '#1A9B8A' }}
+          >
+            <UserPlus className="w-4 h-4" />
+            Novo usuário
+          </Button>
+        </div>
+      </div>
+
+      {/* Lista de usuários */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        {usuariosLoading ? (
+          <div className="flex items-center justify-center py-10 gap-2 text-slate-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" /> Carregando...
+          </div>
+        ) : usuarios.length === 0 ? (
+          <div className="text-center py-10 px-4">
+            <Shield className="w-10 h-10 mx-auto text-slate-200 mb-3" />
+            <p className="text-slate-500 font-medium text-sm">Nenhum usuário cadastrado</p>
+            <p className="text-slate-400 text-xs mt-1">
+              Enquanto não houver usuários, o acesso usa a senha do painel (ADMIN_PASSWORD).
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {usuarios.map((u) => {
+              const cfg = CARGO_CONFIG[u.cargo]
+              return (
+                <div key={u.id} className={`flex items-center gap-4 px-5 py-4 ${!u.ativo ? 'opacity-50' : ''}`}>
+                  {/* Avatar */}
+                  <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                    <span className="text-teal-700 font-bold text-sm">{u.nome[0].toUpperCase()}</span>
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-slate-800 text-sm truncate">{u.nome}</p>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.cor}`}>
+                        {cfg.label}
+                      </span>
+                      {!u.ativo && (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                          Inativo
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 truncate">{u.email}</p>
+                  </div>
+
+                  {/* Ações */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Toggle ativo */}
+                    <button
+                      onClick={() => toggleAtivo(u)}
+                      disabled={!!togglendoId}
+                      title={u.ativo ? 'Desativar' : 'Ativar'}
+                      className={`relative w-10 h-5 rounded-full transition-colors ${
+                        u.ativo ? 'bg-teal-500' : 'bg-slate-200'
+                      }`}
+                    >
+                      {togglendoId === u.id
+                        ? <Loader2 className="w-3 h-3 animate-spin text-white absolute top-1 left-1" />
+                        : <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${u.ativo ? 'translate-x-5' : 'translate-x-0'}`} />
+                      }
+                    </button>
+
+                    {/* Editar */}
+                    <button
+                      onClick={() => setModalUsuario(u)}
+                      className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                      title="Editar"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+
+                    {/* Deletar */}
+                    <button
+                      onClick={() => deletarUsuario(u.id)}
+                      disabled={deletandoId === u.id}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Remover"
+                    >
+                      {deletandoId === u.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Trash2 className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Modal criar/editar usuário */}
+      {modalUsuario !== null && (
+        <ModalUsuario
+          usuario={modalUsuario === 'novo' ? null : modalUsuario}
+          onClose={() => setModalUsuario(null)}
+          onSalvo={carregarUsuarios}
+        />
+      )}
+
+      {/* Divider */}
+      <div className="border-t border-slate-200" />
 
       {/* ── Banner do Cardápio ── */}
       <div>

@@ -19,7 +19,12 @@ export function middleware(request: NextRequest) {
 
   const token = request.cookies.get('admin_auth')?.value
 
-  if (token !== SESSION_TOKEN) {
+  // Aceita token legado (env var) ou novo formato por usuário (mmu:UUID)
+  const valido =
+    token === SESSION_TOKEN ||
+    (!!token && /^mmu:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(token))
+
+  if (!valido) {
     // Redireciona para login, guardando a rota de destino
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('next', pathname)

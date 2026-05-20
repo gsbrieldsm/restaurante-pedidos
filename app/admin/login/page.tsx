@@ -9,9 +9,10 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const next = searchParams.get('next') ?? '/admin'
 
-  const [senha, setSenha] = useState('')
+  const [email, setEmail]   = useState('')
+  const [senha, setSenha]   = useState('')
   const [mostrar, setMostrar] = useState(false)
-  const [erro, setErro] = useState('')
+  const [erro, setErro]     = useState('')
   const [loading, setLoading] = useState(false)
 
   async function entrar(e: React.FormEvent) {
@@ -19,10 +20,13 @@ function LoginForm() {
     setErro('')
     setLoading(true)
 
+    const body: Record<string, string> = { senha }
+    if (email.trim()) body.email = email.trim()
+
     const resp = await fetch('/api/admin/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senha }),
+      body: JSON.stringify(body),
     })
 
     setLoading(false)
@@ -31,20 +35,36 @@ function LoginForm() {
       router.push(next)
       router.refresh()
     } else {
-      setErro('Senha incorreta. Tente novamente.')
+      const data = await resp.json()
+      setErro(data.error ?? 'Erro ao entrar. Tente novamente.')
       setSenha('')
     }
   }
 
   return (
     <form onSubmit={entrar} className="w-full space-y-4">
+      {/* Email */}
       <div className="space-y-2">
         <label className="text-white/50 text-xs font-bold uppercase tracking-widest">
-          Senha de acesso
+          Email
+        </label>
+        <input
+          autoFocus
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="seu@email.com"
+          className="w-full bg-white/5 border border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-teal-500/60 focus:bg-white/8 transition-all"
+        />
+      </div>
+
+      {/* Senha */}
+      <div className="space-y-2">
+        <label className="text-white/50 text-xs font-bold uppercase tracking-widest">
+          Senha
         </label>
         <div className="relative">
           <input
-            autoFocus
             type={mostrar ? 'text' : 'password'}
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
@@ -114,8 +134,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* useSearchParams precisa de Suspense */}
-        <Suspense fallback={<div className="w-full h-24" />}>
+        <Suspense fallback={<div className="w-full h-32" />}>
           <LoginForm />
         </Suspense>
 
