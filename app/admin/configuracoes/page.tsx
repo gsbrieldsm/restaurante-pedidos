@@ -1,11 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Trash2, RefreshCw, Users, ClipboardList,
-  DollarSign, Bell, TableProperties, AlertTriangle, CheckCircle2, Loader2, ShieldAlert
+  DollarSign, Bell, TableProperties, AlertTriangle, CheckCircle2, Loader2, ShieldAlert,
+  Megaphone, Save, Eye, EyeOff
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
+interface BannerConfig {
+  banner_ativo:     boolean
+  banner_titulo:    string
+  banner_subtitulo: string
+  banner_emoji:     string
+  banner_estilo:    string
+}
+
+const BANNER_ESTILOS: Record<string, { label: string; gradient: string; subColor: string }> = {
+  teal:   { label: 'Teal',    gradient: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)', subColor: '#5eead4' },
+  ocean:  { label: 'Oceano',  gradient: 'linear-gradient(135deg, #0a1628 0%, #0d2d5e 50%, #1a6eb5 100%)', subColor: '#93c5fd' },
+  sunset: { label: 'Sunset',  gradient: 'linear-gradient(135deg, #1a0808 0%, #5e1a0d 50%, #e0533a 100%)', subColor: '#fca5a5' },
+  gold:   { label: 'Dourado', gradient: 'linear-gradient(135deg, #1a1205 0%, #5e3e0d 50%, #d4a017 100%)', subColor: '#fde68a' },
+  roxo:   { label: 'Roxo',    gradient: 'linear-gradient(135deg, #12091a 0%, #3d1a5e 50%, #8b5cf6 100%)', subColor: '#c4b5fd' },
+}
 
 interface Acao {
   escopo: string
@@ -100,6 +117,48 @@ const NIVEL_CONFIG = {
 }
 
 export default function ConfiguracoesPage() {
+  // --- Banner state ---
+  const [banner, setBanner] = useState<BannerConfig>({
+    banner_ativo: false,
+    banner_titulo: 'Bem-vindo ao Meu Menu+! 🎉',
+    banner_subtitulo: 'Veja nossas novidades do dia',
+    banner_emoji: '🍽️',
+    banner_estilo: 'teal',
+  })
+  const [bannerCarregando, setBannerCarregando] = useState(true)
+  const [bannerSalvando, setBannerSalvando] = useState(false)
+  const [bannerSucesso, setBannerSucesso] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/configuracoes')
+      .then((r) => r.json())
+      .then(({ config }) => {
+        if (config) setBanner({
+          banner_ativo:     config.banner_ativo     ?? false,
+          banner_titulo:    config.banner_titulo     ?? '',
+          banner_subtitulo: config.banner_subtitulo  ?? '',
+          banner_emoji:     config.banner_emoji      ?? '🍽️',
+          banner_estilo:    config.banner_estilo     ?? 'teal',
+        })
+      })
+      .finally(() => setBannerCarregando(false))
+  }, [])
+
+  async function salvarBanner() {
+    setBannerSalvando(true)
+    const resp = await fetch('/api/admin/configuracoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(banner),
+    })
+    setBannerSalvando(false)
+    if (resp.ok) {
+      setBannerSucesso(true)
+      setTimeout(() => setBannerSucesso(false), 3000)
+    }
+  }
+
+  // --- Reset state ---
   const [confirmando, setConfirmando] = useState<Acao | null>(null)
   const [executando, setExecutando] = useState(false)
   const [sucesso, setSucesso] = useState<string | null>(null)
@@ -133,13 +192,174 @@ export default function ConfiguracoesPage() {
   const PALAVRA_CONFIRMA = 'CONFIRMAR'
   const podeExecutar = digitado === PALAVRA_CONFIRMA
 
-  return (
-    <div className="p-6 space-y-6 max-w-3xl">
+  const estiloAtual = BANNER_ESTILOS[banner.banner_estilo] ?? BANNER_ESTILOS.teal
 
-      {/* Header */}
+  return (
+    <div className="p-6 space-y-8 max-w-3xl">
+
+      {/* ── Banner do Cardápio ── */}
       <div>
-        <p className="text-xs font-bold tracking-widest uppercase text-teal-600 mb-1">Configurações</p>
-        <h1 className="text-2xl font-bold text-slate-800">Gestão de Dados</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-xs font-bold tracking-widest uppercase text-teal-600">Configurações</p>
+        </div>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+              <Megaphone className="w-6 h-6 text-teal-600" />
+              Banner do Cardápio
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Exibido no topo da lista de itens quando o cliente abre o cardápio.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {bannerCarregando ? (
+        <div className="flex items-center gap-2 text-slate-400 text-sm">
+          <Loader2 className="w-4 h-4 animate-spin" /> Carregando...
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+
+          {/* Toggle ativo */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              {banner.banner_ativo
+                ? <Eye className="w-5 h-5 text-teal-600" />
+                : <EyeOff className="w-5 h-5 text-slate-400" />}
+              <div>
+                <p className="font-semibold text-slate-800 text-sm">
+                  {banner.banner_ativo ? 'Banner ativo' : 'Banner desativado'}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {banner.banner_ativo ? 'Visível para os clientes' : 'Não aparece no cardápio'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setBanner((b) => ({ ...b, banner_ativo: !b.banner_ativo }))}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                banner.banner_ativo ? 'bg-teal-500' : 'bg-slate-200'
+              }`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                banner.banner_ativo ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
+
+          {/* Preview */}
+          <div className="px-5 py-4 bg-slate-50 border-b border-slate-100">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Pré-visualização</p>
+            <div
+              className="relative rounded-2xl overflow-hidden shadow-lg max-w-sm"
+              style={{ background: estiloAtual.gradient }}
+            >
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full opacity-10 bg-white" />
+              <div className="absolute -top-4 -left-4 w-20 h-20 rounded-full opacity-5 bg-white" />
+              <div className="relative px-5 pt-5 pb-6">
+                <div className="text-4xl mb-3 leading-none">{banner.banner_emoji || '🍽️'}</div>
+                <h2 className="text-white font-black text-xl leading-tight">
+                  {banner.banner_titulo || 'Título do banner'}
+                </h2>
+                {banner.banner_subtitulo && (
+                  <p className="text-sm mt-1.5 font-medium" style={{ color: estiloAtual.subColor }}>
+                    {banner.banner_subtitulo}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Campos */}
+          <div className="px-5 py-4 space-y-4">
+
+            {/* Emoji + Estilo */}
+            <div className="flex gap-4">
+              <div className="space-y-1.5 w-28">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Emoji</label>
+                <input
+                  value={banner.banner_emoji}
+                  onChange={(e) => setBanner((b) => ({ ...b, banner_emoji: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-xl text-center outline-none focus:border-teal-400 transition-colors"
+                  maxLength={4}
+                />
+              </div>
+              <div className="flex-1 space-y-1.5">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Cor / Estilo</label>
+                <div className="flex gap-2 flex-wrap">
+                  {Object.entries(BANNER_ESTILOS).map(([key, val]) => (
+                    <button
+                      key={key}
+                      onClick={() => setBanner((b) => ({ ...b, banner_estilo: key }))}
+                      title={val.label}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        banner.banner_estilo === key
+                          ? 'border-slate-800 scale-110 shadow-md'
+                          : 'border-transparent hover:scale-105'
+                      }`}
+                      style={{ background: val.gradient }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Título */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Título principal</label>
+              <input
+                value={banner.banner_titulo}
+                onChange={(e) => setBanner((b) => ({ ...b, banner_titulo: e.target.value }))}
+                placeholder="Ex: Promoção de hoje! 🎉"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-teal-400 transition-colors"
+                maxLength={80}
+              />
+            </div>
+
+            {/* Subtítulo */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Subtítulo <span className="font-normal text-slate-400">(opcional)</span>
+              </label>
+              <input
+                value={banner.banner_subtitulo}
+                onChange={(e) => setBanner((b) => ({ ...b, banner_subtitulo: e.target.value }))}
+                placeholder="Ex: Peça o prato do chef com 20% off hoje!"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-teal-400 transition-colors"
+                maxLength={120}
+              />
+            </div>
+
+            {/* Botão salvar */}
+            <div className="flex items-center gap-3 pt-1">
+              <Button
+                onClick={salvarBanner}
+                disabled={bannerSalvando}
+                className="flex items-center gap-2 text-white"
+                style={{ background: '#1A9B8A' }}
+              >
+                {bannerSalvando
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
+                  : <><Save className="w-4 h-4" /> Salvar banner</>}
+              </Button>
+              {bannerSucesso && (
+                <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
+                  <CheckCircle2 className="w-4 h-4" /> Salvo!
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Divider */}
+      <div className="border-t border-slate-200" />
+
+      {/* Header — Gestão de Dados */}
+      <div>
+        <h2 className="text-xl font-bold text-slate-800">Gestão de Dados</h2>
         <p className="text-sm text-slate-500 mt-1">
           Use com cuidado. As ações abaixo são irreversíveis e afetam diretamente o banco de dados.
         </p>

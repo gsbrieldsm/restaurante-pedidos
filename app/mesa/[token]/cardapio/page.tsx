@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Separator } from '@/components/ui/separator'
 import {
   ShoppingCart, Plus, Minus, Trash2, ChevronRight,
-  Clock, Loader2, Search, Receipt, ConciergeBell, CheckCircle2
+  Clock, Loader2, Search, Receipt, ConciergeBell, CheckCircle2, X
 } from 'lucide-react'
 import type { CardapioItem, ItemCarrinho } from '@/lib/supabase/types'
 
@@ -34,6 +34,14 @@ export default function CardapioPage() {
   const [observacoes, setObservacoes] = useState<Record<string, string>>({})
   const [chamandoGarcom, setChamandoGarcom] = useState(false)
   const [garcomChamado, setGarcomChamado] = useState(false)
+  const [banner, setBanner] = useState<{
+    banner_ativo: boolean
+    banner_titulo: string
+    banner_subtitulo: string
+    banner_emoji: string
+    banner_estilo: string
+  } | null>(null)
+  const [bannerFechado, setBannerFechado] = useState(false)
 
   useEffect(() => {
     const sessaoId = sessionStorage.getItem('sessao_id')
@@ -42,15 +50,15 @@ export default function CardapioPage() {
       return
     }
 
-    fetch('/api/cardapio')
-      .then((r) => r.json())
-      .then(({ itens }) => {
-        setItens(itens)
-        if (itens.length > 0) {
-          setCategoriaAtiva(itens[0].categoria)
-        }
-      })
-      .finally(() => setLoading(false))
+    Promise.all([
+      fetch('/api/cardapio').then((r) => r.json()),
+      fetch('/api/configuracoes/banner').then((r) => r.json()),
+    ]).then(([cardapioData, bannerData]) => {
+      const lista = cardapioData.itens ?? []
+      setItens(lista)
+      if (lista.length > 0) setCategoriaAtiva(lista[0].categoria)
+      if (bannerData.banner) setBanner(bannerData.banner)
+    }).finally(() => setLoading(false))
   }, [token, router])
 
   const categorias = useMemo(
@@ -129,6 +137,14 @@ export default function CardapioPage() {
       sessionStorage.setItem('ultimo_pedido_id', data.pedido.id)
       router.push(`/mesa/${token}/confirmacao`)
     }
+  }
+
+  const BANNER_ESTILOS: Record<string, { gradient: string; subColor: string }> = {
+    teal:   { gradient: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)', subColor: '#5eead4' },
+    ocean:  { gradient: 'linear-gradient(135deg, #0a1628 0%, #0d2d5e 50%, #1a6eb5 100%)', subColor: '#93c5fd' },
+    sunset: { gradient: 'linear-gradient(135deg, #1a0808 0%, #5e1a0d 50%, #e0533a 100%)', subColor: '#fca5a5' },
+    gold:   { gradient: 'linear-gradient(135deg, #1a1205 0%, #5e3e0d 50%, #d4a017 100%)', subColor: '#fde68a' },
+    roxo:   { gradient: 'linear-gradient(135deg, #12091a 0%, #3d1a5e 50%, #8b5cf6 100%)', subColor: '#c4b5fd' },
   }
 
   async function chamarGarcom() {
@@ -252,6 +268,49 @@ export default function CardapioPage() {
           </div>
         </div>
       )}
+
+      {/* Banner personalizável */}
+      {banner?.banner_ativo && !bannerFechado && (() => {
+        const estilo = BANNER_ESTILOS[banner.banner_estilo] ?? BANNER_ESTILOS.teal
+        return (
+          <div className="px-4 pt-4">
+            <div
+              className="relative rounded-3xl overflow-hidden shadow-xl"
+              style={{ background: estilo.gradient }}
+            >
+              {/* Botão fechar */}
+              <button
+                onClick={() => setBannerFechado(true)}
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4 text-white/60" />
+              </button>
+
+              {/* Decoração de fundo */}
+              <div
+                className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full opacity-10"
+                style={{ background: 'white' }}
+              />
+              <div
+                className="absolute -top-6 -left-6 w-28 h-28 rounded-full opacity-5"
+                style={{ background: 'white' }}
+              />
+
+              <div className="relative px-6 pt-6 pb-7 pr-10">
+                <div className="text-5xl mb-4 leading-none">{banner.banner_emoji}</div>
+                <h2 className="text-white font-black text-2xl leading-tight">
+                  {banner.banner_titulo}
+                </h2>
+                {banner.banner_subtitulo && (
+                  <p className="text-sm mt-2 leading-relaxed font-medium" style={{ color: estilo.subColor }}>
+                    {banner.banner_subtitulo}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Itens */}
       <div className="p-4 space-y-3">
