@@ -372,12 +372,10 @@ export default function CardapioAdminPage() {
 
       {/* ── Painel lateral de Opcionais (overlay custom, sem Dialog) ── */}
       {!!modalOpcionaisItem && (
-        <div className="fixed inset-0 z-50 flex">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/40" onClick={() => setModalOpcionaisItem(null)} />
+        <div className="fixed inset-0 z-50 flex bg-black/40" onClick={() => setModalOpcionaisItem(null)}>
 
-          {/* Painel lateral direito */}
-          <div className="relative ml-auto w-full max-w-lg bg-white flex flex-col shadow-2xl">
+          {/* Painel lateral direito — stopPropagation para não fechar ao clicar dentro */}
+          <div className="relative ml-auto w-full max-w-lg bg-white flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* Cabeçalho */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50 shrink-0">
               <div className="flex items-center gap-2">
