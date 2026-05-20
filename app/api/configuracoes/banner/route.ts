@@ -6,7 +6,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('configuracoes')
-    .select('banner_ativo, banner_titulo, banner_subtitulo, banner_emoji, banner_estilo')
+    .select('banner_ativo, banner_titulo, banner_subtitulo, banner_emoji, banner_estilo, banner_imagem_url')
     .eq('id', 1)
     .single()
 
