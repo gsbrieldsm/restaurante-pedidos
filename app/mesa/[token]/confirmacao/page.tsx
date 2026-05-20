@@ -139,7 +139,7 @@ export default function ConfirmacaoPage() {
         <Button
           onClick={() => router.push(`/mesa/${token}/conta`)}
           className="w-full h-12 font-bold text-black"
-          style={{ background: '#F05A4F' }}
+          style={{ background: '#1A9B8A' }}
         >
           <Receipt className="w-5 h-5 mr-2" /> Ver minha conta
         </Button>

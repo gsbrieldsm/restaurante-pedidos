@@ -152,7 +152,7 @@ export default function ContaPage() {
             <Button
               onClick={() => router.push(`/mesa/${token}/cardapio`)}
               className="mt-4 text-black font-bold"
-              style={{ background: '#F05A4F' }}
+              style={{ background: '#1A9B8A' }}
             >
               <Plus className="w-4 h-4 mr-2" /> Ver cardápio
             </Button>
@@ -269,7 +269,7 @@ export default function ContaPage() {
             <Button
               onClick={() => setModalPix(true)}
               className="w-full h-12 text-black font-bold text-base"
-              style={{ background: '#F05A4F' }}
+              style={{ background: '#1A9B8A' }}
             >
               <QrCode className="w-5 h-5 mr-2" />
               Pagar via Pix — {formatarReal(totalGeral)}
@@ -341,7 +341,7 @@ export default function ContaPage() {
               onClick={() => chamarGarcom('pix_pago')}
               disabled={chamandoGarcom}
               className="w-full h-12 text-black font-bold"
-              style={{ background: '#F05A4F' }}
+              style={{ background: '#1A9B8A' }}
             >
               {chamandoGarcom
                 ? <Loader2 className="w-4 h-4 animate-spin mr-2" />

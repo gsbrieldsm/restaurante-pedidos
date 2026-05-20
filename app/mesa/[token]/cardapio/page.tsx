@@ -140,7 +140,7 @@ export default function CardapioPage() {
   return (
     <div className="min-h-screen pb-24" style={{ background: '#F0FAFA' }}>
       {/* Header compacto */}
-      <div className="text-white sticky top-0 z-10 shadow" style={{ background: '#F05A4F' }}>
+      <div className="text-white sticky top-0 z-10 shadow" style={{ background: '#1A9B8A' }}>
         <div className="flex items-center justify-between px-4 py-2">
           <div className="flex items-center gap-2">
             <span className="font-black tracking-widest text-sm uppercase text-teal-400">Meu Menu+</span>
@@ -241,7 +241,7 @@ export default function CardapioPage() {
                       size="sm"
                       onClick={() => adicionarItem(item)}
                       className="h-8 px-4 text-xs font-bold text-black hover:opacity-90"
-                      style={{ background: '#F05A4F' }}
+                      style={{ background: '#1A9B8A' }}
                     >
                       <Plus className="w-3 h-3 mr-1" /> Adicionar
                     </Button>
@@ -275,7 +275,7 @@ export default function CardapioPage() {
           <Button
             onClick={() => setCarrinhoAberto(true)}
             className="w-full h-12 text-base font-bold text-black hover:opacity-90"
-            style={{ background: '#F05A4F' }}
+            style={{ background: '#1A9B8A' }}
           >
             <ShoppingCart className="w-5 h-5 mr-2" />
             Ver pedido ({qtdCarrinho} {qtdCarrinho === 1 ? 'item' : 'itens'}) —{' '}
@@ -347,7 +347,7 @@ export default function CardapioPage() {
               <Button
                 onClick={finalizarPedido}
                 className="w-full h-12 text-base font-bold text-black hover:opacity-90"
-                style={{ background: '#F05A4F' }}
+                style={{ background: '#1A9B8A' }}
                 disabled={enviando}
               >
                 {enviando ? (

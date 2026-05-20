@@ -145,7 +145,7 @@ export default function IdentificacaoPage() {
             <Button
               type="submit"
               className="w-full h-12 text-base font-bold text-black hover:opacity-90"
-              style={{ background: '#F05A4F' }}
+              style={{ background: '#1A9B8A' }}
               disabled={salvando}
             >
               {salvando ? (
