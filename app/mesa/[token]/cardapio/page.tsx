@@ -435,15 +435,21 @@ export default function CardapioPage() {
 
       {/* Drawer do carrinho */}
       <Sheet open={carrinhoAberto} onOpenChange={setCarrinhoAberto}>
-        <SheetContent side="bottom" className="h-[85vh] flex flex-col">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
+        <SheetContent
+          side="bottom"
+          className="flex flex-col rounded-t-3xl"
+          style={{ maxHeight: '88vh', paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
+        >
+          {/* Cabeçalho fixo */}
+          <SheetHeader className="shrink-0 pb-3 border-b border-slate-100">
+            <SheetTitle className="flex items-center gap-2 text-lg">
               <ShoppingCart className="w-5 h-5 text-teal-600" />
               Meu Pedido
             </SheetTitle>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-3 mt-4">
+          {/* Lista — scroll independente */}
+          <div className="flex-1 overflow-y-auto py-3 space-y-3 min-h-0">
             {carrinho.length === 0 && (
               <p className="text-center text-slate-400 mt-8">Carrinho vazio.</p>
             )}
@@ -453,27 +459,27 @@ export default function CardapioPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => removerItem(c.item.id)}
-                      className="w-7 h-7 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center"
+                      className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center"
                     >
-                      {c.quantidade === 1 ? <Trash2 className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                      {c.quantidade === 1 ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                     </button>
-                    <span className="font-bold w-4 text-center">{c.quantidade}</span>
+                    <span className="font-bold text-base w-5 text-center">{c.quantidade}</span>
                     <button
                       onClick={() => adicionarItem(c.item)}
-                      className="w-7 h-7 rounded-full bg-teal-600 text-white flex items-center justify-center"
+                      className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center"
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{c.item.nome}</p>
-                    <p className="text-xs text-slate-500">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-base text-slate-800 leading-snug">{c.item.nome}</p>
+                    <p className="text-sm text-slate-500 mt-0.5">
                       R$ {(c.item.preco * c.quantidade).toFixed(2).replace('.', ',')}
                     </p>
                   </div>
                 </div>
                 <input
-                  className="w-full text-xs border rounded-lg px-3 py-2 placeholder-slate-400"
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none focus:border-teal-400"
                   placeholder="Alguma observação? (ex: sem cebola)"
                   value={observacoes[c.item.id] || ''}
                   onChange={(e) =>
@@ -485,18 +491,19 @@ export default function CardapioPage() {
             ))}
           </div>
 
+          {/* Rodapé fixo — nunca some da tela */}
           {carrinho.length > 0 && (
-            <div className="pt-3 space-y-3">
-              <div className="flex justify-between items-center font-bold text-base">
-                <span>Total</span>
-                <span className="text-teal-700">
+            <div className="shrink-0 pt-3 space-y-3 border-t border-slate-100">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-lg text-slate-800">Total</span>
+                <span className="font-black text-xl text-teal-700">
                   R$ {totalCarrinho.toFixed(2).replace('.', ',')}
                 </span>
               </div>
               <Button
                 onClick={finalizarPedido}
-                className="w-full h-12 text-base font-bold text-black hover:opacity-90"
-                style={{ background: '#1A9B8A' }}
+                className="w-full h-13 text-base font-bold text-black hover:opacity-90"
+                style={{ background: '#1A9B8A', height: '52px' }}
                 disabled={enviando}
               >
                 {enviando ? (
