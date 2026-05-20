@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Clock, DollarSign,
-  BookOpen, QrCode, ConciergeBell, Users, ChevronDown, ChevronRight, Settings
+  BookOpen, QrCode, ConciergeBell, Users, ChevronDown, ChevronRight, Settings, LogOut
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 const NAV = [
   { href: '/admin',            label: 'Visão ao Vivo', icon: LayoutDashboard },
@@ -28,13 +29,28 @@ const OPERACOES = [
 
 export function AdminSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [operacoesAberto, setOperacoesAberto] = useState(false)
+
+  async function sair() {
+    await fetch('/api/admin/auth', { method: 'DELETE' })
+    router.push('/admin/login')
+  }
 
   return (
     <aside className="w-56 bg-teal-900 text-white flex flex-col shrink-0">
-      <div className="px-4 py-4 border-b border-teal-700">
-        <p className="font-black tracking-widest text-sm uppercase text-teal-400">Meu Menu+</p>
-        <p className="text-xs text-teal-500 tracking-widest uppercase">cardápio digital</p>
+      <div className="px-4 py-4 border-b border-teal-700 flex items-center justify-between">
+        <div>
+          <p className="font-black tracking-widest text-sm uppercase text-teal-400">Meu Menu+</p>
+          <p className="text-xs text-teal-500 tracking-widest uppercase">cardápio digital</p>
+        </div>
+        <button
+          onClick={sair}
+          title="Sair"
+          className="text-teal-600 hover:text-red-400 transition-colors p-1"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
 
       <nav className="flex-1 py-3 px-2 space-y-0.5">
