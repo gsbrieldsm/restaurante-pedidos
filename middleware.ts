@@ -6,7 +6,9 @@ const SESSION_TOKEN = 'mmu-admin-v1'
 // Rotas que nunca precisam de autenticação
 const PUBLIC_PREFIXES = [
   '/admin/login',
+  '/admin/setup',
   '/api/admin/auth',
+  '/api/admin/setup',
 ]
 
 export function middleware(request: NextRequest) {
