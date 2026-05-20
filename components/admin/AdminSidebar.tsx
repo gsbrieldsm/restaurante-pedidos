@@ -35,6 +35,7 @@ export function AdminSidebar() {
   async function sair() {
     await fetch('/api/admin/auth', { method: 'DELETE' })
     router.push('/admin/login')
+    router.refresh()
   }
 
   return (
