@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Separator } from '@/components/ui/separator'
 import {
   ShoppingCart, Plus, Minus, Trash2, ChevronRight,
-  Clock, Loader2, Search, Receipt
+  Clock, Loader2, Search, Receipt, ConciergeBell, CheckCircle2
 } from 'lucide-react'
 import type { CardapioItem, ItemCarrinho } from '@/lib/supabase/types'
 
@@ -32,6 +32,8 @@ export default function CardapioPage() {
   const [loading, setLoading] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [observacoes, setObservacoes] = useState<Record<string, string>>({})
+  const [chamandoGarcom, setChamandoGarcom] = useState(false)
+  const [garcomChamado, setGarcomChamado] = useState(false)
 
   useEffect(() => {
     const sessaoId = sessionStorage.getItem('sessao_id')
@@ -129,6 +131,21 @@ export default function CardapioPage() {
     }
   }
 
+  async function chamarGarcom() {
+    const sessaoId = sessionStorage.getItem('sessao_id')
+    if (!sessaoId || chamandoGarcom || garcomChamado) return
+    setChamandoGarcom(true)
+    await fetch(`/api/mesa/${token}/chamar-garcom`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessao_id: sessaoId, motivo: 'ajuda' }),
+    })
+    setChamandoGarcom(false)
+    setGarcomChamado(true)
+    // Reset após 4 segundos para permitir chamar novamente
+    setTimeout(() => setGarcomChamado(false), 4000)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-teal-50">
@@ -150,7 +167,28 @@ export default function CardapioPage() {
             <p className="text-xs font-bold tracking-widest uppercase text-teal-400 leading-none">Meu Menu+</p>
             <p className="text-white font-black text-xl leading-tight">Cardápio</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Chamar garçom */}
+            <button
+              onClick={chamarGarcom}
+              disabled={chamandoGarcom}
+              className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-xl font-medium transition-all ${
+                garcomChamado
+                  ? 'bg-green-500/20 text-green-300'
+                  : 'text-teal-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {chamandoGarcom ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : garcomChamado ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <ConciergeBell className="w-4 h-4" />
+              )}
+              <span>{garcomChamado ? 'Chamado!' : 'Garçom'}</span>
+            </button>
+
+            {/* Minha conta */}
             <button
               onClick={() => router.push(`/mesa/${token}/conta`)}
               className="flex items-center gap-1.5 text-sm text-teal-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 transition-colors font-medium"
@@ -158,6 +196,8 @@ export default function CardapioPage() {
               <Receipt className="w-4 h-4" />
               <span>Conta</span>
             </button>
+
+            {/* Carrinho */}
             <button onClick={() => setCarrinhoAberto(true)} className="relative p-1.5">
               <ShoppingCart className="w-6 h-6" />
               {qtdCarrinho > 0 && (
@@ -201,6 +241,17 @@ export default function CardapioPage() {
           </div>
         )}
       </div>
+
+      {/* Toast: garçom chamado */}
+      {garcomChamado && (
+        <div className="mx-4 mt-3 flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-4 py-3 shadow-sm animate-in slide-in-from-top-2 duration-300">
+          <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+          <div>
+            <p className="font-semibold text-green-800 text-sm">Garçom chamado!</p>
+            <p className="text-green-600 text-xs">Alguém estará com você em breve.</p>
+          </div>
+        </div>
+      )}
 
       {/* Itens */}
       <div className="p-4 space-y-3">
