@@ -35,11 +35,12 @@ export default function CardapioPage() {
   const [chamandoGarcom, setChamandoGarcom] = useState(false)
   const [garcomChamado, setGarcomChamado] = useState(false)
   const [banner, setBanner] = useState<{
-    banner_ativo: boolean
-    banner_titulo: string
-    banner_subtitulo: string
-    banner_emoji: string
-    banner_estilo: string
+    banner_ativo:      boolean
+    banner_titulo:     string
+    banner_subtitulo:  string
+    banner_emoji:      string
+    banner_estilo:     string
+    banner_imagem_url: string | null
   } | null>(null)
   const [bannerFechado, setBannerFechado] = useState(false)
 
@@ -271,42 +272,63 @@ export default function CardapioPage() {
 
       {/* Banner personalizável */}
       {banner?.banner_ativo && !bannerFechado && (() => {
+        const temImagem = !!banner.banner_imagem_url
         const estilo = BANNER_ESTILOS[banner.banner_estilo] ?? BANNER_ESTILOS.teal
+
         return (
           <div className="px-4 pt-4">
-            <div
-              className="relative rounded-3xl overflow-hidden shadow-xl"
-              style={{ background: estilo.gradient }}
-            >
+            <div className="relative rounded-3xl overflow-hidden shadow-xl">
+
               {/* Botão fechar */}
               <button
                 onClick={() => setBannerFechado(true)}
-                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4 text-white/60" />
+                <X className="w-4 h-4 text-white/80" />
               </button>
 
-              {/* Decoração de fundo */}
-              <div
-                className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full opacity-10"
-                style={{ background: 'white' }}
-              />
-              <div
-                className="absolute -top-6 -left-6 w-28 h-28 rounded-full opacity-5"
-                style={{ background: 'white' }}
-              />
-
-              <div className="relative px-6 pt-6 pb-7 pr-10">
-                <div className="text-5xl mb-4 leading-none">{banner.banner_emoji}</div>
-                <h2 className="text-white font-black text-2xl leading-tight">
-                  {banner.banner_titulo}
-                </h2>
-                {banner.banner_subtitulo && (
-                  <p className="text-sm mt-2 leading-relaxed font-medium" style={{ color: estilo.subColor }}>
-                    {banner.banner_subtitulo}
-                  </p>
-                )}
-              </div>
+              {temImagem ? (
+                /* ── Modo imagem ── */
+                <>
+                  <img
+                    src={banner.banner_imagem_url!}
+                    alt={banner.banner_titulo}
+                    className="w-full h-52 object-cover"
+                  />
+                  {/* overlay degradê de baixo para cima */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pr-10">
+                    {banner.banner_emoji && (
+                      <div className="text-4xl mb-2 leading-none">{banner.banner_emoji}</div>
+                    )}
+                    <h2 className="text-white font-black text-2xl leading-tight drop-shadow">
+                      {banner.banner_titulo}
+                    </h2>
+                    {banner.banner_subtitulo && (
+                      <p className="text-white/75 text-sm mt-1.5 leading-relaxed">
+                        {banner.banner_subtitulo}
+                      </p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                /* ── Modo gradiente ── */
+                <div style={{ background: estilo.gradient }}>
+                  <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full opacity-10 bg-white" />
+                  <div className="absolute -top-6 -left-6 w-28 h-28 rounded-full opacity-5 bg-white" />
+                  <div className="relative px-6 pt-6 pb-7 pr-10">
+                    <div className="text-5xl mb-4 leading-none">{banner.banner_emoji}</div>
+                    <h2 className="text-white font-black text-2xl leading-tight">
+                      {banner.banner_titulo}
+                    </h2>
+                    {banner.banner_subtitulo && (
+                      <p className="text-sm mt-2 leading-relaxed font-medium" style={{ color: estilo.subColor }}>
+                        {banner.banner_subtitulo}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )
