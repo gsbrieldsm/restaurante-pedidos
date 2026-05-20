@@ -132,7 +132,7 @@ export default function ClientesPage() {
         kpis={[
           { label: 'Clientes únicos',      value: totais.unicos,         destaque: true },
           { label: 'Acessos totais',       value: totais.total                          },
-          { label: 'Mesas ativas agora',   value: totais.ativos,         alerta: totais.ativos > 0 },
+          { label: 'Comandas ativas agora', value: totais.ativos,         alerta: totais.ativos > 0 },
           { label: 'Ticket médio/cliente', value: ticketMedioCliente                    },
           { label: 'Receita total',        value: formatarReal(totais.receitaTotal), destaque: true },
         ]}

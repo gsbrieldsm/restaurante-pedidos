@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   CheckCircle2, Clock, ChefHat, Loader2,
@@ -8,7 +8,25 @@ import {
   Copy, Check, ChevronDown, ChevronUp, ArrowLeft
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { createClient } from '@/lib/supabase/client'
 import type { Pedido, PedidoItem } from '@/lib/supabase/types'
+
+function tocarSom() {
+  try {
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    const osc  = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = 880
+    gain.gain.setValueAtTime(0.25, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.6)
+  } catch {
+    // sem suporte a Web Audio
+  }
+}
 
 const PIX_KEY = process.env.NEXT_PUBLIC_PIX_KEY ?? '(não configurada)'
 const RESTAURANT_NAME = process.env.NEXT_PUBLIC_RESTAURANT_NAME ?? 'Meu Menu+'
@@ -35,12 +53,16 @@ export default function ContaPage() {
   const [mesaNumero, setMesaNumero] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set())
+  const [itemPronto, setItemPronto] = useState(false)
 
   const [modalPix, setModalPix] = useState(false)
   const [copiado, setCopiado] = useState(false)
   const [chamandoGarcom, setChamandoGarcom] = useState(false)
   const [garcomChamado, setGarcomChamado] = useState(false)
   const [garcomPix, setGarcomPix] = useState(false)
+
+  // IDs de itens que já sabemos que estão "pronto" — para detectar novos
+  const prontosSabidos = useRef<Set<string>>(new Set())
 
   const buscarConta = useCallback(async () => {
     const sessaoId = sessionStorage.getItem('sessao_id')
@@ -49,22 +71,55 @@ export default function ContaPage() {
     const res = await fetch(`/api/mesa/${token}/conta?sessao_id=${sessaoId}`)
     if (!res.ok) { router.push(`/mesa/${token}`); return }
     const data = await res.json()
-    setPedidos(data.pedidos ?? [])
+
+    const pedidosNovos: PedidoComItens[] = data.pedidos ?? []
+
+    // Detecta itens que acabaram de ficar "pronto"
+    let novoPronto = false
+    for (const p of pedidosNovos) {
+      for (const item of p.pedido_itens) {
+        if (item.status === 'pronto' && !prontosSabidos.current.has(item.id)) {
+          novoPronto = true
+        }
+        if (item.status === 'pronto' || item.status === 'entregue') {
+          prontosSabidos.current.add(item.id)
+        }
+      }
+    }
+
+    if (novoPronto && !loading) {
+      tocarSom()
+      setItemPronto(true)
+      setTimeout(() => setItemPronto(false), 5000)
+    }
+
+    setPedidos(pedidosNovos)
     setClienteNome(data.cliente_nome ?? '')
     setMesaNumero(data.mesa_numero)
     setLoading(false)
 
-    // Expande o último pedido por padrão
-    if (data.pedidos?.length) {
+    if (data.pedidos?.length && loading) {
       setExpandidos(new Set([data.pedidos[data.pedidos.length - 1].id]))
     }
-  }, [token, router])
+  }, [token, router, loading])
 
   useEffect(() => {
+    const sessaoId = sessionStorage.getItem('sessao_id')
+    if (!sessaoId) return
+
     buscarConta()
-    const interval = setInterval(buscarConta, 20000)
-    return () => clearInterval(interval)
-  }, [buscarConta])
+
+    // Realtime: atualiza instantaneamente quando pedidos ou itens mudam
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`conta-${sessaoId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos',      filter: `sessao_id=eq.${sessaoId}` }, buscarConta)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_itens' }, buscarConta)
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
 
   const totalGeral = pedidos.flatMap((p) => p.pedido_itens)
     .reduce((acc, i) => acc + i.item_preco * i.quantidade, 0)
@@ -146,6 +201,17 @@ export default function ContaPage() {
       </div>
 
       <div className="max-w-lg mx-auto p-4 space-y-4">
+
+        {/* Toast: item pronto */}
+        {itemPronto && (
+          <div className="flex items-center gap-3 bg-green-50 border-2 border-green-300 rounded-2xl px-4 py-3 animate-pulse">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <p className="font-bold text-green-800 text-sm">Um item está pronto!</p>
+              <p className="text-green-600 text-xs">O garçom está a caminho com seu pedido.</p>
+            </div>
+          </div>
+        )}
 
         {/* Saudação */}
         <p className="text-slate-500 text-sm">
