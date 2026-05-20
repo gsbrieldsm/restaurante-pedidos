@@ -5,8 +5,8 @@ import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { UtensilsCrossed, Loader2 } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 
 export default function IdentificacaoPage() {
   const { token } = useParams() as { token: string }
@@ -97,19 +97,20 @@ export default function IdentificacaoPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: '#F0FAFA' }}>
-      <Card className="w-full max-w-sm shadow-lg border-0">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-4">
-            <img src="/logo.png" alt="Meu Menu+" className="h-24 mx-auto object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            <div className="mt-2 text-2xl font-black tracking-widest uppercase text-teal-900">Meu Menu+</div>
-            <div className="text-xs font-bold tracking-widest text-teal-600 uppercase">cardápio digital</div>
-          </div>
-          <CardTitle className="text-2xl font-bold">Bem-vindo!</CardTitle>
-          <CardDescription className="text-base">
-            Mesa <span className="font-bold text-teal-700">{mesa?.numero}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Card className="w-full max-w-sm shadow-xl border-0 overflow-hidden">
+        {/* Banner hero */}
+        <div
+          className="px-6 pt-8 pb-7 text-white"
+          style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
+        >
+          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">Meu Menu+</p>
+          <h1 className="text-3xl font-black leading-tight">Bem-vindo!</h1>
+          <p className="text-teal-300 text-lg font-semibold mt-1">
+            Mesa <span className="text-white font-black">{mesa?.numero}</span>
+          </p>
+          <p className="text-white/50 text-sm mt-2">Informe seu nome para acessar o cardápio</p>
+        </div>
+        <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4 mt-2">
             <div className="space-y-1.5">
               <Label htmlFor="nome">Seu nome *</Label>

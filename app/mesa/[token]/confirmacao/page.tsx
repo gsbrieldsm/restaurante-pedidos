@@ -56,18 +56,29 @@ export default function ConfirmacaoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-teal-50 p-4">
-      <div className="max-w-sm mx-auto pt-8 space-y-6">
-        {/* Confirmação */}
-        <div className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
-            <CheckCircle2 className="w-9 h-9 text-white" />
+    <div className="min-h-screen" style={{ background: '#F0FAFA' }}>
+      {/* Header */}
+      <div
+        className="shadow-lg"
+        style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
+      >
+        <div className="px-5 pt-5 pb-6">
+          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">Meu Menu+</p>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center shrink-0 shadow-lg">
+              <CheckCircle2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-white font-black text-2xl leading-tight">Pedido Enviado!</h1>
+              <p className="text-teal-300 text-sm font-medium">
+                Olá, <span className="text-white font-bold">{pedido?.cliente_nome}</span>!
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">Pedido Enviado!</h1>
-          <p className="text-slate-600">
-            Olá, <strong>{pedido?.cliente_nome}</strong>! Seu pedido foi recebido.
-          </p>
         </div>
+      </div>
+
+      <div className="max-w-sm mx-auto p-4 space-y-4">
 
         {/* Status geral */}
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">

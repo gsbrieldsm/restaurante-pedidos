@@ -139,33 +139,29 @@ export default function CardapioPage() {
 
   return (
     <div className="min-h-screen pb-24" style={{ background: '#F0FAFA' }}>
-      {/* Header compacto */}
-      <div className="text-white sticky top-0 z-10 shadow" style={{ background: '#1A9B8A' }}>
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-2">
-            <span className="font-black tracking-widest text-sm uppercase text-teal-400">Meu Menu+</span>
+      {/* Header */}
+      <div
+        className="text-white sticky top-0 z-10 shadow-lg"
+        style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
+      >
+        {/* Linha superior: marca + ações */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <div>
+            <p className="text-xs font-bold tracking-widest uppercase text-teal-400 leading-none">Meu Menu+</p>
+            <p className="text-white font-black text-xl leading-tight">Cardápio</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.push(`/mesa/${token}/conta`)}
-              className="flex items-center gap-1 text-xs text-teal-300 hover:text-white px-2 py-1 rounded-lg hover:bg-white/10 transition-colors"
+              className="flex items-center gap-1.5 text-sm text-teal-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 transition-colors font-medium"
             >
               <Receipt className="w-4 h-4" />
-              <span>Minha conta</span>
+              <span>Conta</span>
             </button>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-teal-400" />
-              <input
-                className="bg-white/10 placeholder-teal-400 text-white rounded-lg py-1.5 pl-8 pr-3 text-sm outline-none focus:bg-white/20 w-36"
-                placeholder="Buscar..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-              />
-            </div>
             <button onClick={() => setCarrinhoAberto(true)} className="relative p-1.5">
-              <ShoppingCart className="w-5 h-5" />
+              <ShoppingCart className="w-6 h-6" />
               {qtdCarrinho > 0 && (
-                <span className="absolute -top-1 -right-1 bg-white text-teal-600 text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-white text-teal-700 text-xs font-black rounded-full w-5 h-5 flex items-center justify-center">
                   {qtdCarrinho}
                 </span>
               )}
@@ -173,17 +169,30 @@ export default function CardapioPage() {
           </div>
         </div>
 
-        {/* Categorias dentro do header */}
+        {/* Barra de busca */}
+        <div className="px-4 pb-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-400" />
+            <input
+              className="w-full bg-white/10 placeholder-teal-400 text-white rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:bg-white/20 transition-colors"
+              placeholder="Buscar no cardápio..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Categorias */}
         {!busca && (
-          <div className="flex gap-2 px-4 pb-2 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
             {categorias.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategoriaAtiva(cat)}
-                className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
                   categoriaAtiva === cat
-                    ? 'bg-teal-600 text-black font-bold'
-                    : 'bg-white/10 text-teal-300 hover:bg-white/20'
+                    ? 'bg-white text-teal-800 font-bold shadow'
+                    : 'bg-white/10 text-teal-200 hover:bg-white/20'
                 }`}
               >
                 {cat}

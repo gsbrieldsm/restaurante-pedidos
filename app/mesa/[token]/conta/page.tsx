@@ -117,22 +117,30 @@ export default function ContaPage() {
     <div className="min-h-screen pb-52" style={{ background: '#F0FAFA' }}>
 
       {/* Header */}
-      <div className="sticky top-0 z-10 shadow-sm" style={{ background: '#1A9B8A' }}>
-        <div className="flex items-center gap-3 px-4 py-3">
-          <button onClick={() => router.push(`/mesa/${token}/cardapio`)} className="text-white/70 hover:text-white">
-            <ArrowLeft className="w-5 h-5" />
+      <div
+        className="sticky top-0 z-10 shadow-lg"
+        style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
+      >
+        <div className="flex items-center gap-3 px-4 pt-3 pb-4">
+          <button
+            onClick={() => router.push(`/mesa/${token}/cardapio`)}
+            className="text-white/60 hover:text-white p-1 -ml-1 shrink-0"
+          >
+            <ArrowLeft className="w-6 h-6" />
           </button>
-          <div className="flex-1">
-            <p className="text-xs font-bold tracking-widest uppercase text-teal-300">Meu Menu+</p>
-            <h1 className="text-white font-bold text-base leading-tight">
-              Minha Conta — Mesa {mesaNumero}
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold tracking-widest uppercase text-teal-400 leading-none">Meu Menu+</p>
+            <h1 className="text-white font-black text-2xl leading-tight">
+              Mesa {mesaNumero}
             </h1>
+            <p className="text-teal-300 text-sm font-medium">Minha conta · {clienteNome}</p>
           </div>
           <button
             onClick={buscarConta}
-            className="text-white/70 hover:text-white p-1"
+            title="Atualizar"
+            className="text-white/50 hover:text-white p-1 shrink-0 transition-colors"
           >
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle2 className="w-5 h-5" />
           </button>
         </div>
       </div>
