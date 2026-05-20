@@ -344,75 +344,74 @@ export default function CardapioPage() {
           return (
             <div
               key={item.id}
-              className="bg-white rounded-2xl shadow-sm overflow-hidden"
+              className="bg-white rounded-2xl shadow-sm overflow-hidden flex"
             >
-              {/* Foto — ocupa toda a largura */}
+              {/* Foto lateral */}
               {item.imagem_url ? (
                 <img
                   src={item.imagem_url}
                   alt={item.nome}
-                  className="w-full h-48 object-cover"
+                  className="w-36 h-36 object-cover shrink-0"
                 />
               ) : (
-                <div className="w-full h-16 bg-gradient-to-r from-slate-50 to-teal-50 flex items-center justify-center">
-                  <span className="text-4xl opacity-40">{ESTACAO_EMOJI[item.estacao]}</span>
+                <div className="w-36 h-36 bg-gradient-to-br from-slate-50 to-teal-50 flex items-center justify-center shrink-0">
+                  <span className="text-4xl opacity-30">{ESTACAO_EMOJI[item.estacao]}</span>
                 </div>
               )}
 
               {/* Conteúdo */}
-              <div className="p-4">
-                {/* Nome + emoji da estação */}
-                <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <h3 className="font-bold text-slate-800 text-lg leading-snug flex-1">
-                    {item.nome}
-                  </h3>
-                  <span className="text-xl shrink-0">{ESTACAO_EMOJI[item.estacao]}</span>
-                </div>
-
-                {/* Descrição */}
-                {item.descricao && (
-                  <p className="text-sm text-slate-500 leading-relaxed line-clamp-3 mb-3">
-                    {item.descricao}
-                  </p>
-                )}
-
-                {/* Preço + tempo */}
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-xl font-black text-teal-700">
-                    R$ {item.preco.toFixed(2).replace('.', ',')}
-                  </span>
-                  <span className="flex items-center gap-1 text-sm text-slate-400">
-                    <Clock className="w-4 h-4" />
-                    ~{item.tempo_preparo_estimado} min
-                  </span>
+              <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-bold text-slate-800 text-base leading-snug">
+                      {item.nome}
+                    </h3>
+                    <span className="text-base shrink-0">{ESTACAO_EMOJI[item.estacao]}</span>
+                  </div>
+                  {item.descricao && (
+                    <p className="text-sm text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                      {item.descricao}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-teal-700 font-black text-base">
+                      R$ {item.preco.toFixed(2).replace('.', ',')}
+                    </span>
+                    <span className="flex items-center gap-1 text-sm text-slate-400">
+                      <Clock className="w-3.5 h-3.5" />
+                      ~{item.tempo_preparo_estimado}min
+                    </span>
+                  </div>
                 </div>
 
                 {/* Botão / controle de quantidade */}
-                {qtd === 0 ? (
-                  <Button
-                    onClick={() => adicionarItem(item)}
-                    className="w-full h-12 text-base font-bold text-black hover:opacity-90"
-                    style={{ background: '#1A9B8A' }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Adicionar
-                  </Button>
-                ) : (
-                  <div className="flex items-center justify-between bg-teal-50 rounded-xl px-3 py-2">
-                    <button
-                      onClick={() => removerItem(item.id)}
-                      className="w-11 h-11 rounded-full bg-white border border-teal-200 text-teal-700 flex items-center justify-center shadow-sm"
-                    >
-                      <Minus className="w-5 h-5" />
-                    </button>
-                    <span className="font-black text-2xl text-teal-800 w-10 text-center">{qtd}</span>
-                    <button
+                <div className="flex items-center justify-end mt-3">
+                  {qtd === 0 ? (
+                    <Button
                       onClick={() => adicionarItem(item)}
-                      className="w-11 h-11 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-sm"
+                      className="h-10 px-5 text-sm font-bold text-black hover:opacity-90"
+                      style={{ background: '#1A9B8A' }}
                     >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                  </div>
-                )}
+                      <Plus className="w-4 h-4 mr-1.5" /> Adicionar
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => removerItem(item.id)}
+                        className="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="font-black text-lg w-5 text-center text-slate-800">{qtd}</span>
+                      <button
+                        onClick={() => adicionarItem(item)}
+                        className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )
