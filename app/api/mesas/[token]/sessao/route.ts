@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+// POST — cria nova comanda nesta mesa
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ token: string }> }
@@ -25,14 +26,7 @@ export async function POST(
     return NextResponse.json({ error: 'Mesa não encontrada' }, { status: 404 })
   }
 
-  // Encerrar sessão anterior se existir
-  await supabase
-    .from('sessoes_mesa')
-    .update({ ativa: false, fechada_em: new Date().toISOString() })
-    .eq('mesa_id', mesa.id)
-    .eq('ativa', true)
-
-  // Criar nova sessão
+  // Cria nova comanda — NÃO fecha outras (múltiplas pessoas por mesa é permitido)
   const { data: sessao, error: sessaoError } = await supabase
     .from('sessoes_mesa')
     .insert({
@@ -45,14 +39,75 @@ export async function POST(
     .single()
 
   if (sessaoError) {
-    return NextResponse.json({ error: 'Erro ao criar sessão' }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao criar comanda' }, { status: 500 })
   }
 
-  // Atualizar status da mesa para ocupada
-  await supabase
-    .from('mesas')
-    .update({ status: 'ocupada' })
-    .eq('id', mesa.id)
+  // Mesa fica ocupada
+  await supabase.from('mesas').update({ status: 'ocupada' }).eq('id', mesa.id)
 
   return NextResponse.json({ sessao, mesa })
+}
+
+// PATCH — transfere comanda existente para esta mesa
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  const { token } = await params
+  const { sessao_id } = await req.json() as { sessao_id: string }
+
+  if (!sessao_id) {
+    return NextResponse.json({ error: 'sessao_id obrigatório' }, { status: 400 })
+  }
+
+  const supabase = createServiceClient()
+
+  // Mesa destino
+  const { data: mesaNova, error: mesaError } = await supabase
+    .from('mesas')
+    .select('*')
+    .eq('qr_token', token)
+    .single()
+
+  if (mesaError || !mesaNova) {
+    return NextResponse.json({ error: 'Mesa não encontrada' }, { status: 404 })
+  }
+
+  // Busca comanda atual
+  const { data: sessao, error: sessaoError } = await supabase
+    .from('sessoes_mesa')
+    .select('id, mesa_id, cliente_nome')
+    .eq('id', sessao_id)
+    .eq('ativa', true)
+    .single()
+
+  if (sessaoError || !sessao) {
+    return NextResponse.json({ error: 'Comanda não encontrada ou encerrada' }, { status: 404 })
+  }
+
+  const mesaAntigaId = sessao.mesa_id
+
+  // Transfere comanda para a nova mesa
+  await supabase
+    .from('sessoes_mesa')
+    .update({ mesa_id: mesaNova.id })
+    .eq('id', sessao_id)
+
+  // Nova mesa fica ocupada
+  await supabase.from('mesas').update({ status: 'ocupada' }).eq('id', mesaNova.id)
+
+  // Mesa antiga: só libera se não tiver mais ninguém
+  if (mesaAntigaId !== mesaNova.id) {
+    const { data: outrasAtivas } = await supabase
+      .from('sessoes_mesa')
+      .select('id')
+      .eq('mesa_id', mesaAntigaId)
+      .eq('ativa', true)
+
+    if (!outrasAtivas || outrasAtivas.length === 0) {
+      await supabase.from('mesas').update({ status: 'livre' }).eq('id', mesaAntigaId)
+    }
+  }
+
+  return NextResponse.json({ sessao: { ...sessao, mesa_id: mesaNova.id }, mesa: mesaNova })
 }
