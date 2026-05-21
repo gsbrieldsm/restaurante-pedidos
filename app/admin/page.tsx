@@ -190,7 +190,7 @@ export default function AdminDashboard() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-bold tracking-widest uppercase text-teal-600 mb-1">Visão ao Vivo</p>
-          <h1 className="text-2xl font-bold text-slate-800 capitalize">{diaDaSemana()}</h1>
+          <h1 className="text-base font-bold text-slate-800 capitalize">{diaDaSemana()}</h1>
         </div>
         <div className="text-right">
           <p className="text-xs text-slate-400 mb-0.5">Receita do dia</p>
