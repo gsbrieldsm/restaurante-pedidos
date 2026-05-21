@@ -195,7 +195,7 @@ export default function AdminDashboard() {
         <div className="text-right flex items-start gap-4">
           <div>
             <p className="text-xs text-slate-400 mb-0.5">Receita do dia</p>
-            <p className="text-2xl font-black text-teal-600">
+            <p className="text-lg md:text-2xl font-black text-teal-600 whitespace-nowrap">
               {overview ? formatarReal(overview.receita_hoje) : '—'}
             </p>
           </div>
