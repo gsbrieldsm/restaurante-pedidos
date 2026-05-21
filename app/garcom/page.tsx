@@ -337,11 +337,6 @@ export default function GarcomPage() {
                 {chamadas.length} chamada{chamadas.length > 1 ? 's' : ''}
               </span>
             )}
-            {totalProntos > 0 && (
-              <span className="bg-white text-teal-700 font-bold text-sm rounded-full px-3 py-1">
-                {totalProntos} pronto{totalProntos > 1 ? 's' : ''}
-              </span>
-            )}
             <button
               onClick={() => { setTpErro(''); setModalTirarPedido(true) }}
               className="flex items-center gap-1.5 bg-white text-teal-700 text-sm font-black px-4 py-2 rounded-xl shadow-sm hover:bg-teal-50 transition-colors"
