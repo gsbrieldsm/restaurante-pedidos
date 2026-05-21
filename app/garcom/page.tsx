@@ -437,65 +437,49 @@ export default function GarcomPage() {
             )}
           </div>
         ) : (
-          gruposFiltrados.map((grupo) => {
-            const tudoEntregando = grupo.itens.every((i) => entregando.has(i.id))
-            return (
-              <div key={grupo.mesa_numero} className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100" style={{ background: '#F0FAFA' }}>
-                  <div>
-                    <span className="font-black text-teal-700 text-lg">Mesa {grupo.mesa_numero}</span>
-                    <span className="text-slate-500 text-sm ml-2">— {grupo.cliente_nome}</span>
-                  </div>
-                  <Button
-                    onClick={() => entregarMesa(grupo)}
-                    disabled={tudoEntregando}
-                    size="sm"
-                    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs h-8 px-3"
-                  >
-                    {tudoEntregando
-                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      : <><CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Entregar tudo</>}
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 p-3">
-                  {grupo.itens.map((item) => {
-                    const isEntregando = entregando.has(item.id)
-                    const espera = tempoEspera(item.pronto_em)
-                    return (
-                      <div key={item.id} className="bg-slate-50 rounded-xl p-3 flex flex-col gap-2 border border-slate-100">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-black text-slate-800 text-sm leading-tight">{item.quantidade}× {item.item_nome}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{ESTACAO_LABEL[item.estacao]}</p>
-                          {item.observacao && (
-                            <p className="text-xs text-orange-700 bg-orange-50 rounded px-2 py-0.5 mt-1">
-                              ⚠️ {item.observacao}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          {espera ? (
-                            <span className="flex items-center gap-1 text-xs text-slate-400">
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 divide-y divide-slate-50">
+            {gruposFiltrados.flatMap((grupo) =>
+              grupo.itens.map((item) => {
+                const isEntregando = entregando.has(item.id)
+                const espera = tempoEspera(item.pronto_em)
+                return (
+                  <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                    <span className="text-xl shrink-0">{ESTACAO_EMOJI[item.estacao]}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-slate-800 text-sm leading-tight">
+                        {item.quantidade}× {item.item_nome}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs font-semibold text-teal-700">Mesa {grupo.mesa_numero}</span>
+                        <span className="text-slate-300 text-xs">·</span>
+                        <span className="text-xs text-slate-400 truncate">{grupo.cliente_nome}</span>
+                        {espera && (
+                          <>
+                            <span className="text-slate-300 text-xs">·</span>
+                            <span className="flex items-center gap-0.5 text-xs text-slate-400">
                               <Clock className="w-3 h-3" />{espera}
                             </span>
-                          ) : <span />}
-                          <Button
-                            onClick={() => marcarEntregue(item)}
-                            disabled={isEntregando}
-                            size="sm"
-                            className="h-8 px-3 text-xs font-bold text-white hover:opacity-90 shrink-0"
-                            style={{ background: '#F05A4F' }}
-                          >
-                            {isEntregando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Entregar'}
-                          </Button>
-                        </div>
+                          </>
+                        )}
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })
+                      {item.observacao && (
+                        <p className="text-xs text-orange-700 mt-0.5">⚠️ {item.observacao}</p>
+                      )}
+                    </div>
+                    <Button
+                      onClick={() => marcarEntregue(item)}
+                      disabled={isEntregando}
+                      size="sm"
+                      className="h-8 px-3 text-xs font-bold text-white hover:opacity-90 shrink-0"
+                      style={{ background: '#F05A4F' }}
+                    >
+                      {isEntregando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Entregar'}
+                    </Button>
+                  </div>
+                )
+              })
+            )}
+          </div>
         )}
 
         {/* ── Comandas abertas (colapsável) ── */}
