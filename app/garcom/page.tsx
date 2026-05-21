@@ -2,14 +2,61 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X } from 'lucide-react'
+import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Separator } from '@/components/ui/separator'
+import type { Pedido, PedidoItem } from '@/lib/supabase/types'
 
 const ESTACAO_LABEL: Record<string, string> = {
   cozinha: '🍳 Cozinha',
   bar: '🍺 Bar',
   drinks: '🍹 Drinks',
   chopeira: '🍻 Chopeira',
+}
+
+const ESTACAO_EMOJI: Record<string, string> = {
+  cozinha: '🍳', bar: '🍺', drinks: '🍹', chopeira: '🍻',
+}
+
+type FormaPagamento = 'dinheiro' | 'pix' | 'debito' | 'credito'
+type PedidoComItens = Pedido & { pedido_itens: PedidoItem[] }
+
+interface Comanda {
+  id: string
+  cliente_nome: string
+  cliente_whatsapp: string | null
+  mesa_id: string
+  mesa_numero: number
+  criado_em: string
+  pedidos_count: number
+  itens_ativos: number
+  total: number
+}
+
+const FORMAS: { key: FormaPagamento; label: string; icon: React.ElementType; cor: string }[] = [
+  { key: 'dinheiro', label: 'Dinheiro', icon: Banknote,   cor: 'border-green-400 bg-green-50 text-green-700'    },
+  { key: 'pix',      label: 'Pix',      icon: QrCode,     cor: 'border-teal-400 bg-teal-50 text-teal-700'       },
+  { key: 'debito',   label: 'Débito',   icon: CreditCard, cor: 'border-blue-400 bg-blue-50 text-blue-700'       },
+  { key: 'credito',  label: 'Crédito',  icon: CreditCard, cor: 'border-purple-400 bg-purple-50 text-purple-700' },
+]
+
+const STATUS_ITEM_CONFIG: Record<string, { label: string; cor: string }> = {
+  aguardando: { label: 'Aguardando', cor: 'bg-slate-100 text-slate-600' },
+  em_preparo: { label: 'Em preparo', cor: 'bg-teal-100 text-teal-700'  },
+  pronto:     { label: 'Pronto',     cor: 'bg-green-100 text-green-700' },
+  entregue:   { label: 'Entregue',   cor: 'bg-blue-100 text-blue-700'  },
+  cancelado:  { label: 'Cancelado',  cor: 'bg-red-100 text-red-600'    },
+}
+
+function formatarReal(v: number) {
+  return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function tempoAberto(iso: string) {
+  const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
+  if (min < 60) return `${min}min`
+  return `${Math.floor(min / 60)}h${min % 60 > 0 ? String(min % 60).padStart(2, '0') : ''}`
 }
 
 interface ItemPronto {
@@ -58,6 +105,15 @@ export default function GarcomPage() {
   const [dispensando, setDispensando] = useState<Set<string>>(new Set())
   const [tick, setTick] = useState(0)
 
+  // — Comandas —
+  const [comandas, setComandas] = useState<Comanda[]>([])
+  const [comandaSelecionada, setComandaSelecionada] = useState<Comanda | null>(null)
+  const [pedidosComanda, setPedidosComanda] = useState<PedidoComItens[]>([])
+  const [loadingModal, setLoadingModal] = useState(false)
+  const [etapaPagamento, setEtapaPagamento] = useState(false)
+  const [formaSelecionada, setFormaSelecionada] = useState<FormaPagamento | null>(null)
+  const [fechando, setFechando] = useState(false)
+
   const audioCtx = useRef<AudioContext | null>(null)
   const prevItemIds = useRef<Set<string>>(new Set())
   const prevChamadaIds = useRef<Set<string>>(new Set())
@@ -80,6 +136,46 @@ export default function GarcomPage() {
       }
     } catch {}
   }
+
+  const carregarComandas = useCallback(async () => {
+    const res = await fetch('/api/admin/comandas')
+    const { comandas: data } = await res.json() as { comandas: Comanda[] }
+    setComandas(data ?? [])
+  }, [])
+
+  async function abrirComanda(comanda: Comanda) {
+    setComandaSelecionada(comanda)
+    setEtapaPagamento(false)
+    setFormaSelecionada(null)
+    setLoadingModal(true)
+    const resp = await fetch(`/api/admin/mesas/${comanda.id}?por=sessao`)
+    const data = await resp.json()
+    setPedidosComanda(data.pedidos || [])
+    setLoadingModal(false)
+  }
+
+  async function confirmarPagamento() {
+    if (!comandaSelecionada || !formaSelecionada) return
+    setFechando(true)
+    const total = pedidosComanda
+      .flatMap((p) => p.pedido_itens)
+      .reduce((acc, i) => acc + i.item_preco * i.quantidade, 0)
+    const resp = await fetch('/api/admin/pagamentos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessao_id: comandaSelecionada.id, forma: formaSelecionada, valor: total }),
+    })
+    setFechando(false)
+    if (resp.ok) {
+      setComandaSelecionada(null)
+      setEtapaPagamento(false)
+      carregarComandas()
+    }
+  }
+
+  const totalComanda = pedidosComanda
+    .flatMap((p) => p.pedido_itens)
+    .reduce((acc, i) => acc + i.item_preco * i.quantidade, 0)
 
   const carregarItens = useCallback(async () => {
     const res = await fetch('/api/garcom')
@@ -116,8 +212,8 @@ export default function GarcomPage() {
   }, [])
 
   const carregarTudo = useCallback(async () => {
-    await Promise.all([carregarItens(), carregarChamadas()])
-  }, [carregarItens, carregarChamadas])
+    await Promise.all([carregarItens(), carregarChamadas(), carregarComandas()])
+  }, [carregarItens, carregarChamadas, carregarComandas])
 
   useEffect(() => {
     carregarTudo()
@@ -127,6 +223,7 @@ export default function GarcomPage() {
       .channel('garcom-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_itens' }, carregarItens)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chamadas_garcom' }, carregarChamadas)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sessoes_mesa' }, carregarComandas)
       .subscribe()
 
     const timer = setInterval(() => setTick((t) => t + 1), 10000)
@@ -195,6 +292,39 @@ export default function GarcomPage() {
       </div>
 
       <div className="p-4 space-y-4">
+
+        {/* ── Comandas abertas ── */}
+        {comandas.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+              Comandas abertas ({comandas.length})
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {comandas.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => abrirComanda(c)}
+                  className="bg-white rounded-2xl p-4 border border-slate-100 text-left hover:border-teal-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                      <span className="text-teal-700 font-bold text-xs">{c.cliente_nome.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <span className="font-bold text-slate-800 text-sm truncate">{c.cliente_nome}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
+                    <TableProperties className="w-3 h-3" />
+                    <span>Mesa {c.mesa_numero}</span>
+                    <span className="mx-1">·</span>
+                    <Clock className="w-3 h-3" />
+                    <span>{tempoAberto(c.criado_em)}</span>
+                  </div>
+                  <p className="text-teal-700 font-black text-base">{formatarReal(c.total)}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Chamadas dos clientes ── */}
         {chamadas.length > 0 && (
@@ -311,6 +441,124 @@ export default function GarcomPage() {
           })
         )}
       </div>
+      {/* ── Modal comanda ── */}
+      <Dialog open={!!comandaSelecionada} onOpenChange={(open) => { if (!open) { setComandaSelecionada(null); setEtapaPagamento(false) } }}>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-teal-600" />
+                <span className="text-xl font-black text-slate-800">{comandaSelecionada?.cliente_nome}</span>
+              </div>
+              <span className="bg-teal-100 text-teal-700 text-sm font-bold px-2.5 py-0.5 rounded-full">
+                Mesa {comandaSelecionada?.mesa_numero}
+              </span>
+              <span className="text-xs text-slate-400 ml-auto">
+                {comandaSelecionada && tempoAberto(comandaSelecionada.criado_em)} aberta
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {etapaPagamento ? (
+            <div className="space-y-5 mt-2">
+              <div className="text-center pb-2 border-b border-slate-100">
+                <p className="text-xs text-slate-400 mb-1">Total da comanda</p>
+                <p className="text-3xl font-black text-teal-700">{formatarReal(totalComanda)}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-600 mb-3">Como vai pagar?</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {FORMAS.map(({ key, label, icon: Icon, cor }) => (
+                    <button key={key} onClick={() => setFormaSelecionada(key)}
+                      className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                        formaSelecionada === key ? cor : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                      }`}>
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span className="font-semibold text-sm">{label}</span>
+                      {formaSelecionada === key && <CheckCircle2 className="w-4 h-4 ml-auto shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-3 pt-1">
+                <Button variant="outline" className="flex-1" onClick={() => setEtapaPagamento(false)}>Voltar</Button>
+                <Button onClick={confirmarPagamento} disabled={!formaSelecionada || fechando} className="flex-1 bg-teal-600 hover:bg-teal-700">
+                  {fechando ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                  Confirmar e fechar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto space-y-4 mt-2 min-h-0">
+                {loadingModal ? (
+                  <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-teal-600" /></div>
+                ) : pedidosComanda.length === 0 ? (
+                  <p className="text-center text-slate-400 py-8">Nenhum pedido ainda nesta comanda.</p>
+                ) : (
+                  pedidosComanda.map((pedido, idx) => {
+                    const subtotal = pedido.pedido_itens.reduce((acc, i) => acc + i.item_preco * i.quantidade, 0)
+                    return (
+                      <div key={pedido.id} className="border border-slate-200 rounded-xl overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                          <span className="text-sm font-semibold text-slate-700">Pedido #{idx + 1}</span>
+                          <span className="text-xs text-slate-400">
+                            {new Date(pedido.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="divide-y divide-slate-50">
+                          {pedido.pedido_itens.map((item) => {
+                            const cfg = STATUS_ITEM_CONFIG[item.status] ?? STATUS_ITEM_CONFIG.aguardando
+                            return (
+                              <div key={item.id} className="flex items-center gap-3 px-4 py-2.5">
+                                <span className="text-base">{ESTACAO_EMOJI[item.estacao]}</span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-slate-800 truncate">
+                                    {item.quantidade}× {item.item_nome}
+                                  </p>
+                                  {item.observacao && (
+                                    <p className="text-xs text-orange-600 truncate">⚠️ {item.observacao}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="text-xs text-slate-500">
+                                    R$ {(item.item_preco * item.quantidade).toFixed(2).replace('.', ',')}
+                                  </span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.cor}`}>
+                                    {cfg.label}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div className="flex justify-between items-center px-4 py-2.5 bg-slate-50 border-t border-slate-200">
+                          <span className="text-xs text-slate-500">Subtotal</span>
+                          <span className="text-sm font-bold text-teal-700">R$ {subtotal.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+                {pedidosComanda.length > 1 && (
+                  <>
+                    <Separator />
+                    <div className="flex justify-between items-center px-1">
+                      <span className="font-bold text-slate-700">Total da comanda</span>
+                      <span className="text-lg font-black text-teal-700">{formatarReal(totalComanda)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="pt-3 border-t border-slate-100 mt-2 shrink-0">
+                <Button onClick={() => setEtapaPagamento(true)} className="w-full bg-teal-600 hover:bg-teal-700 text-white">
+                  <Receipt className="w-4 h-4 mr-2" /> Fechar comanda
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
