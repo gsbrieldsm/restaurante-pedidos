@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone, Search } from 'lucide-react'
+import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone, Search, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
@@ -107,6 +107,9 @@ export default function GarcomPage() {
 
   // — Busca por mesa —
   const [buscaMesa, setBuscaMesa] = useState('')
+
+  // — Comandas expandidas —
+  const [comandasExpandidas, setComandasExpandidas] = useState(false)
 
   // — Tirar pedido —
   const [modalTirarPedido, setModalTirarPedido] = useState(false)
@@ -376,39 +379,6 @@ export default function GarcomPage() {
 
       <div className="p-4 space-y-4">
 
-        {/* ── Comandas abertas ── */}
-        {comandasFiltradas.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              Comandas abertas ({comandasFiltradas.length}{busca ? ` de ${comandas.length}` : ''})
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {comandasFiltradas.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => abrirComanda(c)}
-                  className="bg-white rounded-2xl p-4 border border-slate-100 text-left hover:border-teal-300 hover:shadow-md transition-all"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-                      <span className="text-teal-700 font-bold text-xs">{c.cliente_nome.charAt(0).toUpperCase()}</span>
-                    </div>
-                    <span className="font-bold text-slate-800 text-sm truncate">{c.cliente_nome}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
-                    <TableProperties className="w-3 h-3" />
-                    <span>Mesa {c.mesa_numero}</span>
-                    <span className="mx-1">·</span>
-                    <Clock className="w-3 h-3" />
-                    <span>{tempoAberto(c.criado_em)}</span>
-                  </div>
-                  <p className="text-teal-700 font-black text-base">{formatarReal(c.total)}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* ── Chamadas dos clientes ── */}
         {chamadasFiltradas.length > 0 && (
           <div className="space-y-2">
@@ -456,7 +426,7 @@ export default function GarcomPage() {
           </p>
         )}
 
-        {gruposFiltrados.length === 0 && chamadasFiltradas.length === 0 ? (
+        {gruposFiltrados.length === 0 && chamadasFiltradas.length === 0 && comandasFiltradas.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-24 gap-3 text-slate-400">
             <UtensilsCrossed className="w-14 h-14 text-teal-200" />
             {busca ? (
@@ -532,6 +502,55 @@ export default function GarcomPage() {
             )
           })
         )}
+
+        {/* ── Comandas abertas (colapsável) ── */}
+        {comandasFiltradas.length > 0 && (
+          <div className="space-y-2">
+            <button
+              onClick={() => setComandasExpandidas((v) => !v)}
+              className="w-full flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-4 py-3 hover:border-teal-300 hover:shadow-sm transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-teal-600" />
+                <span className="text-sm font-bold text-slate-700">Comandas abertas</span>
+                <span className="bg-teal-100 text-teal-700 text-xs font-black px-2 py-0.5 rounded-full">
+                  {comandasFiltradas.length}{busca ? ` de ${comandas.length}` : ''}
+                </span>
+              </div>
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${comandasExpandidas ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {comandasExpandidas && (
+              <div className="grid grid-cols-2 gap-2">
+                {comandasFiltradas.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => abrirComanda(c)}
+                    className="bg-white rounded-2xl p-4 border border-slate-100 text-left hover:border-teal-300 hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                        <span className="text-teal-700 font-bold text-xs">{c.cliente_nome.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <span className="font-bold text-slate-800 text-sm truncate">{c.cliente_nome}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
+                      <TableProperties className="w-3 h-3" />
+                      <span>Mesa {c.mesa_numero}</span>
+                      <span className="mx-1">·</span>
+                      <Clock className="w-3 h-3" />
+                      <span>{tempoAberto(c.criado_em)}</span>
+                    </div>
+                    <p className="text-teal-700 font-black text-base">{formatarReal(c.total)}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
       {/* ── Modal tirar pedido ── */}
       {modalTirarPedido && (
