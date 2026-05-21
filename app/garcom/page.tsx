@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties } from 'lucide-react'
+import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
@@ -105,6 +105,14 @@ export default function GarcomPage() {
   const [dispensando, setDispensando] = useState<Set<string>>(new Set())
   const [tick, setTick] = useState(0)
 
+  // — Tirar pedido —
+  const [modalTirarPedido, setModalTirarPedido] = useState(false)
+  const [tpMesa, setTpMesa] = useState('')
+  const [tpNome, setTpNome] = useState('')
+  const [tpWhatsapp, setTpWhatsapp] = useState('')
+  const [tpLoading, setTpLoading] = useState(false)
+  const [tpErro, setTpErro] = useState('')
+
   // — Comandas —
   const [comandas, setComandas] = useState<Comanda[]>([])
   const [comandaSelecionada, setComandaSelecionada] = useState<Comanda | null>(null)
@@ -135,6 +143,36 @@ export default function GarcomPage() {
         osc.stop(t + duracao)
       }
     } catch {}
+  }
+
+  async function tirarPedido() {
+    if (!tpMesa || !tpNome.trim()) {
+      setTpErro('Informe o número da mesa e o nome do cliente.')
+      return
+    }
+    setTpErro('')
+    setTpLoading(true)
+    const resp = await fetch('/api/garcom/pedido', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mesa_numero: Number(tpMesa),
+        cliente_nome: tpNome.trim(),
+        cliente_whatsapp: tpWhatsapp.trim() || undefined,
+      }),
+    })
+    const data = await resp.json()
+    setTpLoading(false)
+    if (!resp.ok) {
+      setTpErro(data.error || 'Erro ao abrir comanda')
+      return
+    }
+    setModalTirarPedido(false)
+    setTpMesa('')
+    setTpNome('')
+    setTpWhatsapp('')
+    setTpErro('')
+    window.open(`/mesa/${data.token}/cardapio?sessao=${data.sessao_id}`, '_blank')
   }
 
   const carregarComandas = useCallback(async () => {
@@ -287,6 +325,13 @@ export default function GarcomPage() {
                 {totalProntos} pronto{totalProntos > 1 ? 's' : ''}
               </span>
             )}
+            <button
+              onClick={() => { setTpErro(''); setModalTirarPedido(true) }}
+              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-3 py-1.5 rounded-xl transition-colors"
+            >
+              <ClipboardList className="w-4 h-4" />
+              <span className="hidden xs:inline">Tirar pedido</span>
+            </button>
           </div>
         </div>
       </div>
@@ -441,6 +486,117 @@ export default function GarcomPage() {
           })
         )}
       </div>
+      {/* ── Modal tirar pedido ── */}
+      {modalTirarPedido && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={() => setModalTirarPedido(false)}>
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="relative bg-white rounded-t-3xl flex flex-col w-full"
+            style={{ maxHeight: '90vh', paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Alça */}
+            <div className="shrink-0 flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+
+            {/* Cabeçalho */}
+            <div className="shrink-0 flex items-center justify-between px-5 pt-2 pb-4 border-b border-slate-100">
+              <div>
+                <p className="font-black text-slate-800 text-lg">Tirar pedido</p>
+                <p className="text-xs text-slate-400 mt-0.5">Abra uma comanda para o cliente</p>
+              </div>
+              <button
+                onClick={() => setModalTirarPedido(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"
+              >
+                <X className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+
+            {/* Campos */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4 min-h-0">
+              {/* Mesa */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Número da mesa <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <TableProperties className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="Ex: 5"
+                    value={tpMesa}
+                    onChange={(e) => setTpMesa(e.target.value)}
+                    className="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-slate-800 text-base outline-none focus:border-teal-400 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Nome */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Nome do cliente <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Ex: João Silva"
+                    value={tpNome}
+                    onChange={(e) => setTpNome(e.target.value)}
+                    className="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-slate-800 text-base outline-none focus:border-teal-400 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* WhatsApp (opcional) */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  WhatsApp <span className="text-slate-400 font-normal text-xs">(opcional)</span>
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    placeholder="Ex: 47999998888"
+                    value={tpWhatsapp}
+                    onChange={(e) => setTpWhatsapp(e.target.value)}
+                    className="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-slate-800 text-base outline-none focus:border-teal-400 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {tpErro && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+                  {tpErro}
+                </p>
+              )}
+            </div>
+
+            {/* Botão */}
+            <div className="shrink-0 px-5 pt-3 pb-2 border-t border-slate-100 bg-white">
+              <button
+                type="button"
+                onClick={tirarPedido}
+                disabled={tpLoading}
+                className="w-full flex items-center justify-center gap-2 font-bold text-base text-white rounded-2xl disabled:opacity-50 transition-opacity"
+                style={{ background: '#1A9B8A', height: '52px' }}
+              >
+                {tpLoading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Abrindo comanda...</>
+                ) : (
+                  <><ClipboardList className="w-4 h-4" /> Abrir cardápio</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Modal comanda ── */}
       <Dialog open={!!comandaSelecionada} onOpenChange={(open) => { if (!open) { setComandaSelecionada(null); setEtapaPagamento(false) } }}>
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">

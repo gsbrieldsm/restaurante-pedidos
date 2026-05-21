@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -22,6 +22,7 @@ const ESTACAO_EMOJI: Record<string, string> = {
 export default function CardapioPage() {
   const { token } = useParams() as { token: string }
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [itens, setItens] = useState<CardapioItem[]>([])
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([])
@@ -49,6 +50,12 @@ export default function CardapioPage() {
   const [bannerFechado, setBannerFechado] = useState(false)
 
   useEffect(() => {
+    // Se veio via garçom com ?sessao=, salva no sessionStorage
+    const sessaoParam = searchParams.get('sessao')
+    if (sessaoParam) {
+      sessionStorage.setItem('sessao_id', sessaoParam)
+    }
+
     const sessaoId = sessionStorage.getItem('sessao_id')
     if (!sessaoId) {
       router.push(`/mesa/${token}`)
@@ -64,7 +71,7 @@ export default function CardapioPage() {
       if (lista.length > 0) setCategoriaAtiva(lista[0].categoria)
       if (bannerData.banner) setBanner(bannerData.banner)
     }).finally(() => setLoading(false))
-  }, [token, router])
+  }, [token, router, searchParams])
 
   const categorias = useMemo(
     () => [...new Set(itens.map((i) => i.categoria))],
