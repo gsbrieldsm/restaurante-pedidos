@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
-import { Loader2, ArrowRight } from 'lucide-react'
+import { Loader2, ArrowRight, BookUser } from 'lucide-react'
 
 export default function IdentificacaoPage() {
   const { token } = useParams() as { token: string }
@@ -22,6 +22,12 @@ export default function IdentificacaoPage() {
   const [erro, setErro] = useState('')
 
   useEffect(() => {
+    // Pré-preenche com dados salvos do último acesso
+    const nomeSalvo = localStorage.getItem('mmu_cliente_nome')
+    const whatsappSalvo = localStorage.getItem('mmu_cliente_whatsapp')
+    if (nomeSalvo) setNome(nomeSalvo)
+    if (whatsappSalvo) setWhatsapp(whatsappSalvo)
+
     const sessaoId = sessionStorage.getItem('sessao_id')
     const nomeGuardado = sessionStorage.getItem('cliente_nome')
 
@@ -99,6 +105,9 @@ export default function IdentificacaoPage() {
 
     sessionStorage.setItem('sessao_id', data.sessao.id)
     sessionStorage.setItem('cliente_nome', data.sessao.cliente_nome)
+    // Salva para pré-preencher no próximo acesso
+    localStorage.setItem('mmu_cliente_nome', nome.trim())
+    if (whatsapp) localStorage.setItem('mmu_cliente_whatsapp', whatsapp)
     router.push(`/mesa/${token}/cardapio`)
   }
 
@@ -165,6 +174,12 @@ export default function IdentificacaoPage() {
           <p className="text-white/50 text-sm mt-2">Informe seu nome para abrir sua comanda</p>
         </div>
         <CardContent className="pt-6">
+          {nome && localStorage.getItem('mmu_cliente_nome') === nome && (
+            <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-xl px-3 py-2 mb-4">
+              <BookUser className="w-4 h-4 text-teal-600 shrink-0" />
+              <p className="text-xs text-teal-700 font-medium">Dados do seu último acesso foram lembrados</p>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4 mt-2">
             <div className="space-y-1.5">
               <Label htmlFor="nome">Seu nome *</Label>
