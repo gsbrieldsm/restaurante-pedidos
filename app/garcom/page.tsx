@@ -437,44 +437,41 @@ export default function GarcomPage() {
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 divide-y divide-slate-50">
+          <div className="grid grid-cols-2 gap-2">
             {gruposFiltrados.flatMap((grupo) =>
               grupo.itens.map((item) => {
                 const isEntregando = entregando.has(item.id)
                 const espera = tempoEspera(item.pronto_em)
                 return (
-                  <div key={item.id} className="flex items-center gap-3 px-4 py-3">
-                    <span className="text-xl shrink-0">{ESTACAO_EMOJI[item.estacao]}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-slate-800 text-sm leading-tight">
+                  <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3 flex flex-col gap-2">
+                    {/* Infos */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-lg">{ESTACAO_EMOJI[item.estacao]}</span>
+                        <span className="text-xs font-black text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">Mesa {grupo.mesa_numero}</span>
+                      </div>
+                      <p className="font-black text-slate-800 text-sm leading-tight">
                         {item.quantidade}× {item.item_nome}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-xs font-semibold text-teal-700">Mesa {grupo.mesa_numero}</span>
-                        <span className="text-slate-300 text-xs">·</span>
-                        <span className="text-xs text-slate-400 truncate">{grupo.cliente_nome}</span>
-                        {espera && (
-                          <>
-                            <span className="text-slate-300 text-xs">·</span>
-                            <span className="flex items-center gap-0.5 text-xs text-slate-400">
-                              <Clock className="w-3 h-3" />{espera}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">{grupo.cliente_nome}</p>
+                      {espera && (
+                        <span className="flex items-center gap-0.5 text-xs text-slate-400 mt-0.5">
+                          <Clock className="w-3 h-3" />{espera}
+                        </span>
+                      )}
                       {item.observacao && (
-                        <p className="text-xs text-orange-700 mt-0.5">⚠️ {item.observacao}</p>
+                        <p className="text-xs text-orange-700 bg-orange-50 rounded px-1.5 py-0.5 mt-1 leading-tight">⚠️ {item.observacao}</p>
                       )}
                     </div>
-                    <Button
+                    {/* Botão */}
+                    <button
                       onClick={() => marcarEntregue(item)}
                       disabled={isEntregando}
-                      size="sm"
-                      className="h-8 px-3 text-xs font-bold text-white hover:opacity-90 shrink-0"
+                      className="w-full h-9 rounded-xl text-xs font-black text-white flex items-center justify-center disabled:opacity-50"
                       style={{ background: '#F05A4F' }}
                     >
                       {isEntregando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Entregar'}
-                    </Button>
+                    </button>
                   </div>
                 )
               })
