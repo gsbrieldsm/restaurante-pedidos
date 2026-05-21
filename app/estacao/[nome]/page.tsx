@@ -80,7 +80,10 @@ export default function EstacaoPage() {
       )
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    // Polling de segurança: garante atualização mesmo se o realtime falhar
+    const timer = setInterval(buscarItens, 5000)
+
+    return () => { supabase.removeChannel(channel); clearInterval(timer) }
   }, [estacao, buscarItens])
 
   if (!config) {
