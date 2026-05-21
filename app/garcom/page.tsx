@@ -327,10 +327,10 @@ export default function GarcomPage() {
             )}
             <button
               onClick={() => { setTpErro(''); setModalTirarPedido(true) }}
-              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-3 py-1.5 rounded-xl transition-colors"
+              className="flex items-center gap-1.5 bg-white text-teal-700 text-sm font-black px-4 py-2 rounded-xl shadow-sm hover:bg-teal-50 transition-colors"
             >
               <ClipboardList className="w-4 h-4" />
-              <span className="hidden xs:inline">Tirar pedido</span>
+              Iniciar Comanda
             </button>
           </div>
         </div>
