@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone } from 'lucide-react'
+import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
@@ -104,6 +104,9 @@ export default function GarcomPage() {
   const [entregando, setEntregando] = useState<Set<string>>(new Set())
   const [dispensando, setDispensando] = useState<Set<string>>(new Set())
   const [tick, setTick] = useState(0)
+
+  // — Busca por mesa —
+  const [buscaMesa, setBuscaMesa] = useState('')
 
   // — Tirar pedido —
   const [modalTirarPedido, setModalTirarPedido] = useState(false)
@@ -296,6 +299,17 @@ export default function GarcomPage() {
 
   const totalProntos = grupos.reduce((acc, g) => acc + g.itens.length, 0)
 
+  const busca = buscaMesa.trim()
+  const comandasFiltradas = busca
+    ? comandas.filter((c) => String(c.mesa_numero).includes(busca) || c.cliente_nome.toLowerCase().includes(busca.toLowerCase()))
+    : comandas
+  const chamadasFiltradas = busca
+    ? chamadas.filter((c) => String(c.mesa_numero).includes(busca) || c.cliente_nome.toLowerCase().includes(busca.toLowerCase()))
+    : chamadas
+  const gruposFiltrados = busca
+    ? grupos.filter((g) => String(g.mesa_numero).includes(busca) || g.cliente_nome.toLowerCase().includes(busca.toLowerCase()))
+    : grupos
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#F0FAFA' }}>
@@ -334,18 +348,42 @@ export default function GarcomPage() {
             </button>
           </div>
         </div>
+
+        {/* Busca por mesa */}
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-300 pointer-events-none" />
+            <input
+              type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Buscar mesa..."
+              value={buscaMesa}
+              onChange={(e) => setBuscaMesa(e.target.value)}
+              className="w-full bg-white/15 placeholder-teal-300 text-white rounded-xl py-2.5 pl-9 pr-9 text-sm outline-none focus:bg-white/25 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            {buscaMesa && (
+              <button
+                onClick={() => setBuscaMesa('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-300 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="p-4 space-y-4">
 
         {/* ── Comandas abertas ── */}
-        {comandas.length > 0 && (
+        {comandasFiltradas.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              Comandas abertas ({comandas.length})
+              Comandas abertas ({comandasFiltradas.length}{busca ? ` de ${comandas.length}` : ''})
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {comandas.map((c) => (
+              {comandasFiltradas.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => abrirComanda(c)}
@@ -372,12 +410,12 @@ export default function GarcomPage() {
         )}
 
         {/* ── Chamadas dos clientes ── */}
-        {chamadas.length > 0 && (
+        {chamadasFiltradas.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
               Chamadas de clientes
             </p>
-            {chamadas.map((chamada) => {
+            {chamadasFiltradas.map((chamada) => {
               const cfg = MOTIVO_CONFIG[chamada.motivo] ?? MOTIVO_CONFIG.conta
               const Icon = cfg.icon
               const isDispensando = dispensando.has(chamada.id)
@@ -412,20 +450,29 @@ export default function GarcomPage() {
         )}
 
         {/* ── Itens prontos para entrega ── */}
-        {grupos.length > 0 && (
+        {gruposFiltrados.length > 0 && (
           <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
             Prontos para entrega
           </p>
         )}
 
-        {grupos.length === 0 && chamadas.length === 0 ? (
+        {gruposFiltrados.length === 0 && chamadasFiltradas.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-24 gap-3 text-slate-400">
             <UtensilsCrossed className="w-14 h-14 text-teal-200" />
-            <p className="text-lg font-medium">Tudo tranquilo por aqui</p>
-            <p className="text-sm text-center">Itens prontos e chamadas de clientes aparecem aqui.</p>
+            {busca ? (
+              <>
+                <p className="text-lg font-medium">Mesa não encontrada</p>
+                <p className="text-sm text-center">Nenhum resultado para <strong className="text-slate-600">Mesa {busca}</strong>.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-lg font-medium">Tudo tranquilo por aqui</p>
+                <p className="text-sm text-center">Itens prontos e chamadas de clientes aparecem aqui.</p>
+              </>
+            )}
           </div>
         ) : (
-          grupos.map((grupo) => {
+          gruposFiltrados.map((grupo) => {
             const tudoEntregando = grupo.itens.every((i) => entregando.has(i.id))
             return (
               <div key={grupo.mesa_numero} className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
