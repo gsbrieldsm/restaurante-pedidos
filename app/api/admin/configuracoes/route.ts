@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
