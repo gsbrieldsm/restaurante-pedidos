@@ -71,8 +71,8 @@ export default function ConfirmacaoPage() {
     const supabase = createClient()
     const channel = supabase
       .channel(`confirmacao-${pedidoId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos',      filter: `id=eq.${pedidoId}` }, buscarPedido)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_itens', filter: `pedido_id=eq.${pedidoId}` }, buscarPedido)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, buscarPedido)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_itens' }, buscarPedido)
       .subscribe()
 
     // Redireciona para /conta após 6s

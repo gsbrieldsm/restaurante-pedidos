@@ -113,7 +113,7 @@ export default function ContaPage() {
     const supabase = createClient()
     const channel = supabase
       .channel(`conta-${sessaoId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos',      filter: `sessao_id=eq.${sessaoId}` }, buscarConta)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, buscarConta)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_itens' }, buscarConta)
       .subscribe()
 
