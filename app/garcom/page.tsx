@@ -266,12 +266,21 @@ export default function GarcomPage() {
     const channel = supabase
       .channel('garcom-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_itens' }, carregarItens)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chamadas_garcom' }, carregarChamadas)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas_garcom' }, carregarChamadas)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sessoes_mesa' }, carregarComandas)
       .subscribe()
 
-    const timer = setInterval(() => setTick((t) => t + 1), 10000)
-    return () => { supabase.removeChannel(channel); clearInterval(timer) }
+    // Polling de segurança: garante que chamadas e itens aparecem mesmo se o realtime falhar
+    const timerChamadas = setInterval(carregarChamadas, 4000)
+    const timerItens    = setInterval(carregarItens,    8000)
+    const timerTick     = setInterval(() => setTick((t) => t + 1), 10000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(timerChamadas)
+      clearInterval(timerItens)
+      clearInterval(timerTick)
+    }
   }, [carregarTudo, carregarItens, carregarChamadas])
 
   async function dispensarChamada(id: string) {
