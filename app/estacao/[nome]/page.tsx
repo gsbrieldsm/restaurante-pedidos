@@ -70,12 +70,12 @@ export default function EstacaoPage() {
       .channel(`estacao-${estacao}`)
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'pedido_itens',
-          filter: `estacao=eq.${estacao}`,
-        },
+        { event: '*', schema: 'public', table: 'pedido_itens' },
+        () => buscarItens()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'pedidos' },
         () => buscarItens()
       )
       .subscribe()
