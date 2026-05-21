@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import {
-  RefreshCw, XCircle, Loader2, AlertTriangle,
+  XCircle, Loader2, AlertTriangle,
   ConciergeBell, Banknote, QrCode, CreditCard, CheckCircle2, User, Clock
 } from 'lucide-react'
 import type { Pedido, PedidoItem } from '@/lib/supabase/types'
@@ -192,16 +192,11 @@ export default function AdminDashboard() {
           <p className="text-xs font-bold tracking-widest uppercase text-teal-600 mb-1">Visão ao Vivo</p>
           <h1 className="text-2xl font-bold text-slate-800 capitalize">{diaDaSemana()}</h1>
         </div>
-        <div className="text-right flex items-start gap-4">
-          <div>
-            <p className="text-xs text-slate-400 mb-0.5">Receita do dia</p>
-            <p className="text-lg md:text-2xl font-black text-teal-600 whitespace-nowrap">
-              {overview ? formatarReal(overview.receita_hoje) : '—'}
-            </p>
-          </div>
-          <Button onClick={buscarTudo} variant="outline" size="sm" className="gap-1.5 mt-1">
-            <RefreshCw className="w-3.5 h-3.5" /> Atualizar
-          </Button>
+        <div className="text-right">
+          <p className="text-xs text-slate-400 mb-0.5">Receita do dia</p>
+          <p className="text-lg md:text-2xl font-black text-teal-600 whitespace-nowrap">
+            {overview ? formatarReal(overview.receita_hoje) : '—'}
+          </p>
         </div>
       </div>
 
