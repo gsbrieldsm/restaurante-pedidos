@@ -27,14 +27,16 @@ export async function GET() {
   // Conta mesas e pedidos por tenant
   const ids = (tenants ?? []).map((t) => t.id)
 
-  const [{ data: mesas }, { data: pedidos }] = await Promise.all([
+  const [{ data: mesas }, { data: pedidos }, { data: sessoes }] = await Promise.all([
     supabase.from('mesas').select('tenant_id').in('tenant_id', ids),
     supabase.from('pedidos').select('tenant_id, total').in('tenant_id', ids),
+    supabase.from('sessoes_mesa').select('tenant_id').in('tenant_id', ids),
   ])
 
   const mesasPorTenant: Record<string, number> = {}
   const pedidosPorTenant: Record<string, number> = {}
   const faturamentoPorTenant: Record<string, number> = {}
+  const sessoesPorTenant: Record<string, number> = {}
 
   for (const m of mesas ?? []) {
     mesasPorTenant[m.tenant_id] = (mesasPorTenant[m.tenant_id] ?? 0) + 1
@@ -43,12 +45,16 @@ export async function GET() {
     pedidosPorTenant[p.tenant_id] = (pedidosPorTenant[p.tenant_id] ?? 0) + 1
     faturamentoPorTenant[p.tenant_id] = (faturamentoPorTenant[p.tenant_id] ?? 0) + (p.total ?? 0)
   }
+  for (const s of sessoes ?? []) {
+    sessoesPorTenant[s.tenant_id] = (sessoesPorTenant[s.tenant_id] ?? 0) + 1
+  }
 
   const resultado = (tenants ?? []).map((t) => ({
     ...t,
     total_mesas: mesasPorTenant[t.id] ?? 0,
     total_pedidos: pedidosPorTenant[t.id] ?? 0,
     faturamento_total: faturamentoPorTenant[t.id] ?? 0,
+    total_sessoes: sessoesPorTenant[t.id] ?? 0,
   }))
 
   return NextResponse.json({ tenants: resultado })

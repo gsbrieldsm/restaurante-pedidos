@@ -17,6 +17,7 @@ type Tenant = {
   total_mesas: number
   total_pedidos: number
   faturamento_total: number
+  total_sessoes: number
 }
 
 const MENSALIDADE = 550
@@ -81,6 +82,7 @@ export default function SuperAdminPage() {
   const receitaTotal = ativos.length * IMPLEMENTACAO + mrr
   const totalPedidos = tenants.reduce((s, t) => s + t.total_pedidos, 0)
   const totalFaturado = tenants.reduce((s, t) => s + t.faturamento_total, 0)
+  const totalSessoes = tenants.reduce((s, t) => s + t.total_sessoes, 0)
 
   if (carregando) {
     return (
@@ -319,9 +321,9 @@ export default function SuperAdminPage() {
         {/* ── Breakdown de receita ── */}
         <div className="rounded-2xl p-6 border" style={{ background: 'rgba(26,155,138,0.06)', borderColor: 'rgba(26,155,138,0.2)' }}>
           <h3 className="text-xs font-bold uppercase tracking-widest mb-5" style={{ color: '#1A9B8A' }}>
-            Breakdown de receita
+            Breakdown de receita & uso
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <RevenueItem
               label="Implementações"
               value={`R$ ${(ativos.length * IMPLEMENTACAO).toLocaleString('pt-BR')}`}
@@ -339,6 +341,12 @@ export default function SuperAdminPage() {
               value={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
               sub="soma de todos os pedidos"
               color="#8b5cf6"
+            />
+            <RevenueItem
+              label="Acessos ao cardápio"
+              value={totalSessoes.toLocaleString('pt-BR')}
+              sub="sessões de mesa abertas"
+              color="#38bdf8"
             />
           </div>
         </div>
