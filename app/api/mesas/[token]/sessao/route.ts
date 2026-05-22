@@ -30,10 +30,11 @@ export async function POST(
   const { data: sessao, error: sessaoError } = await supabase
     .from('sessoes_mesa')
     .insert({
-      mesa_id: mesa.id,
-      cliente_nome: cliente_nome.trim(),
+      mesa_id:          mesa.id,
+      cliente_nome:     cliente_nome.trim(),
       cliente_whatsapp: cliente_whatsapp?.trim() || null,
-      ativa: true,
+      ativa:            true,
+      tenant_id:        mesa.tenant_id ?? null,
     })
     .select()
     .single()

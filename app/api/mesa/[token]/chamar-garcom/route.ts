@@ -11,7 +11,7 @@ export async function POST(
 
   const { data: sessao } = await supabase
     .from('sessoes_mesa')
-    .select('id, cliente_nome, mesa_id, mesas(numero)')
+    .select('id, cliente_nome, mesa_id, tenant_id, mesas(numero)')
     .eq('id', sessao_id)
     .eq('ativa', true)
     .single()
@@ -28,6 +28,7 @@ export async function POST(
     mesa_numero:  mesa.numero,
     cliente_nome: sessao.cliente_nome,
     motivo:       motivo ?? 'conta',
+    tenant_id:    (sessao as any).tenant_id ?? null,
   })
 
   if (error) {

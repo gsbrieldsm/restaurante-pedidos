@@ -35,18 +35,21 @@ export async function POST(req: Request) {
     0
   )
 
+  const tenantId = mesa.tenant_id ?? null
+
   // Criar pedido
   const { data: pedido, error: pedidoError } = await supabase
     .from('pedidos')
     .insert({
       sessao_id,
-      mesa_id: mesa.id,
-      mesa_numero: mesa.numero,
-      cliente_nome: sessao.cliente_nome,
+      mesa_id:          mesa.id,
+      mesa_numero:      mesa.numero,
+      cliente_nome:     sessao.cliente_nome,
       cliente_whatsapp: sessao.cliente_whatsapp,
-      status_geral: 'aguardando',
+      status_geral:     'aguardando',
       observacao_geral: observacao_geral || null,
       total,
+      tenant_id:        tenantId,
     })
     .select()
     .single()
@@ -57,16 +60,17 @@ export async function POST(req: Request) {
 
   // Criar itens do pedido
   const pedidoItens = itens.map((i) => ({
-    pedido_id: pedido.id,
-    item_id: i.item.id,
-    item_nome: i.item.nome,
-    item_preco: i.preco_unitario,
-    quantidade: i.quantidade,
-    observacao: i.observacao || null,
-    estacao: i.item.estacao,
+    pedido_id:              pedido.id,
+    item_id:                i.item.id,
+    item_nome:              i.item.nome,
+    item_preco:             i.preco_unitario,
+    quantidade:             i.quantidade,
+    observacao:             i.observacao || null,
+    estacao:                i.item.estacao,
     tempo_preparo_estimado: i.item.tempo_preparo_estimado,
-    status: 'aguardando' as const,
-    opcoes_selecionadas: i.opcoes_selecionadas ?? [],
+    status:                 'aguardando' as const,
+    opcoes_selecionadas:    i.opcoes_selecionadas ?? [],
+    tenant_id:              tenantId,
   }))
 
   const { error: itensError } = await supabase

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getTenantId } from '@/lib/tenant'
 import type { EstacaoTipo } from '@/lib/supabase/types'
 
 export async function GET(req: Request) {
@@ -12,17 +13,19 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Estação obrigatória' }, { status: 400 })
   }
 
-  const supabase = createServiceClient()
+  const supabase  = createServiceClient()
+  const tenantId  = await getTenantId()
 
-  const { data, error } = await supabase
+  let q = supabase
     .from('view_fila_estacoes')
     .select('*')
     .eq('estacao', estacao)
     .order('criado_em', { ascending: true })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  if (tenantId) q = (q as any).eq('tenant_id', tenantId)
+
+  const { data, error } = await q
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ itens: data })
 }

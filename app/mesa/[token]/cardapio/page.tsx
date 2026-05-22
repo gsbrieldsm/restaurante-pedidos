@@ -68,7 +68,7 @@ export default function CardapioPage() {
     }
 
     Promise.all([
-      fetch('/api/cardapio').then((r) => r.json()),
+      fetch(`/api/cardapio?token=${token}`).then((r) => r.json()),
       fetch('/api/configuracoes/banner').then((r) => r.json()),
     ]).then(([cardapioData, bannerData]) => {
       const lista = cardapioData.itens ?? []

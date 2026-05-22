@@ -1,10 +1,25 @@
+export const dynamic = 'force-dynamic'
+
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(req: Request) {
   const supabase = createServiceClient()
+  const { searchParams } = new URL(req.url)
+  const token = searchParams.get('token') // token da mesa para derivar tenant_id
 
-  const { data, error } = await supabase
+  // Deriva tenant_id a partir do token da mesa (se fornecido)
+  let tenantId: string | null = null
+  if (token) {
+    const { data: mesa } = await supabase
+      .from('mesas')
+      .select('tenant_id')
+      .eq('qr_token', token)
+      .single()
+    tenantId = mesa?.tenant_id ?? null
+  }
+
+  let q = supabase
     .from('cardapio_itens')
     .select(`
       *,
@@ -17,11 +32,11 @@ export async function GET() {
     .order('categoria')
     .order('ordem')
 
-  if (error) {
-    return NextResponse.json({ error: 'Erro ao buscar cardápio' }, { status: 500 })
-  }
+  if (tenantId) q = (q as any).eq('tenant_id', tenantId)
 
-  // Ordena as opções dentro de cada grupo
+  const { data, error } = await q
+  if (error) return NextResponse.json({ error: 'Erro ao buscar cardápio' }, { status: 500 })
+
   const itens = (data ?? []).map((item) => ({
     ...item,
     grupos_opcao: (item.grupos_opcao ?? [])
@@ -45,9 +60,6 @@ export async function POST(req: Request) {
     .select()
     .single()
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ item: data }, { status: 201 })
 }
