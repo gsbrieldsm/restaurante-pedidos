@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, Users, TrendingUp, DollarSign, Store, ExternalLink, ShieldOff, ShieldCheck } from 'lucide-react'
+import { LogOut, Users, TrendingUp, DollarSign, Store, ExternalLink, ShieldOff, ShieldCheck, Settings2 } from 'lucide-react'
 
 type Tenant = {
   id: string
@@ -26,6 +26,7 @@ export default function SuperAdminPage() {
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [carregando, setCarregando] = useState(true)
   const [atualizando, setAtualizando] = useState<string | null>(null)
+  const [inicializando, setInicializando] = useState<string | null>(null)
 
   useEffect(() => {
     document.title = 'Master — Meu Menu+'
@@ -41,6 +42,22 @@ export default function SuperAdminPage() {
     const { tenants } = await res.json()
     setTenants(tenants ?? [])
     setCarregando(false)
+  }
+
+  async function forcarSetup(tenant: Tenant) {
+    setInicializando(tenant.id)
+    const res = await fetch('/api/superadmin/tenants', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: tenant.id, acao: 'setup' }),
+    })
+    const data = await res.json()
+    if (data.ok) {
+      setTenants((prev) =>
+        prev.map((t) => t.id === tenant.id ? { ...t, total_mesas: data.ja_configurado ? t.total_mesas : 10 } : t)
+      )
+    }
+    setInicializando(null)
   }
 
   async function toggleStatus(tenant: Tenant) {
@@ -170,6 +187,16 @@ export default function SuperAdminPage() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2 justify-end">
+                          {t.total_mesas === 0 && (
+                            <button
+                              onClick={() => forcarSetup(t)}
+                              disabled={inicializando === t.id}
+                              title="Inicializar mesas e config"
+                              className="text-yellow-500 hover:text-yellow-300 transition-colors disabled:opacity-40"
+                            >
+                              <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
+                            </button>
+                          )}
                           <a
                             href={`https://${t.slug}.meumenu.com.br/admin`}
                             target="_blank"
@@ -248,6 +275,12 @@ export default function SuperAdminPage() {
                       {t.slug}
                     </span>
                     <div className="flex gap-3">
+                      {t.total_mesas === 0 && (
+                        <button onClick={() => forcarSetup(t)} disabled={inicializando === t.id}
+                          title="Inicializar mesas" className="text-yellow-500 hover:text-yellow-300 disabled:opacity-40">
+                          <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
+                        </button>
+                      )}
                       <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer"
                         className="text-slate-500 hover:text-teal-400">
                         <ExternalLink className="w-4 h-4" />
