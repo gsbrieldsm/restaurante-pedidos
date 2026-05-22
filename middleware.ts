@@ -20,12 +20,13 @@ const ADMIN_ONLY = [
   '/admin/mesas',
 ]
 
-// ─── Rotas públicas de tenant (sem auth de tenant exigida) ────────────────────
+// ─── Rotas públicas de tenant (sem auth de staff exigida) ────────────────────
+// Todas as rotas /api/tenant/* gerenciam sua própria auth via cookie tenant_id
 const TENANT_PUBLIC = [
   '/registro',
   '/login',
   '/planos',
-  '/api/tenant/auth',
+  '/api/tenant/',
 ]
 
 // Domínio raiz de produção — só reconhece subdomínio nesse domínio
