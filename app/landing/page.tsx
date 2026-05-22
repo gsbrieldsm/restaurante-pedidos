@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Meu Menu+ — Cardápio digital e gestão de pedidos para restaurantes',
@@ -111,15 +112,21 @@ export default function LandingPage() {
             </div>
             <span className="text-white font-bold text-lg tracking-tight">Meu Menu+</span>
           </div>
-          <a
-            href={whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
-            style={{ background: '#1A9B8A', color: '#fff' }}
-          >
-            Falar com consultor
-          </a>
+          <div className="hidden sm:flex items-center gap-2">
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-white/70 hover:text-white transition-colors"
+            >
+              Entrar
+            </Link>
+            <Link
+              href="/registro"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
+              style={{ background: '#1A9B8A', color: '#fff' }}
+            >
+              Testar grátis →
+            </Link>
+          </div>
         </nav>
 
         {/* Hero content */}
@@ -142,15 +149,13 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <a
-                href={whatsapp}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/registro"
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-black transition-all hover:opacity-90 shadow-lg"
                 style={{ background: '#1A9B8A', color: '#fff' }}
               >
-                📲 Quero uma demonstração
-              </a>
+                🚀 Realizar teste grátis
+              </Link>
               <a
                 href="#como-funciona"
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-bold transition-all hover:bg-white/10"
@@ -159,6 +164,13 @@ export default function LandingPage() {
                 Ver como funciona
               </a>
             </div>
+
+            <p className="text-teal-300/50 text-sm">
+              Já tem uma conta?{' '}
+              <Link href="/login" className="text-teal-300 hover:text-white underline underline-offset-2 transition-colors">
+                Entrar aqui
+              </Link>
+            </p>
 
             <div className="flex items-center gap-6 pt-2">
               {[
@@ -403,6 +415,32 @@ export default function LandingPage() {
               <strong className="text-teal-300">R$ 600/mês</strong> — menos que um garçom por dia.
             </span>
           </div>
+
+          {/* CTA */}
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/registro"
+              className="flex items-center gap-2 px-10 py-4 rounded-2xl text-base font-black transition-all hover:opacity-90 shadow-xl"
+              style={{ background: '#1A9B8A', color: '#fff' }}
+            >
+              🚀 Criar minha conta agora
+            </Link>
+            <a
+              href={whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold transition-all hover:bg-white/10"
+              style={{ color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+            >
+              📲 Falar com consultor
+            </a>
+          </div>
+          <p className="mt-4 text-teal-300/40 text-sm">
+            Já tem conta?{' '}
+            <Link href="/login" className="text-teal-300/70 hover:text-teal-300 underline underline-offset-2 transition-colors">
+              Entrar
+            </Link>
+          </p>
         </div>
       </section>
 
