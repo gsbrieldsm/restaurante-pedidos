@@ -28,16 +28,23 @@ const TENANT_PUBLIC = [
   '/api/tenant/auth',
 ]
 
+// Domínio raiz de produção — só reconhece subdomínio nesse domínio
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'meumenu.com.br'
+
 // ─── Helper: extrai subdomínio do host ────────────────────────────────────────
 function extrairSubdominio(host: string): string | null {
-  // host pode ser: joao.meumenu.com.br, localhost:3000, etc.
-  const partes = host.split('.')
-  // Se tiver 3+ partes (sub.dominio.tld) → é subdomínio
-  if (partes.length >= 3) {
-    const sub = partes[0]
-    if (sub !== 'www' && sub !== 'app') return sub
-  }
-  return null
+  // Remove porta se houver (ex: localhost:3000)
+  const hostSemPorta = host.split(':')[0]
+
+  // Só considera subdomínio se o host terminar com o ROOT_DOMAIN
+  // Ex: joao.meumenu.com.br → 'joao'
+  // restaurante-pedidos-drab.vercel.app → null (não é nosso domínio)
+  // localhost → null
+  if (!hostSemPorta.endsWith(`.${ROOT_DOMAIN}`)) return null
+
+  const sub = hostSemPorta.slice(0, -(ROOT_DOMAIN.length + 1))
+  if (!sub || sub === 'www' || sub === 'app') return null
+  return sub
 }
 
 export function middleware(request: NextRequest) {
