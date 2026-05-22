@@ -51,6 +51,23 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get('host') ?? ''
 
+  // ── 0. Superadmin — fluxo totalmente separado ────────────────────────────────
+  if (pathname.startsWith('/superadmin') || pathname.startsWith('/api/superadmin')) {
+    // Login é público
+    if (pathname === '/superadmin/login' || pathname === '/api/superadmin/auth') {
+      return NextResponse.next()
+    }
+    // Demais rotas exigem cookie superadmin_auth
+    const saToken = request.cookies.get('superadmin_auth')?.value
+    if (saToken !== 'sa-ok') {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      }
+      return NextResponse.redirect(new URL('/superadmin/login', request.url))
+    }
+    return NextResponse.next()
+  }
+
   // ── 1. Rotas públicas de tenant — sempre passam ──────────────────────────────
   if (TENANT_PUBLIC.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
@@ -113,5 +130,8 @@ export const config = {
     '/login',
     '/planos',
     '/api/tenant/:path*',
+    '/superadmin',
+    '/superadmin/:path*',
+    '/api/superadmin/:path*',
   ],
 }
