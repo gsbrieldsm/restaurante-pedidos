@@ -163,8 +163,8 @@ export default function SuperAdminPage() {
         {/* ── Tabela de restaurantes ── */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-white/50 uppercase tracking-widest">
-              Restaurantes <span className="text-teal-400 ml-1">({tenants.length})</span>
+            <h2 className="text-sm font-bold text-white uppercase tracking-widest">
+              Restaurantes <span className="ml-1" style={{ color: '#1A9B8A' }}>({tenants.length})</span>
             </h2>
           </div>
 
@@ -176,7 +176,7 @@ export default function SuperAdminPage() {
                 <thead>
                   <tr style={{ background: 'rgba(26,155,138,0.08)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                     {['Restaurante', 'Email', 'Slug', 'Mesas', 'Pedidos', 'Faturado', 'Plano', 'Status', 'Cadastro', ''].map((h, i) => (
-                      <th key={i} className={`px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-white/40 ${i >= 3 && i <= 5 ? 'text-center' : i === 5 ? 'text-right' : 'text-left'}`}>
+                      <th key={i} className={`px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-white/60 ${i >= 3 && i <= 5 ? 'text-center' : i === 5 ? 'text-right' : 'text-left'}`}>
                         {h}
                       </th>
                     ))}
@@ -193,15 +193,15 @@ export default function SuperAdminPage() {
                         <p className="font-bold text-white">{t.nome_restaurante}</p>
                         <p className="text-white/40 text-xs mt-0.5">{t.nome}</p>
                       </td>
-                      <td className="px-5 py-4 text-white/60 text-xs">{t.email}</td>
+                      <td className="px-5 py-4 text-white text-xs">{t.email}</td>
                       <td className="px-5 py-4">
-                        <span className="font-mono text-xs px-2.5 py-1 rounded-lg" style={{ background: 'rgba(26,155,138,0.15)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.3)' }}>
+                        <span className="font-mono text-xs px-2.5 py-1 rounded-lg whitespace-nowrap" style={{ background: 'rgba(26,155,138,0.15)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.3)' }}>
                           {t.slug}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-center font-semibold text-white/70">{t.total_mesas}</td>
-                      <td className="px-4 py-4 text-center font-semibold text-white/70">{t.total_pedidos}</td>
-                      <td className="px-4 py-4 text-right font-semibold text-white/70">
+                      <td className="px-4 py-4 text-center font-semibold text-white">{t.total_mesas}</td>
+                      <td className="px-4 py-4 text-center font-semibold text-white">{t.total_pedidos}</td>
+                      <td className="px-4 py-4 text-right font-semibold text-white">
                         R$ {t.faturamento_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-4 py-4 text-center">
@@ -224,7 +224,7 @@ export default function SuperAdminPage() {
                           {t.status}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-center text-white/30 text-xs">
+                      <td className="px-4 py-4 text-center text-white text-xs">
                         {new Date(t.criado_em).toLocaleDateString('pt-BR')}
                       </td>
                       <td className="px-4 py-4">
@@ -357,8 +357,8 @@ function MetricCard({ icon, label, value, sub, accent }: {
         {icon}
       </div>
       <p className="text-2xl font-black text-white">{value}</p>
-      <p className="text-white/40 text-xs mt-0.5">{label}</p>
-      <p className="text-xs mt-1 font-medium" style={{ color: accent }}>{sub}</p>
+      <p className="text-white/70 text-sm mt-0.5">{label}</p>
+      <p className="text-xs mt-1 font-semibold" style={{ color: accent }}>{sub}</p>
     </div>
   )
 }
@@ -366,9 +366,9 @@ function MetricCard({ icon, label, value, sub, accent }: {
 function RevenueItem({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
   return (
     <div>
-      <p className="text-white/40 text-sm mb-1">{label}</p>
+      <p className="text-white/70 text-sm mb-1 font-medium">{label}</p>
       <p className="text-2xl font-black" style={{ color }}>{value}</p>
-      <p className="text-white/30 text-xs mt-0.5">{sub}</p>
+      <p className="text-white/50 text-xs mt-0.5">{sub}</p>
     </div>
   )
 }
