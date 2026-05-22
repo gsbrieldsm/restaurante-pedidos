@@ -98,6 +98,9 @@ function tempoEspera(iso: string | null) {
 }
 
 export default function GarcomPage() {
+  // Título da aba do browser
+  useEffect(() => { document.title = '🛎️ Garçom — Meu Menu+' }, [])
+
   const [grupos, setGrupos] = useState<GrupoMesa[]>([])
   const [chamadas, setChamadas] = useState<Chamada[]>([])
   const [loading, setLoading] = useState(true)

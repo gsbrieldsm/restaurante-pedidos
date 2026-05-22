@@ -40,6 +40,11 @@ export default function EstacaoPage() {
   const [conectado, setConectado] = useState(true)
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date>(new Date())
 
+  // Título da aba do browser
+  useEffect(() => {
+    if (config) document.title = `${config.emoji} ${config.label} — Meu Menu+`
+  }, [config])
+
   const buscarItens = useCallback(async () => {
     try {
       const resp = await fetch(`/api/estacao?estacao=${estacao}`)

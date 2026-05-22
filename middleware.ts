@@ -34,6 +34,10 @@ export function middleware(request: NextRequest) {
     (!!token && /^mmu:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(token))
 
   if (!valido) {
+    // APIs retornam 401 JSON — não faz sentido redirecionar uma chamada fetch
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
@@ -54,6 +58,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Protege painel, estações e view do garçom
-  matcher: ['/admin/:path*', '/estacao/:path*', '/garcom'],
+  // Protege painel, APIs admin, estações e view do garçom
+  matcher: ['/admin/:path*', '/api/admin/:path*', '/estacao/:path*', '/garcom'],
 }

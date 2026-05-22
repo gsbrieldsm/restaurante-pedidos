@@ -253,10 +253,10 @@ export default function PerformancePage() {
 
   const hero = heroConfig[abaAtiva]
 
-  const ABAS: { key: Aba; label: string; icon: React.ElementType }[] = [
-    { key: 'tempo',  label: 'Tempo de Preparo', icon: Clock        },
-    { key: 'vendas', label: 'Mais Vendidos',     icon: ShoppingCart },
-    { key: 'margem', label: 'Custo & Margem',    icon: DollarSign   },
+  const ABAS: { key: Aba; label: string; labelMobile: string; icon: React.ElementType }[] = [
+    { key: 'tempo',  label: 'Tempo de Preparo', labelMobile: 'Tempo',   icon: Clock        },
+    { key: 'vendas', label: 'Mais Vendidos',     labelMobile: 'Vendidos', icon: ShoppingCart },
+    { key: 'margem', label: 'Custo & Margem',    labelMobile: 'Margem',  icon: DollarSign   },
   ]
 
   return (
@@ -291,18 +291,19 @@ export default function PerformancePage() {
 
       {/* Abas */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
-        {ABAS.map(({ key, label, icon: Icon }) => (
+        {ABAS.map(({ key, label, labelMobile, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setAbaAtiva(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               abaAtiva === key
                 ? 'bg-white text-teal-700 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             <Icon className="w-4 h-4" />
-            {label}
+            <span className="hidden md:inline">{label}</span>
+            <span className="md:hidden">{labelMobile}</span>
           </button>
         ))}
       </div>
@@ -632,42 +633,91 @@ export default function PerformancePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  {/* Header */}
-                  <div className="grid grid-cols-7 gap-2 px-5 py-2 bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wide border-b">
-                    <div className="col-span-2">Produto</div>
-                    <div className="text-right">Venda</div>
-                    <div className="text-right">Custo</div>
-                    <div className="text-right">Margem</div>
-                    <div className="text-right">Qtd</div>
-                    <div className="text-right">Lucro Total</div>
+                  {/* ── Desktop: tabela 7 colunas ── */}
+                  <div className="hidden md:block">
+                    <div className="grid grid-cols-7 gap-2 px-5 py-2 bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wide border-b">
+                      <div className="col-span-2">Produto</div>
+                      <div className="text-right">Venda</div>
+                      <div className="text-right">Custo</div>
+                      <div className="text-right">Margem</div>
+                      <div className="text-right">Qtd</div>
+                      <div className="text-right">Lucro Total</div>
+                    </div>
+                    <div className="divide-y divide-slate-50">
+                      {statsMargem.map((item) => (
+                        <div key={item.item_nome} className="grid grid-cols-7 gap-2 px-5 py-3 hover:bg-slate-50 transition-colors items-center">
+                          <div className="col-span-2 min-w-0">
+                            <p className="font-medium text-sm text-slate-800 truncate">{item.item_nome}</p>
+                            <p className="text-xs text-slate-400">{ESTACAO_EMOJI[item.estacao]} {item.estacao}</p>
+                          </div>
+                          <div className="text-right text-sm text-slate-600">{formatarReal(item.preco)}</div>
+                          <div className="text-right text-sm text-slate-600">
+                            {item.custo > 0 ? formatarReal(item.custo) : <span className="text-slate-300 text-xs">—</span>}
+                          </div>
+                          <div className="text-right">
+                            <span
+                              className="text-sm font-bold px-2 py-0.5 rounded-full"
+                              style={{
+                                color: corMargem(item.margem_pct),
+                                background: corMargem(item.margem_pct) + '18',
+                              }}
+                            >
+                              {item.custo > 0 ? `${item.margem_pct}%` : <span className="text-slate-300 text-xs font-normal">sem custo</span>}
+                            </span>
+                          </div>
+                          <div className="text-right text-sm text-slate-600">{item.quantidade}</div>
+                          <div className="text-right">
+                            <span className="text-sm font-bold" style={{ color: corMargem(item.margem_pct) }}>
+                              {item.custo > 0 ? formatarReal(item.lucro_total) : <span className="text-slate-300 text-xs font-normal">—</span>}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="divide-y divide-slate-50">
+
+                  {/* ── Mobile: cards ── */}
+                  <div className="md:hidden divide-y divide-slate-100">
                     {statsMargem.map((item) => (
-                      <div key={item.item_nome} className="grid grid-cols-7 gap-2 px-5 py-3 hover:bg-slate-50 transition-colors items-center">
-                        <div className="col-span-2 min-w-0">
-                          <p className="font-medium text-sm text-slate-800 truncate">{item.item_nome}</p>
-                          <p className="text-xs text-slate-400">{ESTACAO_EMOJI[item.estacao]} {item.estacao}</p>
-                        </div>
-                        <div className="text-right text-sm text-slate-600">{formatarReal(item.preco)}</div>
-                        <div className="text-right text-sm text-slate-600">
-                          {item.custo > 0 ? formatarReal(item.custo) : <span className="text-slate-300 text-xs">—</span>}
-                        </div>
-                        <div className="text-right">
+                      <div key={item.item_nome} className="px-4 py-3">
+                        {/* Nome + estação + badge margem */}
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm text-slate-800 leading-tight">{item.item_nome}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">{ESTACAO_EMOJI[item.estacao]} {item.estacao}</p>
+                          </div>
                           <span
-                            className="text-sm font-bold px-2 py-0.5 rounded-full"
+                            className="shrink-0 text-sm font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
                             style={{
                               color: corMargem(item.margem_pct),
                               background: corMargem(item.margem_pct) + '18',
                             }}
                           >
-                            {item.custo > 0 ? `${item.margem_pct}%` : <span className="text-slate-300 text-xs font-normal">sem custo</span>}
+                            {item.custo > 0 ? `${item.margem_pct}%` : 'sem custo'}
                           </span>
                         </div>
-                        <div className="text-right text-sm text-slate-600">{item.quantidade}</div>
-                        <div className="text-right">
-                          <span className="text-sm font-bold" style={{ color: corMargem(item.margem_pct) }}>
-                            {item.custo > 0 ? formatarReal(item.lucro_total) : <span className="text-slate-300 text-xs font-normal">—</span>}
-                          </span>
+                        {/* Grid 2×2 de métricas */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-slate-50 rounded-lg px-3 py-2">
+                            <p className="text-xs text-slate-400 font-medium">Preço venda</p>
+                            <p className="text-sm font-bold text-slate-700">{formatarReal(item.preco)}</p>
+                          </div>
+                          <div className="bg-slate-50 rounded-lg px-3 py-2">
+                            <p className="text-xs text-slate-400 font-medium">Custo unit.</p>
+                            <p className="text-sm font-bold text-slate-700">
+                              {item.custo > 0 ? formatarReal(item.custo) : <span className="text-slate-300">—</span>}
+                            </p>
+                          </div>
+                          <div className="bg-slate-50 rounded-lg px-3 py-2">
+                            <p className="text-xs text-slate-400 font-medium">Qtd vendida</p>
+                            <p className="text-sm font-bold text-slate-700">{item.quantidade} un.</p>
+                          </div>
+                          <div className="bg-slate-50 rounded-lg px-3 py-2">
+                            <p className="text-xs text-slate-400 font-medium">Lucro total</p>
+                            <p className="text-sm font-bold" style={{ color: item.custo > 0 ? corMargem(item.margem_pct) : undefined }}>
+                              {item.custo > 0 ? formatarReal(item.lucro_total) : <span className="text-slate-300">—</span>}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))}
