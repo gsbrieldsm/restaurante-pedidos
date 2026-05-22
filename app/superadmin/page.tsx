@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, Users, TrendingUp, DollarSign, Store, ExternalLink, ShieldOff, ShieldCheck, Settings2 } from 'lucide-react'
+import { LogOut, Users, TrendingUp, DollarSign, Store, ExternalLink, ShieldOff, ShieldCheck, Settings2, RefreshCw } from 'lucide-react'
 
 type Tenant = {
   id: string
@@ -20,6 +20,7 @@ type Tenant = {
 }
 
 const MENSALIDADE = 550
+const IMPLEMENTACAO = 2000
 
 export default function SuperAdminPage() {
   const router = useRouter()
@@ -34,11 +35,9 @@ export default function SuperAdminPage() {
   }, [])
 
   async function carregar() {
+    setCarregando(true)
     const res = await fetch('/api/superadmin/tenants')
-    if (res.status === 401) {
-      router.push('/superadmin/login')
-      return
-    }
+    if (res.status === 401) { router.push('/superadmin/login'); return }
     const { tenants } = await res.json()
     setTenants(tenants ?? [])
     setCarregando(false)
@@ -63,16 +62,12 @@ export default function SuperAdminPage() {
   async function toggleStatus(tenant: Tenant) {
     const novoStatus = tenant.status === 'ativo' ? 'suspenso' : 'ativo'
     setAtualizando(tenant.id)
-
     await fetch('/api/superadmin/tenants', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: tenant.id, status: novoStatus }),
     })
-
-    setTenants((prev) =>
-      prev.map((t) => t.id === tenant.id ? { ...t, status: novoStatus } : t)
-    )
+    setTenants((prev) => prev.map((t) => t.id === tenant.id ? { ...t, status: novoStatus } : t))
     setAtualizando(null)
   }
 
@@ -83,152 +78,183 @@ export default function SuperAdminPage() {
 
   const ativos = tenants.filter((t) => t.status === 'ativo' && t.plano_aceito_em)
   const mrr = ativos.length * MENSALIDADE
+  const receitaTotal = ativos.length * IMPLEMENTACAO + mrr
   const totalPedidos = tenants.reduce((s, t) => s + t.total_pedidos, 0)
   const totalFaturado = tenants.reduce((s, t) => s + t.faturamento_total, 0)
 
   if (carregando) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <p className="text-slate-400 text-sm">Carregando...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a1628' }}>
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 rounded-full border-2 border-teal-500 border-t-transparent animate-spin mx-auto" />
+          <p className="text-teal-400/60 text-sm">Carregando painel...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      {/* Header */}
-      <header className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-black tracking-widest uppercase text-teal-400">Meu Menu+</p>
-          <h1 className="text-lg font-bold text-white leading-tight">Painel Master</h1>
+    <div className="min-h-screen text-white" style={{ background: '#0a1628' }}>
+
+      {/* ── Header com gradiente da marca ── */}
+      <header style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}>
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20">
+              <span className="text-lg font-black text-white">M</span>
+            </div>
+            <div>
+              <p className="text-xs font-black tracking-widest uppercase text-teal-300 leading-none">Meu Menu+</p>
+              <h1 className="text-xl font-black text-white leading-tight">Painel Master</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={carregar}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white/70 hover:text-white"
+              title="Atualizar"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={sair}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-red-500/30 border border-white/20 hover:border-red-500/40 transition-all text-sm text-white/80 hover:text-white"
+            >
+              <LogOut className="w-4 h-4" /> Sair
+            </button>
+          </div>
         </div>
-        <button
-          onClick={sair}
-          className="flex items-center gap-2 text-sm text-slate-400 hover:text-red-400 transition-colors"
-        >
-          <LogOut className="w-4 h-4" /> Sair
-        </button>
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
-        {/* Cards de resumo */}
+        {/* ── Cards de métricas ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card icon={<Store className="w-5 h-5" />} label="Restaurantes ativos" value={ativos.length.toString()} color="teal" />
-          <Card icon={<Users className="w-5 h-5" />} label="Total cadastros" value={tenants.length.toString()} color="blue" />
-          <Card icon={<DollarSign className="w-5 h-5" />} label="MRR estimado" value={`R$ ${mrr.toLocaleString('pt-BR')}`} color="green" />
-          <Card icon={<TrendingUp className="w-5 h-5" />} label="Pedidos gerados" value={totalPedidos.toLocaleString('pt-BR')} color="purple" />
+          <MetricCard
+            icon={<Store className="w-5 h-5" />}
+            label="Restaurantes ativos"
+            value={ativos.length.toString()}
+            sub={`${tenants.length} total`}
+            accent="#1A9B8A"
+          />
+          <MetricCard
+            icon={<DollarSign className="w-5 h-5" />}
+            label="MRR"
+            value={`R$ ${mrr.toLocaleString('pt-BR')}`}
+            sub={`${ativos.length} × R$ 550/mês`}
+            accent="#22c55e"
+          />
+          <MetricCard
+            icon={<TrendingUp className="w-5 h-5" />}
+            label="Receita total est."
+            value={`R$ ${receitaTotal.toLocaleString('pt-BR')}`}
+            sub="impl. + mensalidades"
+            accent="#f59e0b"
+          />
+          <MetricCard
+            icon={<Users className="w-5 h-5" />}
+            label="Pedidos gerados"
+            value={totalPedidos.toLocaleString('pt-BR')}
+            sub={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em vendas`}
+            accent="#8b5cf6"
+          />
         </div>
 
-        {/* Tabela de tenants */}
+        {/* ── Tabela de restaurantes ── */}
         <div>
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            Todos os restaurantes ({tenants.length})
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-white/50 uppercase tracking-widest">
+              Restaurantes <span className="text-teal-400 ml-1">({tenants.length})</span>
+            </h2>
+          </div>
 
-          <div className="rounded-2xl border border-slate-800 overflow-hidden">
+          <div className="rounded-2xl overflow-hidden border border-white/8" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+
             {/* Desktop */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/50">
-                    <th className="text-left px-5 py-3 text-slate-400 font-medium">Restaurante</th>
-                    <th className="text-left px-5 py-3 text-slate-400 font-medium">Email</th>
-                    <th className="text-left px-5 py-3 text-slate-400 font-medium">Slug</th>
-                    <th className="text-center px-4 py-3 text-slate-400 font-medium">Mesas</th>
-                    <th className="text-center px-4 py-3 text-slate-400 font-medium">Pedidos</th>
-                    <th className="text-right px-4 py-3 text-slate-400 font-medium">Faturado</th>
-                    <th className="text-center px-4 py-3 text-slate-400 font-medium">Plano</th>
-                    <th className="text-center px-4 py-3 text-slate-400 font-medium">Status</th>
-                    <th className="text-center px-4 py-3 text-slate-400 font-medium">Cadastro</th>
-                    <th className="px-4 py-3" />
+                  <tr style={{ background: 'rgba(26,155,138,0.08)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                    {['Restaurante', 'Email', 'Slug', 'Mesas', 'Pedidos', 'Faturado', 'Plano', 'Status', 'Cadastro', ''].map((h, i) => (
+                      <th key={i} className={`px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-white/40 ${i >= 3 && i <= 5 ? 'text-center' : i === 5 ? 'text-right' : 'text-left'}`}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {tenants.map((t) => (
-                    <tr key={t.id} className="bg-slate-900 hover:bg-slate-800/60 transition-colors">
+                <tbody>
+                  {tenants.map((t, idx) => (
+                    <tr
+                      key={t.id}
+                      style={{ background: idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                      className="hover:bg-teal-500/5 transition-colors"
+                    >
                       <td className="px-5 py-4">
-                        <p className="font-semibold text-white">{t.nome_restaurante}</p>
-                        <p className="text-slate-500 text-xs">{t.nome}</p>
+                        <p className="font-bold text-white">{t.nome_restaurante}</p>
+                        <p className="text-white/40 text-xs mt-0.5">{t.nome}</p>
                       </td>
-                      <td className="px-5 py-4 text-slate-300">{t.email}</td>
+                      <td className="px-5 py-4 text-white/60 text-xs">{t.email}</td>
                       <td className="px-5 py-4">
-                        <span className="font-mono text-teal-400 text-xs bg-teal-950/40 px-2 py-0.5 rounded">
+                        <span className="font-mono text-xs px-2.5 py-1 rounded-lg" style={{ background: 'rgba(26,155,138,0.15)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.3)' }}>
                           {t.slug}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-center text-slate-300">{t.total_mesas}</td>
-                      <td className="px-4 py-4 text-center text-slate-300">{t.total_pedidos}</td>
-                      <td className="px-4 py-4 text-right text-slate-300">
+                      <td className="px-4 py-4 text-center font-semibold text-white/70">{t.total_mesas}</td>
+                      <td className="px-4 py-4 text-center font-semibold text-white/70">{t.total_pedidos}</td>
+                      <td className="px-4 py-4 text-right font-semibold text-white/70">
                         R$ {t.faturamento_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-4 py-4 text-center">
                         {t.plano_aceito_em ? (
-                          <span className="text-xs bg-green-900/40 text-green-400 border border-green-900/60 px-2 py-0.5 rounded-full">
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
                             {t.plano}
                           </span>
                         ) : (
-                          <span className="text-xs bg-yellow-900/40 text-yellow-400 border border-yellow-900/60 px-2 py-0.5 rounded-full">
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}>
                             pendente
                           </span>
                         )}
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
                           t.status === 'ativo'
-                            ? 'bg-teal-900/40 text-teal-400 border-teal-900/60'
-                            : 'bg-red-900/40 text-red-400 border-red-900/60'
-                        }`}>
+                            ? ''
+                            : 'text-red-400'
+                        }`} style={t.status === 'ativo' ? { background: 'rgba(26,155,138,0.15)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.3)' } : { background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}>
                           {t.status}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-center text-slate-500 text-xs">
+                      <td className="px-4 py-4 text-center text-white/30 text-xs">
                         {new Date(t.criado_em).toLocaleDateString('pt-BR')}
                       </td>
                       <td className="px-4 py-4">
-                        <div className="flex items-center gap-2 justify-end">
+                        <div className="flex items-center gap-1.5 justify-end">
                           {t.total_mesas === 0 && (
-                            <button
-                              onClick={() => forcarSetup(t)}
-                              disabled={inicializando === t.id}
+                            <button onClick={() => forcarSetup(t)} disabled={inicializando === t.id}
                               title="Inicializar mesas e config"
-                              className="text-yellow-500 hover:text-yellow-300 transition-colors disabled:opacity-40"
+                              className="p-1.5 rounded-lg transition-colors disabled:opacity-40"
+                              style={{ color: '#f59e0b' }}
                             >
                               <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
                             </button>
                           )}
-                          <a
-                            href={`https://${t.slug}.meumenu.com.br/admin`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-slate-500 hover:text-teal-400 transition-colors"
+                          <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer"
                             title="Abrir painel do cliente"
-                          >
+                            className="p-1.5 rounded-lg text-white/30 hover:text-teal-400 transition-colors">
                             <ExternalLink className="w-4 h-4" />
                           </a>
-                          <button
-                            onClick={() => toggleStatus(t)}
-                            disabled={atualizando === t.id}
-                            title={t.status === 'ativo' ? 'Suspender acesso' : 'Reativar acesso'}
-                            className={`transition-colors disabled:opacity-40 ${
-                              t.status === 'ativo'
-                                ? 'text-slate-500 hover:text-red-400'
-                                : 'text-slate-500 hover:text-green-400'
-                            }`}
-                          >
-                            {t.status === 'ativo'
-                              ? <ShieldOff className="w-4 h-4" />
-                              : <ShieldCheck className="w-4 h-4" />
-                            }
+                          <button onClick={() => toggleStatus(t)} disabled={atualizando === t.id}
+                            title={t.status === 'ativo' ? 'Suspender' : 'Reativar'}
+                            className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${t.status === 'ativo' ? 'text-white/30 hover:text-red-400' : 'text-white/30 hover:text-green-400'}`}>
+                            {t.status === 'ativo' ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                           </button>
                         </div>
                       </td>
                     </tr>
                   ))}
-
                   {tenants.length === 0 && (
                     <tr>
-                      <td colSpan={10} className="px-5 py-12 text-center text-slate-500">
+                      <td colSpan={10} className="px-5 py-16 text-center text-white/30">
                         Nenhum restaurante cadastrado ainda.
                       </td>
                     </tr>
@@ -237,58 +263,49 @@ export default function SuperAdminPage() {
               </table>
             </div>
 
-            {/* Mobile: cards */}
-            <div className="md:hidden divide-y divide-slate-800">
+            {/* Mobile */}
+            <div className="md:hidden divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
               {tenants.map((t) => (
-                <div key={t.id} className="bg-slate-900 px-5 py-4 space-y-3">
+                <div key={t.id} className="px-5 py-4 space-y-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-semibold text-white">{t.nome_restaurante}</p>
-                      <p className="text-slate-400 text-xs">{t.email}</p>
+                      <p className="font-bold text-white">{t.nome_restaurante}</p>
+                      <p className="text-white/40 text-xs mt-0.5">{t.email}</p>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${
-                      t.status === 'ativo'
-                        ? 'bg-teal-900/40 text-teal-400 border-teal-900/60'
-                        : 'bg-red-900/40 text-red-400 border-red-900/60'
-                    }`}>
+                    <span className="text-xs px-2.5 py-1 rounded-full font-semibold shrink-0"
+                      style={t.status === 'ativo'
+                        ? { background: 'rgba(26,155,138,0.15)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.3)' }
+                        : { background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>
                       {t.status}
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-slate-800 rounded-xl py-2">
-                      <p className="text-white font-bold">{t.total_mesas}</p>
-                      <p className="text-slate-500 text-xs">mesas</p>
-                    </div>
-                    <div className="bg-slate-800 rounded-xl py-2">
-                      <p className="text-white font-bold">{t.total_pedidos}</p>
-                      <p className="text-slate-500 text-xs">pedidos</p>
-                    </div>
-                    <div className="bg-slate-800 rounded-xl py-2">
-                      <p className="text-white font-bold text-xs">
-                        R$ {(t.faturamento_total / 100).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
-                      </p>
-                      <p className="text-slate-500 text-xs">faturado</p>
-                    </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {[
+                      { val: t.total_mesas, lbl: 'mesas' },
+                      { val: t.total_pedidos, lbl: 'pedidos' },
+                      { val: `R$${(t.faturamento_total).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`, lbl: 'faturado' },
+                    ].map(({ val, lbl }) => (
+                      <div key={lbl} className="rounded-xl py-2.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <p className="font-bold text-white text-sm">{val}</p>
+                        <p className="text-white/40 text-xs">{lbl}</p>
+                      </div>
+                    ))}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-teal-400 text-xs bg-teal-950/40 px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(26,155,138,0.15)', color: '#1A9B8A' }}>
                       {t.slug}
                     </span>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       {t.total_mesas === 0 && (
-                        <button onClick={() => forcarSetup(t)} disabled={inicializando === t.id}
-                          title="Inicializar mesas" className="text-yellow-500 hover:text-yellow-300 disabled:opacity-40">
+                        <button onClick={() => forcarSetup(t)} disabled={inicializando === t.id} style={{ color: '#f59e0b' }} className="disabled:opacity-40">
                           <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
                         </button>
                       )}
-                      <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer"
-                        className="text-slate-500 hover:text-teal-400">
+                      <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer" className="text-white/30 hover:text-teal-400">
                         <ExternalLink className="w-4 h-4" />
                       </a>
                       <button onClick={() => toggleStatus(t)} disabled={atualizando === t.id}
-                        className={`transition-colors disabled:opacity-40 ${
-                          t.status === 'ativo' ? 'text-slate-500 hover:text-red-400' : 'text-slate-500 hover:text-green-400'
-                        }`}>
+                        className={`disabled:opacity-40 ${t.status === 'ativo' ? 'text-white/30 hover:text-red-400' : 'text-white/30 hover:text-green-400'}`}>
                         {t.status === 'ativo' ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                       </button>
                     </div>
@@ -299,31 +316,30 @@ export default function SuperAdminPage() {
           </div>
         </div>
 
-        {/* Rodapé com MRR breakdown */}
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6">
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Receita estimada</h3>
+        {/* ── Breakdown de receita ── */}
+        <div className="rounded-2xl p-6 border" style={{ background: 'rgba(26,155,138,0.06)', borderColor: 'rgba(26,155,138,0.2)' }}>
+          <h3 className="text-xs font-bold uppercase tracking-widest mb-5" style={{ color: '#1A9B8A' }}>
+            Breakdown de receita
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <p className="text-slate-500 text-sm">Implementações vendidas</p>
-              <p className="text-2xl font-bold text-white mt-1">
-                R$ {(ativos.length * 2000).toLocaleString('pt-BR')}
-              </p>
-              <p className="text-slate-500 text-xs mt-0.5">{ativos.length} × R$ 2.000</p>
-            </div>
-            <div>
-              <p className="text-slate-500 text-sm">MRR (mensalidades)</p>
-              <p className="text-2xl font-bold text-teal-400 mt-1">
-                R$ {mrr.toLocaleString('pt-BR')}
-              </p>
-              <p className="text-slate-500 text-xs mt-0.5">{ativos.length} × R$ 550/mês</p>
-            </div>
-            <div>
-              <p className="text-slate-500 text-sm">Volume processado pelos clientes</p>
-              <p className="text-2xl font-bold text-green-400 mt-1">
-                R$ {totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-              <p className="text-slate-500 text-xs mt-0.5">soma de todos os pedidos</p>
-            </div>
+            <RevenueItem
+              label="Implementações"
+              value={`R$ ${(ativos.length * IMPLEMENTACAO).toLocaleString('pt-BR')}`}
+              sub={`${ativos.length} × R$ 2.000`}
+              color="#f59e0b"
+            />
+            <RevenueItem
+              label="Mensalidades (MRR)"
+              value={`R$ ${mrr.toLocaleString('pt-BR')}`}
+              sub={`${ativos.length} × R$ 550/mês`}
+              color="#1A9B8A"
+            />
+            <RevenueItem
+              label="Volume dos clientes"
+              value={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              sub="soma de todos os pedidos"
+              color="#8b5cf6"
+            />
           </div>
         </div>
 
@@ -332,26 +348,27 @@ export default function SuperAdminPage() {
   )
 }
 
-function Card({ icon, label, value, color }: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  color: 'teal' | 'blue' | 'green' | 'purple'
+function MetricCard({ icon, label, value, sub, accent }: {
+  icon: React.ReactNode; label: string; value: string; sub: string; accent: string
 }) {
-  const colors = {
-    teal:   'bg-teal-500/10 text-teal-400 border-teal-900/40',
-    blue:   'bg-blue-500/10 text-blue-400 border-blue-900/40',
-    green:  'bg-green-500/10 text-green-400 border-green-900/40',
-    purple: 'bg-purple-500/10 text-purple-400 border-purple-900/40',
-  }
-
   return (
-    <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5">
-      <div className={`inline-flex p-2 rounded-xl border ${colors[color]} mb-3`}>
+    <div className="rounded-2xl p-5 border" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+      <div className="inline-flex p-2 rounded-xl mb-3" style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}>
         {icon}
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="text-slate-500 text-xs mt-0.5">{label}</p>
+      <p className="text-2xl font-black text-white">{value}</p>
+      <p className="text-white/40 text-xs mt-0.5">{label}</p>
+      <p className="text-xs mt-1 font-medium" style={{ color: accent }}>{sub}</p>
+    </div>
+  )
+}
+
+function RevenueItem({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
+  return (
+    <div>
+      <p className="text-white/40 text-sm mb-1">{label}</p>
+      <p className="text-2xl font-black" style={{ color }}>{value}</p>
+      <p className="text-white/30 text-xs mt-0.5">{sub}</p>
     </div>
   )
 }
