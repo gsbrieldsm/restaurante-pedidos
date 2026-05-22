@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hashSenha } from '@/lib/auth-utils'
+import { getTenantId } from '@/lib/tenant'
 
 // GET — lista todos os usuários (sem senha_hash)
 export async function GET() {
   const supabase = createServiceClient()
+  const tenantId = await getTenantId()
 
-  const { data, error } = await supabase
+  let q = supabase
     .from('usuarios')
     .select('id, nome, email, cargo, ativo, criado_em')
     .order('criado_em', { ascending: true })
+
+  if (tenantId) q = (q as any).eq('tenant_id', tenantId)
+
+  const { data, error } = await q
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -21,6 +27,7 @@ export async function GET() {
 // POST — cria novo usuário
 export async function POST(req: Request) {
   const supabase = createServiceClient()
+  const tenantId = await getTenantId()
   const { nome, email, senha, cargo } = await req.json() as {
     nome: string
     email: string
@@ -43,6 +50,7 @@ export async function POST(req: Request) {
       email:      email.toLowerCase().trim(),
       senha_hash: hashSenha(senha),
       cargo,
+      ...(tenantId ? { tenant_id: tenantId } : {}),
     })
     .select('id, nome, email, cargo, ativo, criado_em')
     .single()

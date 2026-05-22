@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   if (email) {
     const { data: usuario } = await supabase
       .from('usuarios')
-      .select('id, nome, cargo, senha_hash, ativo')
+      .select('id, nome, cargo, senha_hash, ativo, tenant_id')
       .eq('email', email.toLowerCase().trim())
       .single()
 
@@ -48,6 +48,10 @@ export async function POST(req: Request) {
     const resp = NextResponse.json({ ok: true, nome: usuario.nome, cargo: usuario.cargo })
     resp.cookies.set('admin_auth', `mmu:${usuario.id}`, COOKIE_OPTS)
     resp.cookies.set('mmu_cargo', usuario.cargo, CARGO_OPTS)
+    // Propaga tenant_id para que estação/garçom filtrem pelo tenant correto
+    if (usuario.tenant_id) {
+      resp.cookies.set('tenant_id', usuario.tenant_id, COOKIE_OPTS)
+    }
     return resp
   }
 
@@ -78,5 +82,7 @@ export async function DELETE() {
   const resp = NextResponse.json({ ok: true })
   resp.cookies.delete('admin_auth')
   resp.cookies.delete('mmu_cargo')
+  resp.cookies.delete('tenant_id')
+  resp.cookies.delete('tenant_slug')
   return resp
 }
