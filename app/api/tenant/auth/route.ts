@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hashSenha, verificarSenha } from '@/lib/auth-utils'
+import { Resend } from 'resend'
+import { emailBoasVindas } from '@/lib/email/boas-vindas'
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -76,6 +78,22 @@ export async function POST(req: Request) {
 
     if (error || !tenant) {
       return NextResponse.json({ error: 'Erro ao criar conta. Tente novamente.' }, { status: 500 })
+    }
+
+    // Dispara e-mail de boas-vindas (não bloqueia a resposta se falhar)
+    if (process.env.RESEND_API_KEY) {
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      resend.emails.send({
+        from:    process.env.RESEND_FROM ?? 'Meu Menu+ <noreply@meumenu.com.br>',
+        to:      tenant.email,
+        subject: `Bem-vindo ao Meu Menu+, ${tenant.nome}! 🎉`,
+        html:    emailBoasVindas({
+          nome:             tenant.nome,
+          nome_restaurante: tenant.nome_restaurante,
+          email:            tenant.email,
+          slug:             tenant.slug,
+        }),
+      }).catch((err) => console.error('[resend] erro ao enviar e-mail:', err))
     }
 
     const resp = NextResponse.json({ ok: true, tenant })

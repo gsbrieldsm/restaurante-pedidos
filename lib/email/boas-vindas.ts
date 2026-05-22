@@ -1,0 +1,108 @@
+interface BoasVindasProps {
+  nome:             string
+  nome_restaurante: string
+  email:            string
+  slug:             string
+}
+
+export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProps): string {
+  const painelUrl = `https://${slug}.meumenu.com.br/admin`
+
+  return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bem-vindo ao Meu Menu+</title>
+</head>
+<body style="margin:0;padding:0;background:#F0FAFA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FAFA;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#0a2420 0%,#0f3d35 50%,#1A9B8A 100%);border-radius:16px 16px 0 0;padding:40px 40px 32px;">
+              <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#5eead4;">Meu Menu+</p>
+              <h1 style="margin:0;font-size:28px;font-weight:900;color:#ffffff;line-height:1.2;">
+                Bem-vindo, ${nome}! 🎉
+              </h1>
+              <p style="margin:10px 0 0;font-size:14px;color:rgba(255,255,255,0.6);">
+                Sua conta foi criada com sucesso.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background:#ffffff;padding:36px 40px;border-radius:0 0 16px 16px;">
+
+              <p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.6;">
+                O <strong>${nome_restaurante}</strong> já está configurado no Meu Menu+.
+                Seu cardápio digital com QR Code está pronto para receber os primeiros pedidos.
+              </p>
+
+              <!-- Resumo do plano -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FAFA;border-radius:12px;padding:20px;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:0 0 12px;">
+                    <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;">Plano contratado</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border-bottom:1px solid #e2e8f0;padding:8px 0;">
+                    <table width="100%"><tr>
+                      <td style="font-size:14px;color:#64748b;">Implementação</td>
+                      <td align="right" style="font-size:14px;font-weight:700;color:#0f172a;">R$ 2.000,00</td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;">
+                    <table width="100%"><tr>
+                      <td style="font-size:14px;color:#64748b;">Mensalidade</td>
+                      <td align="right" style="font-size:14px;font-weight:700;color:#0f172a;">R$ 550,00 / mês</td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td align="center">
+                    <a href="${painelUrl}"
+                       style="display:inline-block;background:#1A9B8A;color:#000000;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:12px;">
+                      Acessar meu painel →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 6px;font-size:13px;color:#94a3b8;text-align:center;">
+                Seu painel está em:
+              </p>
+              <p style="margin:0;font-size:13px;font-family:monospace;color:#1A9B8A;text-align:center;">
+                ${painelUrl}
+              </p>
+
+              <hr style="border:none;border-top:1px solid #f1f5f9;margin:28px 0;" />
+
+              <p style="margin:0;font-size:12px;color:#cbd5e1;text-align:center;line-height:1.6;">
+                Dúvidas? Fale com a gente pelo WhatsApp.<br />
+                Meu Menu+ — Sistema de pedidos por QR Code.
+              </p>
+
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim()
+}
