@@ -86,23 +86,23 @@ export default function SuperAdminPage() {
 
   if (carregando) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a1628' }}>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 rounded-full border-2 border-teal-500 border-t-transparent animate-spin mx-auto" />
-          <p className="text-teal-400/60 text-sm">Carregando painel...</p>
+          <p className="text-slate-400 text-sm">Carregando painel...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen text-white" style={{ background: '#0a1628' }}>
+    <div className="min-h-screen bg-slate-100">
 
-      {/* ── Header com gradiente da marca ── */}
+      {/* ── Header gradiente da marca ── */}
       <header style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}>
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 border border-white/20">
               <span className="text-lg font-black text-white">M</span>
             </div>
             <div>
@@ -111,243 +111,202 @@ export default function SuperAdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={carregar}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white/70 hover:text-white"
-              title="Atualizar"
-            >
+            <button onClick={carregar} title="Atualizar"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white/80 hover:text-white">
               <RefreshCw className="w-4 h-4" />
             </button>
-            <button
-              onClick={sair}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-red-500/30 border border-white/20 hover:border-red-500/40 transition-all text-sm text-white/80 hover:text-white"
-            >
+            <button onClick={sair}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-red-500/30 border border-white/20 hover:border-red-400/40 transition-all text-sm text-white font-medium">
               <LogOut className="w-4 h-4" /> Sair
             </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
         {/* ── Cards de métricas ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricCard
-            icon={<Store className="w-5 h-5" />}
-            label="Restaurantes ativos"
-            value={ativos.length.toString()}
-            sub={`${tenants.length} total`}
-            accent="#1A9B8A"
-          />
-          <MetricCard
-            icon={<DollarSign className="w-5 h-5" />}
-            label="MRR"
-            value={`R$ ${mrr.toLocaleString('pt-BR')}`}
-            sub={`${ativos.length} × R$ 550/mês`}
-            accent="#22c55e"
-          />
-          <MetricCard
-            icon={<TrendingUp className="w-5 h-5" />}
-            label="Receita total est."
-            value={`R$ ${receitaTotal.toLocaleString('pt-BR')}`}
-            sub="impl. + mensalidades"
-            accent="#f59e0b"
-          />
-          <MetricCard
-            icon={<Users className="w-5 h-5" />}
-            label="Pedidos gerados"
-            value={totalPedidos.toLocaleString('pt-BR')}
-            sub={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em vendas`}
-            accent="#8b5cf6"
-          />
+          <MetricCard icon={<Store className="w-5 h-5" />} label="Restaurantes ativos"
+            value={ativos.length.toString()} sub={`${tenants.length} total`} accent="#1A9B8A" />
+          <MetricCard icon={<DollarSign className="w-5 h-5" />} label="MRR"
+            value={`R$ ${mrr.toLocaleString('pt-BR')}`} sub={`${ativos.length} × R$ 550/mês`} accent="#16a34a" />
+          <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="Receita total est."
+            value={`R$ ${receitaTotal.toLocaleString('pt-BR')}`} sub="impl. + mensalidades" accent="#d97706" />
+          <MetricCard icon={<Users className="w-5 h-5" />} label="Pedidos gerados"
+            value={totalPedidos.toLocaleString('pt-BR')} sub={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em vendas`} accent="#7c3aed" />
         </div>
 
         {/* ── Tabela de restaurantes ── */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-white uppercase tracking-widest">
-              Restaurantes <span className="ml-1" style={{ color: '#1A9B8A' }}>({tenants.length})</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="font-bold text-slate-800">
+              Restaurantes
+              <span className="ml-2 text-sm font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-600">{tenants.length}</span>
             </h2>
           </div>
 
-          <div className="rounded-2xl overflow-hidden border border-white/8" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-
-            {/* Desktop */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr style={{ background: 'rgba(26,155,138,0.08)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                    {['Restaurante', 'Email', 'Slug', 'Mesas', 'Pedidos', 'Faturado', 'Plano', 'Status', 'Cadastro', ''].map((h, i) => (
-                      <th key={i} className={`px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-white/60 ${i >= 3 && i <= 5 ? 'text-center' : i === 5 ? 'text-right' : 'text-left'}`}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenants.map((t, idx) => (
-                    <tr
-                      key={t.id}
-                      style={{ background: idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-                      className="hover:bg-teal-500/5 transition-colors"
-                    >
-                      <td className="px-5 py-4">
-                        <p className="font-bold text-white">{t.nome_restaurante}</p>
-                        <p className="text-white/40 text-xs mt-0.5">{t.nome}</p>
-                      </td>
-                      <td className="px-5 py-4 text-white text-xs">{t.email}</td>
-                      <td className="px-5 py-4">
-                        <span className="font-mono text-xs px-2.5 py-1 rounded-lg whitespace-nowrap" style={{ background: 'rgba(26,155,138,0.15)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.3)' }}>
-                          {t.slug}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-center font-semibold text-white">{t.total_mesas}</td>
-                      <td className="px-4 py-4 text-center font-semibold text-white">{t.total_pedidos}</td>
-                      <td className="px-4 py-4 text-right font-semibold text-white">
-                        R$ {t.faturamento_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        {t.plano_aceito_em ? (
-                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
-                            {t.plano}
-                          </span>
-                        ) : (
-                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}>
-                            pendente
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
-                          t.status === 'ativo'
-                            ? ''
-                            : 'text-red-400'
-                        }`} style={t.status === 'ativo' ? { background: 'rgba(26,155,138,0.15)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.3)' } : { background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                          {t.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-center text-white text-xs">
-                        {new Date(t.criado_em).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-1.5 justify-end">
-                          {t.total_mesas === 0 && (
-                            <button onClick={() => forcarSetup(t)} disabled={inicializando === t.id}
-                              title="Inicializar mesas e config"
-                              className="p-1.5 rounded-lg transition-colors disabled:opacity-40"
-                              style={{ color: '#f59e0b' }}
-                            >
-                              <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
-                            </button>
-                          )}
-                          <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer"
-                            title="Abrir painel do cliente"
-                            className="p-1.5 rounded-lg text-white/30 hover:text-teal-400 transition-colors">
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                          <button onClick={() => toggleStatus(t)} disabled={atualizando === t.id}
-                            title={t.status === 'ativo' ? 'Suspender' : 'Reativar'}
-                            className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${t.status === 'ativo' ? 'text-white/30 hover:text-red-400' : 'text-white/30 hover:text-green-400'}`}>
-                            {t.status === 'ativo' ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+          {/* Desktop */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  {['Restaurante', 'Email', 'Slug', 'Mesas', 'Pedidos', 'Faturado', 'Plano', 'Status', 'Cadastro', ''].map((h, i) => (
+                    <th key={i} className={`px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 ${[3,4,5,6,7,8].includes(i) ? 'text-center' : i === 5 ? 'text-right' : 'text-left'}`}>
+                      {h}
+                    </th>
                   ))}
-                  {tenants.length === 0 && (
-                    <tr>
-                      <td colSpan={10} className="px-5 py-16 text-center text-white/30">
-                        Nenhum restaurante cadastrado ainda.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile */}
-            <div className="md:hidden divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-              {tenants.map((t) => (
-                <div key={t.id} className="px-5 py-4 space-y-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-bold text-white">{t.nome_restaurante}</p>
-                      <p className="text-white/40 text-xs mt-0.5">{t.email}</p>
-                    </div>
-                    <span className="text-xs px-2.5 py-1 rounded-full font-semibold shrink-0"
-                      style={t.status === 'ativo'
-                        ? { background: 'rgba(26,155,138,0.15)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.3)' }
-                        : { background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>
-                      {t.status}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    {[
-                      { val: t.total_mesas, lbl: 'mesas' },
-                      { val: t.total_pedidos, lbl: 'pedidos' },
-                      { val: `R$${(t.faturamento_total).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`, lbl: 'faturado' },
-                    ].map(({ val, lbl }) => (
-                      <div key={lbl} className="rounded-xl py-2.5" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                        <p className="font-bold text-white text-sm">{val}</p>
-                        <p className="text-white/40 text-xs">{lbl}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(26,155,138,0.15)', color: '#1A9B8A' }}>
-                      {t.slug}
-                    </span>
-                    <div className="flex gap-2">
-                      {t.total_mesas === 0 && (
-                        <button onClick={() => forcarSetup(t)} disabled={inicializando === t.id} style={{ color: '#f59e0b' }} className="disabled:opacity-40">
-                          <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
-                        </button>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {tenants.map((t) => (
+                  <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-5 py-4">
+                      <p className="font-bold text-slate-800">{t.nome_restaurante}</p>
+                      <p className="text-slate-400 text-xs mt-0.5">{t.nome}</p>
+                    </td>
+                    <td className="px-5 py-4 text-slate-600 text-xs">{t.email}</td>
+                    <td className="px-5 py-4">
+                      <span className="font-mono text-xs px-2.5 py-1 rounded-lg whitespace-nowrap bg-teal-50 text-teal-700 border border-teal-100">
+                        {t.slug}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-center font-semibold text-slate-700">{t.total_mesas}</td>
+                    <td className="px-4 py-4 text-center font-semibold text-slate-700">{t.total_pedidos}</td>
+                    <td className="px-4 py-4 text-right font-semibold text-slate-700">
+                      R$ {t.faturamento_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      {t.plano_aceito_em ? (
+                        <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-green-50 text-green-700 border border-green-100">
+                          {t.plano}
+                        </span>
+                      ) : (
+                        <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-50 text-amber-700 border border-amber-100">
+                          pendente
+                        </span>
                       )}
-                      <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer" className="text-white/30 hover:text-teal-400">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                      <button onClick={() => toggleStatus(t)} disabled={atualizando === t.id}
-                        className={`disabled:opacity-40 ${t.status === 'ativo' ? 'text-white/30 hover:text-red-400' : 'text-white/30 hover:text-green-400'}`}>
-                        {t.status === 'ativo' ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                      </button>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                        t.status === 'ativo'
+                          ? 'bg-teal-50 text-teal-700 border border-teal-100'
+                          : 'bg-red-50 text-red-600 border border-red-100'
+                      }`}>
+                        {t.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-center text-slate-400 text-xs">
+                      {new Date(t.criado_em).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-1.5 justify-end">
+                        {t.total_mesas === 0 && (
+                          <button onClick={() => forcarSetup(t)} disabled={inicializando === t.id}
+                            title="Inicializar mesas" className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors disabled:opacity-40">
+                            <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
+                          </button>
+                        )}
+                        <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer"
+                          title="Abrir painel do cliente"
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-teal-600 hover:bg-teal-50 transition-colors">
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                        <button onClick={() => toggleStatus(t)} disabled={atualizando === t.id}
+                          title={t.status === 'ativo' ? 'Suspender' : 'Reativar'}
+                          className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${
+                            t.status === 'ativo'
+                              ? 'text-slate-300 hover:text-red-500 hover:bg-red-50'
+                              : 'text-slate-300 hover:text-green-600 hover:bg-green-50'
+                          }`}>
+                          {t.status === 'ativo' ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {tenants.length === 0 && (
+                  <tr>
+                    <td colSpan={10} className="px-5 py-16 text-center text-slate-300">
+                      Nenhum restaurante cadastrado ainda.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {tenants.map((t) => (
+              <div key={t.id} className="px-5 py-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-bold text-slate-800">{t.nome_restaurante}</p>
+                    <p className="text-slate-400 text-xs mt-0.5">{t.email}</p>
+                  </div>
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-semibold shrink-0 ${
+                    t.status === 'ativo' ? 'bg-teal-50 text-teal-700 border border-teal-100' : 'bg-red-50 text-red-600 border border-red-100'
+                  }`}>
+                    {t.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { val: t.total_mesas, lbl: 'mesas' },
+                    { val: t.total_pedidos, lbl: 'pedidos' },
+                    { val: `R$${t.faturamento_total.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`, lbl: 'faturado' },
+                  ].map(({ val, lbl }) => (
+                    <div key={lbl} className="bg-slate-50 rounded-xl py-2.5 border border-slate-100">
+                      <p className="font-bold text-slate-800 text-sm">{val}</p>
+                      <p className="text-slate-400 text-xs">{lbl}</p>
                     </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-100">
+                    {t.slug}
+                  </span>
+                  <div className="flex gap-2">
+                    {t.total_mesas === 0 && (
+                      <button onClick={() => forcarSetup(t)} disabled={inicializando === t.id}
+                        className="text-amber-500 disabled:opacity-40">
+                        <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
+                      </button>
+                    )}
+                    <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer"
+                      className="text-slate-300 hover:text-teal-600">
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <button onClick={() => toggleStatus(t)} disabled={atualizando === t.id}
+                      className={`disabled:opacity-40 ${t.status === 'ativo' ? 'text-slate-300 hover:text-red-500' : 'text-slate-300 hover:text-green-600'}`}>
+                      {t.status === 'ativo' ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* ── Breakdown de receita ── */}
-        <div className="rounded-2xl p-6 border" style={{ background: 'rgba(26,155,138,0.06)', borderColor: 'rgba(26,155,138,0.2)' }}>
-          <h3 className="text-xs font-bold uppercase tracking-widest mb-5" style={{ color: '#1A9B8A' }}>
+        {/* ── Breakdown de receita & uso ── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">
             Breakdown de receita & uso
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <RevenueItem
-              label="Implementações"
+            <RevenueItem label="Implementações"
               value={`R$ ${(ativos.length * IMPLEMENTACAO).toLocaleString('pt-BR')}`}
-              sub={`${ativos.length} × R$ 2.000`}
-              color="#f59e0b"
-            />
-            <RevenueItem
-              label="Mensalidades (MRR)"
+              sub={`${ativos.length} × R$ 2.000`} color="#d97706" />
+            <RevenueItem label="Mensalidades (MRR)"
               value={`R$ ${mrr.toLocaleString('pt-BR')}`}
-              sub={`${ativos.length} × R$ 550/mês`}
-              color="#1A9B8A"
-            />
-            <RevenueItem
-              label="Volume dos clientes"
+              sub={`${ativos.length} × R$ 550/mês`} color="#1A9B8A" />
+            <RevenueItem label="Volume dos clientes"
               value={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-              sub="soma de todos os pedidos"
-              color="#8b5cf6"
-            />
-            <RevenueItem
-              label="Acessos ao cardápio"
+              sub="soma de todos os pedidos" color="#7c3aed" />
+            <RevenueItem label="Acessos ao cardápio"
               value={totalSessoes.toLocaleString('pt-BR')}
-              sub="sessões de mesa abertas"
-              color="#38bdf8"
-            />
+              sub="sessões de mesa abertas" color="#0284c7" />
           </div>
         </div>
 
@@ -360,12 +319,12 @@ function MetricCard({ icon, label, value, sub, accent }: {
   icon: React.ReactNode; label: string; value: string; sub: string; accent: string
 }) {
   return (
-    <div className="rounded-2xl p-5 border" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
-      <div className="inline-flex p-2 rounded-xl mb-3" style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}>
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+      <div className="inline-flex p-2 rounded-xl mb-3" style={{ background: `${accent}18`, color: accent, border: `1px solid ${accent}30` }}>
         {icon}
       </div>
-      <p className="text-2xl font-black text-white">{value}</p>
-      <p className="text-white/70 text-sm mt-0.5">{label}</p>
+      <p className="text-2xl font-black text-slate-800">{value}</p>
+      <p className="text-slate-500 text-sm mt-0.5">{label}</p>
       <p className="text-xs mt-1 font-semibold" style={{ color: accent }}>{sub}</p>
     </div>
   )
@@ -374,9 +333,9 @@ function MetricCard({ icon, label, value, sub, accent }: {
 function RevenueItem({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
   return (
     <div>
-      <p className="text-white/70 text-sm mb-1 font-medium">{label}</p>
+      <p className="text-slate-500 text-sm mb-1 font-medium">{label}</p>
       <p className="text-2xl font-black" style={{ color }}>{value}</p>
-      <p className="text-white/50 text-xs mt-0.5">{sub}</p>
+      <p className="text-slate-400 text-xs mt-0.5">{sub}</p>
     </div>
   )
 }
