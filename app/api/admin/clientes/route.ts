@@ -2,29 +2,31 @@ export const dynamic = 'force-dynamic'
 
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getTenantId } from '@/lib/tenant'
 
 export async function GET() {
   const supabase = createServiceClient()
+  const tenantId = await getTenantId()
 
   // Sessões completas (histórico de acessos)
-  const { data: sessoes, error: errSessoes } = await supabase
+  let qSessoes = supabase
     .from('sessoes_mesa')
     .select('id, cliente_nome, cliente_whatsapp, aberta_em, fechada_em, ativa, mesas(numero)')
     .order('aberta_em', { ascending: false })
+  if (tenantId) qSessoes = (qSessoes as any).eq('tenant_id', tenantId)
 
-  if (errSessoes) {
-    return NextResponse.json({ error: errSessoes.message }, { status: 500 })
-  }
+  const { data: sessoes, error: errSessoes } = await qSessoes
+  if (errSessoes) return NextResponse.json({ error: errSessoes.message }, { status: 500 })
 
   // Pedidos para agregar por cliente
-  const { data: pedidos, error: errPedidos } = await supabase
+  let qPedidos = supabase
     .from('pedidos')
     .select('cliente_nome, cliente_whatsapp, total, criado_em')
     .not('status_geral', 'eq', 'cancelado')
+  if (tenantId) qPedidos = (qPedidos as any).eq('tenant_id', tenantId)
 
-  if (errPedidos) {
-    return NextResponse.json({ error: errPedidos.message }, { status: 500 })
-  }
+  const { data: pedidos, error: errPedidos } = await qPedidos
+  if (errPedidos) return NextResponse.json({ error: errPedidos.message }, { status: 500 })
 
   // Agregar por chave: whatsapp (se tiver) ou nome normalizado
   const mapa = new Map<string, {

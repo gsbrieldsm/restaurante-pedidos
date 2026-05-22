@@ -2,20 +2,17 @@ export const dynamic = 'force-dynamic'
 
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getTenantId } from '@/lib/tenant'
 
-// GET — todos os itens, inclusive indisponíveis (apenas para o admin)
 export async function GET() {
   const supabase = createServiceClient()
+  const tenantId = await getTenantId()
 
-  const { data, error } = await supabase
-    .from('cardapio_itens')
-    .select('*')
-    .order('categoria')
-    .order('ordem')
+  let q = supabase.from('cardapio_itens').select('*').order('categoria').order('ordem')
+  if (tenantId) q = (q as any).eq('tenant_id', tenantId)
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  const { data, error } = await q
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ itens: data ?? [] })
 }

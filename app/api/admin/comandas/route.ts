@@ -2,11 +2,13 @@ export const dynamic = 'force-dynamic'
 
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getTenantId } from '@/lib/tenant'
 
 export async function GET() {
   const supabase = createServiceClient()
+  const tenantId = await getTenantId()
 
-  const { data: sessoes, error } = await supabase
+  let q = supabase
     .from('sessoes_mesa')
     .select(`
       id, cliente_nome, cliente_whatsapp, aberta_em, mesa_id,
@@ -19,16 +21,15 @@ export async function GET() {
     .eq('ativa', true)
     .order('aberta_em', { ascending: true })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  if (tenantId) q = (q as any).eq('tenant_id', tenantId)
+
+  const { data: sessoes, error } = await q
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const comandas = (sessoes ?? []).map((s: any) => {
-    const pedidos = s.pedidos ?? []
+    const pedidos    = s.pedidos ?? []
     const todosItens = pedidos.flatMap((p: any) => p.pedido_itens ?? [])
-    const total = todosItens.reduce(
-      (acc: number, i: any) => acc + i.item_preco * i.quantidade, 0
-    )
+    const total      = todosItens.reduce((acc: number, i: any) => acc + i.item_preco * i.quantidade, 0)
     const itensAtivos = todosItens.filter(
       (i: any) => i.status !== 'entregue' && i.status !== 'cancelado'
     ).length

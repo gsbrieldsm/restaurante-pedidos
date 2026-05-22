@@ -34,8 +34,10 @@ export default function PlanosPage() {
       return
     }
 
+    // Cria estrutura inicial (mesas, config) para o novo tenant
+    await fetch('/api/tenant/setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ qtd_mesas: 10 }) })
+
     setAceito(true)
-    // Pequena pausa para mostrar o estado de sucesso antes de redirecionar
     setTimeout(() => {
       router.push('/admin')
     }, 1200)
