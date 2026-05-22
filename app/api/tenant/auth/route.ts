@@ -99,6 +99,9 @@ export async function POST(req: Request) {
     const resp = NextResponse.json({ ok: true, tenant })
     resp.cookies.set('tenant_id',   tenant.id,   COOKIE_OPTS)
     resp.cookies.set('tenant_slug', tenant.slug, { ...COOKIE_OPTS, httpOnly: false })
+    // Garante acesso ao painel /admin
+    resp.cookies.set('admin_auth', `mmu:${tenant.id}`, COOKIE_OPTS)
+    resp.cookies.set('mmu_cargo',  'admin', { ...COOKIE_OPTS, httpOnly: false })
     return resp
   }
 
@@ -128,6 +131,9 @@ export async function POST(req: Request) {
     })
     resp.cookies.set('tenant_id',   tenant.id,   COOKIE_OPTS)
     resp.cookies.set('tenant_slug', tenant.slug, { ...COOKIE_OPTS, httpOnly: false })
+    // Garante acesso ao painel /admin
+    resp.cookies.set('admin_auth', `mmu:${tenant.id}`, COOKIE_OPTS)
+    resp.cookies.set('mmu_cargo',  'admin', { ...COOKIE_OPTS, httpOnly: false })
     return resp
   }
 
@@ -136,6 +142,8 @@ export async function POST(req: Request) {
     const resp = NextResponse.json({ ok: true })
     resp.cookies.delete('tenant_id')
     resp.cookies.delete('tenant_slug')
+    resp.cookies.delete('admin_auth')
+    resp.cookies.delete('mmu_cargo')
     return resp
   }
 
