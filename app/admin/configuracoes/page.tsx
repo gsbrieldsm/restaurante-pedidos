@@ -333,6 +333,45 @@ export default function ConfiguracoesPage() {
     setDeletandoId(null)
   }
 
+  // --- Identidade Visual state ---
+  const [branding, setBranding] = useState({
+    restaurante_nome:     '',
+    restaurante_logo_url: null as string | null,
+    cor_primaria:         '#1A9B8A',
+  })
+  const [brandingSalvando, setBrandingSalvando] = useState(false)
+  const [brandingSucesso,  setBrandingSucesso]  = useState(false)
+  const [uploadingLogo,    setUploadingLogo]    = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  async function uploadLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingLogo(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+    const data = await res.json()
+    if (data.url) setBranding((b) => ({ ...b, restaurante_logo_url: data.url }))
+    setUploadingLogo(false)
+    if (logoInputRef.current) logoInputRef.current.value = ''
+  }
+
+  async function salvarBranding() {
+    setBrandingSalvando(true)
+    // Salva junto com os dados de banner atuais para não sobrescrever
+    const resp = await fetch('/api/admin/configuracoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...banner, ...branding }),
+    })
+    setBrandingSalvando(false)
+    if (resp.ok) {
+      setBrandingSucesso(true)
+      setTimeout(() => setBrandingSucesso(false), 3000)
+    }
+  }
+
   // --- Banner state ---
   const [banner, setBanner] = useState<BannerConfig>({
     banner_ativo:      false,
@@ -352,14 +391,21 @@ export default function ConfiguracoesPage() {
     fetch('/api/admin/configuracoes')
       .then((r) => r.json())
       .then(({ config }) => {
-        if (config) setBanner({
-          banner_ativo:      config.banner_ativo      ?? false,
-          banner_titulo:     config.banner_titulo      ?? '',
-          banner_subtitulo:  config.banner_subtitulo   ?? '',
-          banner_emoji:      config.banner_emoji       ?? '🍽️',
-          banner_estilo:     config.banner_estilo      ?? 'teal',
-          banner_imagem_url: config.banner_imagem_url  ?? null,
-        })
+        if (config) {
+          setBanner({
+            banner_ativo:      config.banner_ativo      ?? false,
+            banner_titulo:     config.banner_titulo      ?? '',
+            banner_subtitulo:  config.banner_subtitulo   ?? '',
+            banner_emoji:      config.banner_emoji       ?? '🍽️',
+            banner_estilo:     config.banner_estilo      ?? 'teal',
+            banner_imagem_url: config.banner_imagem_url  ?? null,
+          })
+          setBranding({
+            restaurante_nome:     config.restaurante_nome     ?? '',
+            restaurante_logo_url: config.restaurante_logo_url ?? null,
+            cor_primaria:         config.cor_primaria         ?? '#1A9B8A',
+          })
+        }
       })
       .finally(() => setBannerCarregando(false))
   }, [])
@@ -383,7 +429,7 @@ export default function ConfiguracoesPage() {
     const resp = await fetch('/api/admin/configuracoes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(banner),
+      body: JSON.stringify({ ...branding, ...banner }),
     })
     setBannerSalvando(false)
     if (resp.ok) {
@@ -551,6 +597,125 @@ export default function ConfiguracoesPage() {
           onSalvo={carregarUsuarios}
         />
       )}
+
+      {/* Divider */}
+      <div className="border-t border-slate-200" />
+
+      {/* ── Identidade Visual ── */}
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-xs font-bold tracking-widest uppercase text-teal-600">Configurações</p>
+        </div>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+              <ImagePlus className="w-6 h-6 text-teal-600" />
+              Identidade Visual
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              Nome, logo e cor de destaque que aparecem para os clientes no cardápio.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-5 max-w-lg">
+          {/* Nome do restaurante */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              Nome do restaurante
+            </label>
+            <input
+              type="text"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition-all"
+              placeholder="Ex: Boteco do João"
+              value={branding.restaurante_nome}
+              onChange={(e) => setBranding((b) => ({ ...b, restaurante_nome: e.target.value }))}
+            />
+            <p className="text-xs text-slate-400 mt-1">Aparece no topo do cardápio e na tela de boas-vindas.</p>
+          </div>
+
+          {/* Logo */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Logo</label>
+            <div className="flex items-center gap-3">
+              {branding.restaurante_logo_url ? (
+                <div className="relative shrink-0">
+                  <img
+                    src={branding.restaurante_logo_url}
+                    alt="Logo"
+                    className="w-16 h-16 rounded-xl object-cover border border-slate-200"
+                  />
+                  <button
+                    onClick={() => setBranding((b) => ({ ...b, restaurante_logo_url: null }))}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center bg-slate-50 shrink-0">
+                  <ImagePlus className="w-6 h-6 text-slate-300" />
+                </div>
+              )}
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                  className="text-sm"
+                >
+                  {uploadingLogo
+                    ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Enviando...</>
+                    : <><Upload className="w-3.5 h-3.5 mr-1.5" /> {branding.restaurante_logo_url ? 'Trocar logo' : 'Enviar logo'}</>
+                  }
+                </Button>
+                <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={uploadLogo} />
+                <p className="text-xs text-slate-400 mt-1">PNG, JPG ou WebP. Recomendado: 200×200px.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Cor primária */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Cor de destaque</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={branding.cor_primaria}
+                onChange={(e) => setBranding((b) => ({ ...b, cor_primaria: e.target.value }))}
+                className="w-12 h-12 rounded-xl border border-slate-200 cursor-pointer p-1"
+              />
+              <div>
+                <p className="text-sm font-mono text-slate-700">{branding.cor_primaria}</p>
+                <p className="text-xs text-slate-400">Usada nos botões e destaques do cardápio.</p>
+              </div>
+              <div
+                className="ml-auto px-4 py-2 rounded-xl text-white text-sm font-bold"
+                style={{ background: branding.cor_primaria }}
+              >
+                Preview
+              </div>
+            </div>
+          </div>
+
+          {/* Botão salvar */}
+          <Button
+            onClick={salvarBranding}
+            disabled={brandingSalvando}
+            className="font-bold text-black hover:opacity-90"
+            style={{ background: '#1A9B8A' }}
+          >
+            {brandingSalvando
+              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
+              : brandingSucesso
+              ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Salvo!</>
+              : <><Save className="w-4 h-4 mr-2" /> Salvar identidade</>
+            }
+          </Button>
+        </div>
+      </div>
 
       {/* Divider */}
       <div className="border-t border-slate-200" />

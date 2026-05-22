@@ -20,6 +20,11 @@ export default function IdentificacaoPage() {
   const [transferindo, setTransferindo] = useState(false)
   const [clienteNome, setClienteNome] = useState<string | null>(null)
   const [erro, setErro] = useState('')
+  const [branding, setBranding] = useState<{
+    restaurante_nome:     string
+    restaurante_logo_url: string | null
+    cor_primaria:         string
+  }>({ restaurante_nome: 'Meu Menu+', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
 
   useEffect(() => {
     // Pré-preenche com dados salvos do último acesso
@@ -27,6 +32,12 @@ export default function IdentificacaoPage() {
     const whatsappSalvo = localStorage.getItem('mmu_cliente_whatsapp')
     if (nomeSalvo) setNome(nomeSalvo)
     if (whatsappSalvo) setWhatsapp(whatsappSalvo)
+
+    // Carrega branding do restaurante
+    fetch('/api/configuracoes/banner')
+      .then((r) => r.json())
+      .then((d) => { if (d.branding) setBranding(d.branding) })
+      .catch(() => {})
 
     const sessaoId = sessionStorage.getItem('sessao_id')
     const nomeGuardado = sessionStorage.getItem('cliente_nome')
@@ -120,7 +131,10 @@ export default function IdentificacaoPage() {
             className="px-6 pt-8 pb-7 text-white"
             style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
           >
-            <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">Meu Menu+</p>
+            {branding.restaurante_logo_url && (
+              <img src={branding.restaurante_logo_url} alt="Logo" className="w-10 h-10 rounded-xl object-cover mb-3 border border-white/20" />
+            )}
+            <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">{branding.restaurante_nome}</p>
             <h1 className="text-3xl font-black leading-tight">Olá, {clienteNome}!</h1>
             <p className="text-teal-300 text-lg font-semibold mt-1">
               Mesa <span className="text-white font-black">{mesa?.numero ?? '...'}</span>
@@ -166,7 +180,10 @@ export default function IdentificacaoPage() {
           className="px-6 pt-8 pb-7 text-white"
           style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
         >
-          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">Meu Menu+</p>
+          {branding.restaurante_logo_url && (
+              <img src={branding.restaurante_logo_url} alt="Logo" className="w-10 h-10 rounded-xl object-cover mb-3 border border-white/20" />
+            )}
+          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">{branding.restaurante_nome}</p>
           <h1 className="text-3xl font-black leading-tight">Bem-vindo!</h1>
           <p className="text-teal-300 text-lg font-semibold mt-1">
             Mesa <span className="text-white font-black">{mesa?.numero}</span>
@@ -210,7 +227,7 @@ export default function IdentificacaoPage() {
             <Button
               type="submit"
               className="w-full h-12 text-base font-bold text-black hover:opacity-90"
-              style={{ background: '#1A9B8A' }}
+              style={{ background: branding.cor_primaria }}
               disabled={salvando}
             >
               {salvando

@@ -48,6 +48,11 @@ export default function CardapioPage() {
     banner_imagem_url: string | null
   } | null>(null)
   const [bannerFechado, setBannerFechado] = useState(false)
+  const [branding, setBranding] = useState<{
+    restaurante_nome:     string
+    restaurante_logo_url: string | null
+    cor_primaria:         string
+  }>({ restaurante_nome: 'Meu Menu+', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
 
   useEffect(() => {
     // Se veio via garçom com ?sessao=, salva no sessionStorage
@@ -70,6 +75,7 @@ export default function CardapioPage() {
       setItens(lista)
       if (lista.length > 0) setCategoriaAtiva(lista[0].categoria)
       if (bannerData.banner) setBanner(bannerData.banner)
+      if (bannerData.branding) setBranding(bannerData.branding)
     }).finally(() => setLoading(false))
   }, [token, router, searchParams])
 
@@ -294,9 +300,20 @@ export default function CardapioPage() {
       >
         {/* Linha superior: marca + ações */}
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <div>
-            <p className="text-xs font-bold tracking-widest uppercase text-teal-400 leading-none">Meu Menu+</p>
-            <p className="text-white font-black text-xl leading-tight">Cardápio</p>
+          <div className="flex items-center gap-2.5 min-w-0">
+            {branding.restaurante_logo_url && (
+              <img
+                src={branding.restaurante_logo_url}
+                alt="Logo"
+                className="w-9 h-9 rounded-xl object-cover shrink-0 border border-white/20"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="text-xs font-bold tracking-widest uppercase text-teal-400 leading-none truncate">
+                {branding.restaurante_nome}
+              </p>
+              <p className="text-white font-black text-xl leading-tight">Cardápio</p>
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             {/* Chamar garçom */}
@@ -504,7 +521,7 @@ export default function CardapioPage() {
                     <Button
                       onClick={() => adicionarItem(item)}
                       className="h-10 px-5 text-sm font-bold text-black hover:opacity-90"
-                      style={{ background: '#1A9B8A' }}
+                      style={{ background: branding.cor_primaria }}
                     >
                       <Plus className="w-4 h-4 mr-1.5" /> Adicionar
                     </Button>
@@ -538,7 +555,7 @@ export default function CardapioPage() {
           <Button
             onClick={() => setCarrinhoAberto(true)}
             className="w-full h-12 text-base font-bold text-black hover:opacity-90"
-            style={{ background: '#1A9B8A' }}
+            style={{ background: branding.cor_primaria }}
           >
             <ShoppingCart className="w-5 h-5 mr-2" />
             Ver pedido ({qtdCarrinho} {qtdCarrinho === 1 ? 'item' : 'itens'}) —{' '}
@@ -649,7 +666,7 @@ export default function CardapioPage() {
                 onClick={confirmarOpcionais}
                 disabled={!opcionaisValidos()}
                 className="w-full flex items-center justify-center gap-2 font-bold text-base text-white rounded-2xl disabled:opacity-40 transition-opacity"
-                style={{ background: '#1A9B8A', height: '52px' }}
+                style={{ background: branding.cor_primaria, height: '52px' }}
               >
                 Adicionar
                 {precoOpcionalAtual() > 0
@@ -766,7 +783,7 @@ export default function CardapioPage() {
                   onClick={finalizarPedido}
                   disabled={enviando}
                   className="w-full flex items-center justify-center gap-2 font-bold text-base text-black rounded-2xl disabled:opacity-50"
-                  style={{ background: '#1A9B8A', height: '52px' }}
+                  style={{ background: branding.cor_primaria, height: '52px' }}
                 >
                   {enviando ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>

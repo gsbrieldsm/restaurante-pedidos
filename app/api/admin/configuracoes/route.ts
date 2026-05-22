@@ -18,13 +18,16 @@ export async function POST(req: Request) {
     .from('configuracoes')
     .upsert({
       id: 1,
-      banner_ativo:      body.banner_ativo,
-      banner_titulo:     body.banner_titulo,
-      banner_subtitulo:  body.banner_subtitulo,
-      banner_emoji:      body.banner_emoji,
-      banner_estilo:     body.banner_estilo,
-      banner_imagem_url: body.banner_imagem_url ?? null,
-      atualizado_em:     new Date().toISOString(),
+      banner_ativo:         body.banner_ativo,
+      banner_titulo:        body.banner_titulo,
+      banner_subtitulo:     body.banner_subtitulo,
+      banner_emoji:         body.banner_emoji,
+      banner_estilo:        body.banner_estilo,
+      banner_imagem_url:    body.banner_imagem_url ?? null,
+      restaurante_nome:     body.restaurante_nome     ?? 'Meu Restaurante',
+      restaurante_logo_url: body.restaurante_logo_url ?? null,
+      cor_primaria:         body.cor_primaria         ?? '#1A9B8A',
+      atualizado_em:        new Date().toISOString(),
     })
 
   if (error) {
