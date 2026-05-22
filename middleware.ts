@@ -38,7 +38,7 @@ function extrairSubdominio(host: string): string | null {
 
   // Só considera subdomínio se o host terminar com o ROOT_DOMAIN
   // Ex: joao.meumenu.com.br → 'joao'
-  // restaurante-pedidos-drab.vercel.app → null (não é nosso domínio)
+  // meumenu.vercel.app → null (não é nosso domínio)
   // localhost → null
   if (!hostSemPorta.endsWith(`.${ROOT_DOMAIN}`)) return null
 
