@@ -101,7 +101,12 @@ export function middleware(request: NextRequest) {
     return response
   }
 
-  // ── 4. Painel admin do staff (rotas /admin, /estacao, /garcom) ───────────────
+  // ── 4. Trial expirado — página pública ───────────────────────────────────────
+  if (pathname === '/trial-expirado') {
+    return NextResponse.next()
+  }
+
+  // ── 5. Painel admin do staff (rotas /admin, /estacao, /garcom) ───────────────
   if (STAFF_PUBLIC.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
   }
@@ -126,6 +131,18 @@ export function middleware(request: NextRequest) {
 
   if (isOperador && ADMIN_ONLY.some((p) => pathname.startsWith(p))) {
     return NextResponse.redirect(new URL('/admin', request.url))
+  }
+
+  // ── Trial expirado? Bloqueia acesso ao painel ─────────────────────────────
+  if (pathname.startsWith('/admin') && !pathname.startsWith('/api/')) {
+    const trialExpira = request.cookies.get('trial_expira_em')?.value
+    if (trialExpira) {
+      const expirou = new Date(trialExpira) < new Date()
+      const planoAtivo = request.cookies.get('plano_ativo')?.value === 'sim'
+      if (expirou && !planoAtivo) {
+        return NextResponse.redirect(new URL('/trial-expirado', request.url))
+      }
+    }
   }
 
   const response = NextResponse.next()
@@ -153,6 +170,7 @@ export const config = {
     '/api/tenant/:path*',
     '/parceiros',
     '/api/parceiros/:path*',
+    '/trial-expirado',
     '/superadmin',
     '/superadmin/:path*',
     '/api/superadmin/:path*',
