@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Trash2, RefreshCw, Users, ClipboardList,
   DollarSign, Bell, TableProperties, AlertTriangle, CheckCircle2, Loader2, ShieldAlert,
-  Megaphone, Save, Eye, EyeOff, ImagePlus, X, Upload,
+  Megaphone, Save, Eye, EyeOff, ImagePlus, X, Upload, Monitor, Smartphone,
   UserPlus, Pencil, Shield, UserCog
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -184,12 +184,13 @@ function ModalUsuario({
 }
 
 interface BannerConfig {
-  banner_ativo:      boolean
-  banner_titulo:     string
-  banner_subtitulo:  string
-  banner_emoji:      string
-  banner_estilo:     string
-  banner_imagem_url: string | null
+  banner_ativo:             boolean
+  banner_titulo:            string
+  banner_subtitulo:         string
+  banner_emoji:             string
+  banner_estilo:            string
+  banner_imagem_url:        string | null
+  banner_imagem_url_mobile: string | null
 }
 
 const BANNER_ESTILOS: Record<string, { label: string; gradient: string; subColor: string }> = {
@@ -374,18 +375,21 @@ export default function ConfiguracoesPage() {
 
   // --- Banner state ---
   const [banner, setBanner] = useState<BannerConfig>({
-    banner_ativo:      false,
-    banner_titulo:     'Bem-vindo ao Menuê+! 🎉',
-    banner_subtitulo:  'Veja nossas novidades do dia',
-    banner_emoji:      '🍽️',
-    banner_estilo:     'teal',
-    banner_imagem_url: null,
+    banner_ativo:             false,
+    banner_titulo:            'Bem-vindo ao Menuê+! 🎉',
+    banner_subtitulo:         'Veja nossas novidades do dia',
+    banner_emoji:             '🍽️',
+    banner_estilo:            'teal',
+    banner_imagem_url:        null,
+    banner_imagem_url_mobile: null,
   })
   const [bannerCarregando, setBannerCarregando] = useState(true)
   const [bannerSalvando,   setBannerSalvando]   = useState(false)
   const [bannerSucesso,    setBannerSucesso]     = useState(false)
   const [uploading,        setUploading]         = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingMobile,  setUploadingMobile]   = useState(false)
+  const fileInputRef       = useRef<HTMLInputElement>(null)
+  const fileInputMobileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch('/api/admin/configuracoes')
@@ -398,7 +402,8 @@ export default function ConfiguracoesPage() {
             banner_subtitulo:  config.banner_subtitulo   ?? '',
             banner_emoji:      config.banner_emoji       ?? '🍽️',
             banner_estilo:     config.banner_estilo      ?? 'teal',
-            banner_imagem_url: config.banner_imagem_url  ?? null,
+            banner_imagem_url:        config.banner_imagem_url         ?? null,
+            banner_imagem_url_mobile: config.banner_imagem_url_mobile  ?? null,
           })
           setBranding({
             restaurante_nome:     config.restaurante_nome     ?? '',
@@ -420,8 +425,20 @@ export default function ConfiguracoesPage() {
     const data = await res.json()
     if (data.url) setBanner((b) => ({ ...b, banner_imagem_url: data.url }))
     setUploading(false)
-    // limpa o input para permitir reenvio do mesmo arquivo
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function uploadImagemMobile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingMobile(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+    const data = await res.json()
+    if (data.url) setBanner((b) => ({ ...b, banner_imagem_url_mobile: data.url }))
+    setUploadingMobile(false)
+    if (fileInputMobileRef.current) fileInputMobileRef.current.value = ''
   }
 
   async function salvarBanner() {
@@ -775,118 +792,175 @@ export default function ConfiguracoesPage() {
           {/* Preview */}
           <div className="px-5 py-4 bg-slate-50 border-b border-slate-100">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Pré-visualização</p>
-            <div className="relative rounded-2xl overflow-hidden shadow-lg max-w-sm">
-              {banner.banner_imagem_url ? (
-                <>
-                  <img
-                    src={banner.banner_imagem_url}
-                    alt="Banner"
-                    className="w-full h-44 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-                    {banner.banner_emoji && <div className="text-3xl mb-2 leading-none">{banner.banner_emoji}</div>}
-                    <h2 className="text-white font-black text-xl leading-tight">
-                      {banner.banner_titulo || 'Título do banner'}
-                    </h2>
-                    {banner.banner_subtitulo && (
-                      <p className="text-white/75 text-sm mt-1">{banner.banner_subtitulo}</p>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ background: estiloAtual.gradient }}>
-                    <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full opacity-10 bg-white" />
-                    <div className="absolute -top-4 -left-4 w-20 h-20 rounded-full opacity-5 bg-white" />
-                    <div className="relative px-5 pt-5 pb-6">
-                      <div className="text-4xl mb-3 leading-none">{banner.banner_emoji || '🍽️'}</div>
-                      <h2 className="text-white font-black text-xl leading-tight">
-                        {banner.banner_titulo || 'Título do banner'}
-                      </h2>
-                      {banner.banner_subtitulo && (
-                        <p className="text-sm mt-1.5 font-medium" style={{ color: estiloAtual.subColor }}>
-                          {banner.banner_subtitulo}
-                        </p>
-                      )}
+            <div className="flex gap-4 flex-wrap">
+
+              {/* Preview Desktop */}
+              <div className="flex-1 min-w-[200px]">
+                <div className="flex items-center gap-1 mb-1.5">
+                  <Monitor className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs text-slate-400 font-medium">Desktop</span>
+                </div>
+                <div className="relative rounded-xl overflow-hidden shadow-md">
+                  {(banner.banner_imagem_url || banner.banner_imagem_url_mobile) ? (
+                    <>
+                      <img src={banner.banner_imagem_url || banner.banner_imagem_url_mobile!} alt="Desktop"
+                        className="w-full h-36 object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
+                        {banner.banner_emoji && <div className="text-2xl mb-1 leading-none">{banner.banner_emoji}</div>}
+                        <h2 className="text-white font-black text-base leading-tight">{banner.banner_titulo || 'Título do banner'}</h2>
+                        {banner.banner_subtitulo && <p className="text-white/75 text-xs mt-0.5">{banner.banner_subtitulo}</p>}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ background: estiloAtual.gradient }} className="relative">
+                      <div className="relative px-4 pt-4 pb-5">
+                        <div className="text-3xl mb-2 leading-none">{banner.banner_emoji || '🍽️'}</div>
+                        <h2 className="text-white font-black text-base leading-tight">{banner.banner_titulo || 'Título do banner'}</h2>
+                        {banner.banner_subtitulo && <p className="text-xs mt-1 font-medium" style={{ color: estiloAtual.subColor }}>{banner.banner_subtitulo}</p>}
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  )}
+                </div>
+              </div>
+
+              {/* Preview Mobile */}
+              <div className="w-36">
+                <div className="flex items-center gap-1 mb-1.5">
+                  <Smartphone className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs text-slate-400 font-medium">Mobile</span>
+                </div>
+                <div className="relative rounded-xl overflow-hidden shadow-md">
+                  {(banner.banner_imagem_url_mobile || banner.banner_imagem_url) ? (
+                    <>
+                      <img src={banner.banner_imagem_url_mobile || banner.banner_imagem_url!} alt="Mobile"
+                        className="w-full h-40 object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 px-3 pb-3">
+                        {banner.banner_emoji && <div className="text-xl mb-0.5 leading-none">{banner.banner_emoji}</div>}
+                        <h2 className="text-white font-black text-sm leading-tight">{banner.banner_titulo || 'Título'}</h2>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ background: estiloAtual.gradient }} className="relative">
+                      <div className="relative px-3 pt-4 pb-5">
+                        <div className="text-2xl mb-1.5 leading-none">{banner.banner_emoji || '🍽️'}</div>
+                        <h2 className="text-white font-black text-sm leading-tight">{banner.banner_titulo || 'Título'}</h2>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
 
           {/* Campos */}
           <div className="px-5 py-4 space-y-4">
 
-            {/* Upload de imagem */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                  Imagem de fundo
-                </label>
-                {banner.banner_imagem_url && (
-                  <span className="text-xs text-teal-600 font-medium">✓ Imagem ativa</span>
-                )}
+            {/* Upload de imagem — Desktop + Mobile */}
+            <div className="space-y-3">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">
+                Imagem de fundo
+              </label>
+              <p className="text-xs text-slate-400 -mt-1">
+                Use imagens diferentes para desktop (horizontal) e mobile (vertical). Sem imagem, o banner usa gradiente de cor.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                {/* ── Desktop ── */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Monitor className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Desktop</span>
+                    {banner.banner_imagem_url && (
+                      <span className="ml-auto text-xs text-teal-600 font-medium">✓ Ativa</span>
+                    )}
+                  </div>
+                  {banner.banner_imagem_url ? (
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                      <img src={banner.banner_imagem_url} alt="Desktop" className="w-16 h-10 object-cover rounded-lg shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-slate-400 truncate">{banner.banner_imagem_url.split('/').pop()}</p>
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                          className="flex items-center gap-1 text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 px-2 py-1 rounded-lg transition-colors">
+                          <Upload className="w-3 h-3" /> Trocar
+                        </button>
+                        <button onClick={() => setBanner((b) => ({ ...b, banner_imagem_url: null }))}
+                          className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg transition-colors">
+                          <X className="w-3 h-3" /> Remover
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                      className="w-full border-2 border-dashed border-slate-200 hover:border-teal-400 rounded-xl py-5 flex flex-col items-center gap-1.5 text-slate-400 hover:text-teal-600 transition-colors group">
+                      {uploading ? (
+                        <><Loader2 className="w-5 h-5 animate-spin" /><span className="text-xs">Enviando...</span></>
+                      ) : (
+                        <>
+                          <ImagePlus className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                          <span className="text-xs font-medium">Enviar imagem desktop</span>
+                          <span className="text-xs text-slate-300">1200×480px recomendado</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={uploadImagem} />
+                </div>
+
+                {/* ── Mobile ── */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Smartphone className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Mobile</span>
+                    {banner.banner_imagem_url_mobile && (
+                      <span className="ml-auto text-xs text-teal-600 font-medium">✓ Ativa</span>
+                    )}
+                  </div>
+                  {banner.banner_imagem_url_mobile ? (
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                      <img src={banner.banner_imagem_url_mobile} alt="Mobile" className="w-16 h-10 object-cover rounded-lg shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-slate-400 truncate">{banner.banner_imagem_url_mobile.split('/').pop()}</p>
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button onClick={() => fileInputMobileRef.current?.click()} disabled={uploadingMobile}
+                          className="flex items-center gap-1 text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 px-2 py-1 rounded-lg transition-colors">
+                          <Upload className="w-3 h-3" /> Trocar
+                        </button>
+                        <button onClick={() => setBanner((b) => ({ ...b, banner_imagem_url_mobile: null }))}
+                          className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg transition-colors">
+                          <X className="w-3 h-3" /> Remover
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button onClick={() => fileInputMobileRef.current?.click()} disabled={uploadingMobile}
+                      className="w-full border-2 border-dashed border-slate-200 hover:border-teal-400 rounded-xl py-5 flex flex-col items-center gap-1.5 text-slate-400 hover:text-teal-600 transition-colors group">
+                      {uploadingMobile ? (
+                        <><Loader2 className="w-5 h-5 animate-spin" /><span className="text-xs">Enviando...</span></>
+                      ) : (
+                        <>
+                          <Smartphone className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                          <span className="text-xs font-medium">Enviar imagem mobile</span>
+                          <span className="text-xs text-slate-300">600×400px recomendado</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  <input ref={fileInputMobileRef} type="file" accept="image/*" className="hidden" onChange={uploadImagemMobile} />
+                  {!banner.banner_imagem_url_mobile && banner.banner_imagem_url && (
+                    <p className="text-xs text-slate-400">Sem imagem mobile? Usa a desktop como fallback.</p>
+                  )}
+                </div>
+
               </div>
 
-              {banner.banner_imagem_url ? (
-                /* Imagem já enviada */
-                <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
-                  <img
-                    src={banner.banner_imagem_url}
-                    alt="Banner"
-                    className="w-20 h-14 object-cover rounded-lg shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-500 truncate">Imagem carregada</p>
-                    <p className="text-xs text-slate-400 truncate">{banner.banner_imagem_url.split('/').pop()}</p>
-                  </div>
-                  <div className="flex flex-col gap-1.5 shrink-0">
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="flex items-center gap-1 text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 px-2.5 py-1.5 rounded-lg transition-colors"
-                    >
-                      <Upload className="w-3 h-3" /> Trocar
-                    </button>
-                    <button
-                      onClick={() => setBanner((b) => ({ ...b, banner_imagem_url: null }))}
-                      className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-colors"
-                    >
-                      <X className="w-3 h-3" /> Remover
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Zona de upload */
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="w-full border-2 border-dashed border-slate-200 hover:border-teal-400 rounded-xl py-6 flex flex-col items-center gap-2 text-slate-400 hover:text-teal-600 transition-colors group"
-                >
-                  {uploading ? (
-                    <><Loader2 className="w-6 h-6 animate-spin" /><span className="text-sm">Enviando...</span></>
-                  ) : (
-                    <>
-                      <ImagePlus className="w-7 h-7 group-hover:scale-110 transition-transform" />
-                      <span className="text-sm font-medium">Clique para enviar uma imagem</span>
-                      <span className="text-xs">JPG, PNG ou WebP · Recomendado: 800×400px</span>
-                    </>
-                  )}
-                </button>
-              )}
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={uploadImagem}
-              />
-
-              {/* Nota: imagem substitui o gradiente */}
-              {!banner.banner_imagem_url && (
+              {!banner.banner_imagem_url && !banner.banner_imagem_url_mobile && (
                 <p className="text-xs text-slate-400">
                   Sem imagem? O banner usa o gradiente de cor selecionado abaixo.
                 </p>

@@ -40,12 +40,13 @@ export default function CardapioPage() {
   const [chamandoGarcom, setChamandoGarcom] = useState(false)
   const [garcomChamado, setGarcomChamado] = useState(false)
   const [banner, setBanner] = useState<{
-    banner_ativo:      boolean
-    banner_titulo:     string
-    banner_subtitulo:  string
-    banner_emoji:      string
-    banner_estilo:     string
-    banner_imagem_url: string | null
+    banner_ativo:             boolean
+    banner_titulo:            string
+    banner_subtitulo:         string
+    banner_emoji:             string
+    banner_estilo:            string
+    banner_imagem_url:        string | null
+    banner_imagem_url_mobile: string | null
   } | null>(null)
   const [bannerFechado, setBannerFechado] = useState(false)
   const [branding, setBranding] = useState<{
@@ -415,7 +416,7 @@ export default function CardapioPage() {
 
       {/* Banner personalizável */}
       {banner?.banner_ativo && !bannerFechado && (() => {
-        const temImagem = !!banner.banner_imagem_url
+        const temImagem = !!(banner.banner_imagem_url || banner.banner_imagem_url_mobile)
         const estilo = BANNER_ESTILOS[banner.banner_estilo] ?? BANNER_ESTILOS.teal
 
         return (
@@ -433,11 +434,21 @@ export default function CardapioPage() {
               {temImagem ? (
                 /* ── Modo imagem ── */
                 <>
-                  <img
-                    src={banner.banner_imagem_url!}
-                    alt={banner.banner_titulo}
-                    className="w-full h-52 object-cover"
-                  />
+                  <picture>
+                    {/* Mobile: usa imagem mobile se existir, senão fallback para desktop */}
+                    {banner.banner_imagem_url_mobile && (
+                      <source media="(max-width: 767px)" srcSet={banner.banner_imagem_url_mobile} />
+                    )}
+                    {/* Desktop: usa imagem desktop se existir */}
+                    {banner.banner_imagem_url && (
+                      <source media="(min-width: 768px)" srcSet={banner.banner_imagem_url} />
+                    )}
+                    <img
+                      src={banner.banner_imagem_url || banner.banner_imagem_url_mobile!}
+                      alt={banner.banner_titulo}
+                      className="w-full h-52 object-cover"
+                    />
+                  </picture>
                   {/* overlay degradê de baixo para cima */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pr-10">

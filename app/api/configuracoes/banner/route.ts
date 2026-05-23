@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 
   const { data } = await supabase
     .from('configuracoes')
-    .select('banner_ativo, banner_titulo, banner_subtitulo, banner_emoji, banner_estilo, banner_imagem_url, restaurante_nome, restaurante_logo_url, cor_primaria')
+    .select('banner_ativo, banner_titulo, banner_subtitulo, banner_emoji, banner_estilo, banner_imagem_url, banner_imagem_url_mobile, restaurante_nome, restaurante_logo_url, cor_primaria')
     .eq('tenant_id', tenantId)
     .maybeSingle()
 
