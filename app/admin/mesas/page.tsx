@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -47,75 +46,18 @@ export default function MesasQRPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.from('mesas').select('*').order('numero')
-      .then(({ data }) => { setMesas(data || []); setLoading(false) })
+    fetch('/api/admin/mesas')
+      .then(r => r.json())
+      .then(({ mesas: data }) => { setMesas(data || []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   useEffect(() => {
     async function buscarStats() {
-      const supabase = createClient()
-      const inicio = new Date()
-      inicio.setDate(inicio.getDate() - 30)
-      inicio.setHours(0, 0, 0, 0)
-      const iso = inicio.toISOString()
-
-      // Sessões por mesa (últimos 30 dias)
-      const { data: sessoes } = await supabase
-        .from('sessoes_mesa')
-        .select('mesa_id, aberta_em, fechada_em')
-        .gte('aberta_em', iso)
-
-      // Pagamentos por mesa
-      const { data: pagamentos } = await supabase
-        .from('pagamentos')
-        .select('mesa_numero, valor')
-        .gte('criado_em', iso)
-
-      // Mesas (para o número)
-      const { data: mesasData } = await supabase
-        .from('mesas')
-        .select('id, numero')
-
-      if (!sessoes || !mesasData) { setLoadingStats(false); return }
-
-      const mesaMap: Record<string, number> = {}
-      mesasData.forEach((m: { id: string; numero: number }) => { mesaMap[m.id] = m.numero })
-
-      // Agrupa sessões por mesa
-      const porMesa: Record<number, { acessos: number; minutos: number }> = {}
-      sessoes.forEach((s: { mesa_id: string; aberta_em: string; fechada_em: string | null }) => {
-        const num = mesaMap[s.mesa_id]
-        if (!num) return
-        if (!porMesa[num]) porMesa[num] = { acessos: 0, minutos: 0 }
-        porMesa[num].acessos += 1
-        if (s.fechada_em) {
-          const min = Math.round((new Date(s.fechada_em).getTime() - new Date(s.aberta_em).getTime()) / 60000)
-          porMesa[num].minutos += min
-        }
-      })
-
-      // Agrupa pagamentos por mesa
-      const receitaMesa: Record<number, number> = {}
-      ;(pagamentos ?? []).forEach((p: { mesa_numero: number; valor: number }) => {
-        receitaMesa[p.mesa_numero] = (receitaMesa[p.mesa_numero] ?? 0) + p.valor
-      })
-
-      // Monta estatísticas
-      const resultado: EstatisticaMesa[] = Object.entries(porMesa).map(([num, v]) => {
-        const n = Number(num)
-        // taxa de ocupação = minutos ocupada / (30 dias * 12h funcionamento * 60min)
-        const minutosMax = 30 * 12 * 60
-        return {
-          mesa_numero: n,
-          acessos: v.acessos,
-          receita: receitaMesa[n] ?? 0,
-          minutos_ocupada: v.minutos,
-          taxa_ocupacao: Math.min(100, Math.round((v.minutos / minutosMax) * 100)),
-        }
-      })
-
-      setStats(resultado)
+      const res = await fetch('/api/admin/mesas/logistica')
+      if (!res.ok) { setLoadingStats(false); return }
+      const { stats: resultado } = await res.json()
+      setStats(resultado ?? [])
       setLoadingStats(false)
     }
     buscarStats()
