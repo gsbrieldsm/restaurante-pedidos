@@ -342,82 +342,95 @@ export default function LandingPage() {
         className="py-24 px-6"
         style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 60%, #1A9B8A 100%)' }}
       >
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-5xl mx-auto text-center">
           <p className="text-xs font-bold uppercase tracking-widest mb-3 text-teal-400">
             Investimento
           </p>
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-            Preço justo, sem surpresas
+            Preço fixo, sem surpresa no mês
           </h2>
-          <p className="text-teal-200/70 text-lg max-w-xl mx-auto mb-16">
-            Você paga proporcional ao que fatura. Se o seu negócio cresce, a gente cresce junto.
+          <p className="text-teal-200/70 text-lg max-w-xl mx-auto mb-4">
+            Você paga pelo tamanho da sua equipe conectada — garçons, cozinha, bar, estações e admin.
           </p>
-
-          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            {/* Implementação */}
-            <div
-              className="rounded-2xl p-8 text-left"
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
-            >
-              <p className="text-teal-300 text-xs font-bold uppercase tracking-widest mb-4">Implementação</p>
-              <p className="text-white font-black text-4xl">R$ 2.500</p>
-              <p className="text-teal-200/50 text-sm mb-6">pagamento único</p>
-              <ul className="space-y-2 text-sm text-teal-100/70">
-                {[
-                  'Configuração completa da plataforma',
-                  'Cadastro do cardápio',
-                  'Criação dos QR codes das mesas',
-                  'Treinamento da equipe',
-                  'Suporte no primeiro mês',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="text-teal-400 mt-0.5">✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Mensalidade */}
-            <div
-              className="rounded-2xl p-8 text-left"
-              style={{ background: 'rgba(26,155,138,0.25)', border: '1px solid rgba(26,155,138,0.5)' }}
-            >
-              <p className="text-teal-300 text-xs font-bold uppercase tracking-widest mb-4">Mensalidade</p>
-              <p className="text-white font-black text-4xl">0,75%</p>
-              <p className="text-teal-200/50 text-sm mb-1">do faturamento mensal</p>
-              <p className="text-teal-300 text-sm font-bold mb-6">mínimo R$ 350/mês</p>
-              <ul className="space-y-2 text-sm text-teal-100/70">
-                {[
-                  'Plataforma sempre atualizada',
-                  'Suporte contínuo',
-                  'Novos recursos inclusos',
-                  'Sem taxa por pedido',
-                  'Sem limite de usuários',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="text-teal-400 mt-0.5">✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold mb-12"
+            style={{ background: 'rgba(255,255,255,0.08)', color: '#5EEAD4', border: '1px solid rgba(255,255,255,0.12)' }}
+          >
+            💡 Usuários = cada tela conectada: garçom, cozinha, bar, drinks, chopeira, admin
           </div>
 
-          {/* Exemplo */}
+          {/* Implementação */}
           <div
-            className="mt-8 inline-flex items-center gap-3 px-6 py-3 rounded-2xl text-sm"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+            className="max-w-sm mx-auto rounded-2xl p-6 mb-8 text-left"
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)' }}
           >
-            <span className="text-teal-300">💡</span>
-            <span className="text-teal-100/70">
-              Restaurante que fatura <strong className="text-white">R$ 80.000/mês</strong> paga apenas{' '}
-              <strong className="text-teal-300">R$ 600/mês</strong> — menos que um garçom por dia.
-            </span>
+            <p className="text-teal-300 text-xs font-bold uppercase tracking-widest mb-3">Implementação · única vez</p>
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="text-white font-black text-4xl">R$ 2.000</span>
+            </div>
+            <ul className="space-y-2 text-sm text-teal-100/70">
+              {['Configuração completa da plataforma', 'Cadastro do cardápio', 'QR codes das mesas', 'Treinamento da equipe', 'Suporte no 1º mês'].map((i) => (
+                <li key={i} className="flex items-start gap-2"><span className="text-teal-400">✓</span>{i}</li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Planos mensais */}
+          <div className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto mb-6">
+            {[
+              { nome: 'Starter', usuarios: 'Até 5 usuários', preco: 350, destaque: false, ex: '1 admin + 2 garçons + cozinha + bar' },
+              { nome: 'Pro',     usuarios: '6 a 10 usuários', preco: 450, destaque: true,  ex: 'Equipe maior com múltiplas estações' },
+              { nome: 'Business',usuarios: '11 a 20 usuários', preco: 650, destaque: false, ex: 'Operação completa de grande porte' },
+            ].map((p) => (
+              <div
+                key={p.nome}
+                className="relative rounded-2xl p-6 text-left"
+                style={{
+                  background: p.destaque ? 'rgba(26,155,138,0.25)' : 'rgba(255,255,255,0.06)',
+                  border: p.destaque ? '1px solid rgba(26,155,138,0.5)' : '1px solid rgba(255,255,255,0.12)',
+                }}
+              >
+                {p.destaque && (
+                  <div
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-white text-xs font-bold"
+                    style={{ background: '#1A9B8A' }}
+                  >
+                    mais popular
+                  </div>
+                )}
+                <p className="text-white font-black text-base mb-1">{p.nome}</p>
+                <p className="text-teal-300/60 text-xs mb-4">{p.usuarios}</p>
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="text-white font-black text-3xl">R$ {p.preco}</span>
+                  <span className="text-teal-300/50 text-sm">/mês</span>
+                </div>
+                <p className="text-teal-200/50 text-xs">{p.ex}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Enterprise */}
+          <div
+            className="max-w-4xl mx-auto rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 mb-10"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)' }}
+          >
+            <div className="text-left">
+              <p className="text-white font-bold text-sm">Mais de 20 usuários?</p>
+              <p className="text-teal-300/50 text-xs mt-0.5">Redes e franquias — montamos um plano sob medida.</p>
+            </div>
+            <a
+              href={whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
+            >
+              📲 Falar com a gente
+            </a>
           </div>
 
           {/* CTA */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/registro"
               className="flex items-center gap-2 px-10 py-4 rounded-2xl text-base font-black transition-all hover:opacity-90 shadow-xl"

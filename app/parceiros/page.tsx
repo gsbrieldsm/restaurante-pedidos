@@ -12,7 +12,7 @@ const TIERS = [
   { min: 20, max: Infinity, label: '20+ clientes',   recorrente: 0.30, cor: '#0a5a4f' },
 ]
 
-const MENSALIDADE_BASE = 550   // R$ mínimo/mês por restaurante
+const MENSALIDADE_BASE = 450   // R$ médio/mês (planos: R$350, R$450, R$650)
 const VALOR_IMPL       = 2000  // R$ implementação por restaurante
 const COMISSAO_IMPL    = 0.30  // 30% fixo na implementação
 
@@ -219,7 +219,7 @@ export default function ParceirosPage() {
                   </span>
                 </div>
               </div>
-              <p className="text-white/30 text-xs">* considerando mensalidade mínima de R$ 550/restaurante</p>
+              <p className="text-white/30 text-xs">* considerando mensalidade média de R$ 450/restaurante (planos R$350–R$650)</p>
             </div>
           </div>
         </div>
@@ -450,7 +450,7 @@ export default function ParceirosPage() {
             </div>
 
             <p className="text-slate-400 text-xs text-center mt-6">
-              * Estimativa com base na mensalidade mínima. Valores reais podem ser maiores.
+              * Estimativa com base na mensalidade média de R$ 450 (planos: R$350 / R$450 / R$650). Valores reais podem ser maiores.
             </p>
           </div>
         </div>
