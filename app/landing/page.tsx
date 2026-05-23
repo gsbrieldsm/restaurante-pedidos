@@ -369,10 +369,25 @@ export default function LandingPage() {
               <span className="text-white font-black text-4xl">R$ 2.000</span>
             </div>
             <ul className="space-y-2 text-sm text-teal-100/70">
-              {['Configuração completa da plataforma', 'Cadastro do cardápio', 'QR codes das mesas', 'Treinamento da equipe', 'Suporte no 1º mês'].map((i) => (
+              {[
+                'Configuração completa da plataforma',
+                'Cadastro dos produtos (sem fotos)',
+                'QR codes das mesas',
+                'Treinamento da equipe no sistema',
+                'Suporte no 1º mês',
+              ].map((i) => (
                 <li key={i} className="flex items-start gap-2"><span className="text-teal-400">✓</span>{i}</li>
               ))}
             </ul>
+            <div
+              className="mt-4 flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <span className="text-yellow-400 shrink-0">📸</span>
+              <span className="text-teal-200/60">
+                Cadastro <strong className="text-teal-200/90">com fotos</strong> dos produtos é orçado à parte — consulte nossa equipe.
+              </span>
+            </div>
           </div>
 
           {/* Planos mensais */}

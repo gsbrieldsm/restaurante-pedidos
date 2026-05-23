@@ -17,6 +17,16 @@ const INCLUSOS = [
   { icon: Headphones,   texto: 'Suporte via WhatsApp' },
 ]
 
+// O que está incluso na implementação
+const IMPL_INCLUSOS = [
+  { ok: true,  texto: 'Configuração completa da plataforma' },
+  { ok: true,  texto: 'Cadastro dos produtos (sem fotos)' },
+  { ok: true,  texto: 'QR codes de todas as mesas' },
+  { ok: true,  texto: 'Treinamento da equipe no sistema' },
+  { ok: true,  texto: 'Suporte dedicado no 1º mês' },
+  { ok: false, texto: 'Cadastro com fotos dos produtos — orçado à parte' },
+]
+
 const PLANOS = [
   {
     id:        'starter',
@@ -203,8 +213,25 @@ export default function PlanosPage() {
             </div>
           </div>
 
+          {/* Implementação — o que está incluso */}
+          <div className="px-8 py-5 border-t border-slate-100">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Implementação · R$ 2.000 (única vez)</p>
+            <div className="space-y-2">
+              {IMPL_INCLUSOS.map(({ ok, texto }) => (
+                <div key={texto} className="flex items-center gap-3">
+                  {ok ? (
+                    <span className="text-teal-500 text-sm shrink-0">✓</span>
+                  ) : (
+                    <span className="text-amber-400 text-sm shrink-0">📸</span>
+                  )}
+                  <span className={`text-sm ${ok ? 'text-slate-700' : 'text-slate-500'}`}>{texto}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Aviso contratual */}
-          <div className="px-8 pb-6">
+          <div className="px-8 pb-6 pt-4">
             <div className="bg-slate-50 rounded-xl p-4 text-xs text-slate-500 leading-relaxed">
               Ao clicar em <strong className="text-slate-700">"Concordar e acessar"</strong> você confirma
               que está ciente dos valores acima e concorda com os termos de uso do Menuê+.
