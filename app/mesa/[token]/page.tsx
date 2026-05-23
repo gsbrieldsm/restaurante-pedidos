@@ -24,7 +24,18 @@ export default function IdentificacaoPage() {
     restaurante_nome:     string
     restaurante_logo_url: string | null
     cor_primaria:         string
-  }>({ restaurante_nome: 'Menuê+', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
+  }>({ restaurante_nome: '', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
+
+  // Gradiente do hero derivado da cor primária do restaurante
+  function darkenHex(hex: string, factor: number): string {
+    const h = hex.replace('#', '')
+    const r = parseInt(h.slice(0, 2), 16)
+    const g = parseInt(h.slice(2, 4), 16)
+    const b = parseInt(h.slice(4, 6), 16)
+    return `rgb(${Math.round(r * factor)},${Math.round(g * factor)},${Math.round(b * factor)})`
+  }
+  const cor = branding.cor_primaria
+  const heroGradient = `linear-gradient(135deg, ${darkenHex(cor, 0.10)} 0%, ${darkenHex(cor, 0.28)} 50%, ${cor} 100%)`
 
   useEffect(() => {
     // Pré-preenche com dados salvos do último acesso
@@ -129,20 +140,22 @@ export default function IdentificacaoPage() {
         <Card className="w-full max-w-sm shadow-xl border-0 overflow-hidden">
           <div
             className="px-6 pt-8 pb-7 text-white"
-            style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
+            style={{ background: heroGradient }}
           >
             {branding.restaurante_logo_url && (
               <img src={branding.restaurante_logo_url} alt="Logo" className="w-10 h-10 rounded-xl object-cover mb-3 border border-white/20" />
             )}
-            <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">{branding.restaurante_nome}</p>
+            {branding.restaurante_nome && (
+              <p className="text-xs font-bold tracking-widest uppercase text-white/70 mb-1">{branding.restaurante_nome}</p>
+            )}
             <h1 className="text-3xl font-black leading-tight">Olá, {clienteNome}!</h1>
-            <p className="text-teal-300 text-lg font-semibold mt-1">
+            <p className="text-white/80 text-lg font-semibold mt-1">
               Mesa <span className="text-white font-black">{mesa?.numero ?? '...'}</span>
             </p>
             <p className="text-white/50 text-sm mt-2">Transferindo sua comanda...</p>
           </div>
           <CardContent className="pt-6 pb-6 flex items-center justify-center gap-3 text-slate-500">
-            <Loader2 className="w-5 h-5 animate-spin text-teal-600" />
+            <Loader2 className="w-5 h-5 animate-spin" style={{ color: cor }} />
             <span className="text-sm">Atualizando sua mesa...</span>
           </CardContent>
         </Card>
@@ -178,7 +191,7 @@ export default function IdentificacaoPage() {
       <Card className="w-full max-w-sm shadow-xl border-0 overflow-hidden">
         <div
           className="px-6 pt-8 pb-7 text-white"
-          style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
+          style={{ background: heroGradient }}
         >
           {branding.restaurante_logo_url && (
               <img src={branding.restaurante_logo_url} alt="Logo" className="w-10 h-10 rounded-xl object-cover mb-3 border border-white/20" />
@@ -192,9 +205,9 @@ export default function IdentificacaoPage() {
         </div>
         <CardContent className="pt-6">
           {nome && localStorage.getItem('mmu_cliente_nome') === nome && (
-            <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-xl px-3 py-2 mb-4">
-              <BookUser className="w-4 h-4 text-teal-600 shrink-0" />
-              <p className="text-xs text-teal-700 font-medium">Dados do seu último acesso foram lembrados</p>
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 mb-4">
+              <BookUser className="w-4 h-4 shrink-0" style={{ color: cor }} />
+              <p className="text-xs font-medium text-slate-600">Dados do seu último acesso foram lembrados</p>
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4 mt-2">

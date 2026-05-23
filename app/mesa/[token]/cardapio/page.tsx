@@ -53,7 +53,7 @@ export default function CardapioPage() {
     restaurante_nome:     string
     restaurante_logo_url: string | null
     cor_primaria:         string
-  }>({ restaurante_nome: 'Menuê+', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
+  }>({ restaurante_nome: '', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
 
   useEffect(() => {
     // Se veio via garçom com ?sessao=, salva no sessionStorage
@@ -321,9 +321,11 @@ export default function CardapioPage() {
               />
             )}
             <div className="min-w-0">
-              <p className="text-xs font-bold tracking-widest uppercase text-teal-400 leading-none truncate">
-                {branding.restaurante_nome}
-              </p>
+              {branding.restaurante_nome && (
+                <p className="text-xs font-bold tracking-widest uppercase leading-none truncate text-white/70">
+                  {branding.restaurante_nome}
+                </p>
+              )}
               <p className="text-white font-black text-xl leading-tight">Cardápio</p>
             </div>
           </div>
