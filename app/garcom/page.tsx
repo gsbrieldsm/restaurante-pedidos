@@ -99,7 +99,7 @@ function tempoEspera(iso: string | null) {
 
 export default function GarcomPage() {
   // Título da aba do browser
-  useEffect(() => { document.title = '🛎️ Garçom — Meu Menu+' }, [])
+  useEffect(() => { document.title = '🛎️ Garçom — Menuê+' }, [])
 
   const [grupos, setGrupos] = useState<GrupoMesa[]>([])
   const [chamadas, setChamadas] = useState<Chamada[]>([])
@@ -340,7 +340,7 @@ export default function GarcomPage() {
       <div className="sticky top-0 z-10 shadow-sm" style={{ background: '#1A9B8A' }}>
         <div className="flex items-center justify-between px-4 py-3">
           <div>
-            <p className="font-black tracking-widest text-xs uppercase text-teal-300">Meu Menu+</p>
+            <p className="font-black tracking-widest text-xs uppercase text-teal-300">Menuê+</p>
             <h1 className="text-white font-bold text-lg leading-tight">Painel do Garçom</h1>
           </div>
           <div className="flex items-center gap-2">

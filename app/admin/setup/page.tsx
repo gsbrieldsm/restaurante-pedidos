@@ -158,7 +158,7 @@ export default function SetupPage() {
           </button>
         </form>
 
-        <p className="text-white/15 text-xs">Meu Menu+ · Configuração inicial</p>
+        <p className="text-white/15 text-xs">Menuê+ · Configuração inicial</p>
       </div>
     </div>
   )

@@ -102,7 +102,7 @@ export default function ConfirmacaoPage() {
       {/* Header */}
       <div className="shadow-lg" style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}>
         <div className="px-5 pt-5 pb-6">
-          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">Meu Menu+</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">Menuê+</p>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center shrink-0 shadow-lg">
               <CheckCircle2 className="w-6 h-6 text-white" />

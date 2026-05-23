@@ -101,7 +101,7 @@ export function AdminSidebar({ cargo }: { cargo: 'admin' | 'operador' }) {
       <aside className="hidden md:flex w-56 bg-teal-900 text-white flex-col shrink-0">
         <div className="px-4 py-4 border-b border-teal-700 flex items-center justify-between">
           <div>
-            <p className="font-black tracking-widest text-sm uppercase text-teal-400">Meu Menu+</p>
+            <p className="font-black tracking-widest text-sm uppercase text-teal-400">Menuê+</p>
             <p className="text-xs text-teal-500 tracking-widest uppercase">cardápio digital</p>
           </div>
           <button onClick={sair} title="Sair" className="text-teal-600 hover:text-red-400 transition-colors p-1">
@@ -114,7 +114,7 @@ export function AdminSidebar({ cargo }: { cargo: 'admin' | 'operador' }) {
       {/* ── Mobile: top bar ── */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-teal-900 flex items-center justify-between px-4 py-3 shadow-md">
         <div>
-          <p className="font-black tracking-widest text-xs uppercase text-teal-400 leading-none">Meu Menu+</p>
+          <p className="font-black tracking-widest text-xs uppercase text-teal-400 leading-none">Menuê+</p>
           <p className="text-white font-bold text-base leading-tight">Gestão</p>
         </div>
         <button
@@ -135,7 +135,7 @@ export function AdminSidebar({ cargo }: { cargo: 'admin' | 'operador' }) {
           >
             <div className="px-4 py-4 border-b border-teal-700 flex items-center justify-between">
               <div>
-                <p className="font-black tracking-widest text-sm uppercase text-teal-400">Meu Menu+</p>
+                <p className="font-black tracking-widest text-sm uppercase text-teal-400">Menuê+</p>
                 <p className="text-xs text-teal-500 tracking-widest uppercase">cardápio digital</p>
               </div>
               <button onClick={() => setDrawerAberto(false)} className="text-teal-400 hover:text-white p-1">

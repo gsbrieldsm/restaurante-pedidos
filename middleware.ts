@@ -30,7 +30,7 @@ const TENANT_PUBLIC = [
 ]
 
 // Domínio raiz de produção — só reconhece subdomínio nesse domínio
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'meumenu.com.br'
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'menue.com.br'
 
 // ─── Helper: extrai subdomínio do host ────────────────────────────────────────
 function extrairSubdominio(host: string): string | null {
@@ -38,8 +38,8 @@ function extrairSubdominio(host: string): string | null {
   const hostSemPorta = host.split(':')[0]
 
   // Só considera subdomínio se o host terminar com o ROOT_DOMAIN
-  // Ex: joao.meumenu.com.br → 'joao'
-  // meumenu.vercel.app → null (não é nosso domínio)
+  // Ex: joao.menue.com.br → 'joao'
+  // menue.vercel.app → null (não é nosso domínio)
   // localhost → null
   if (!hostSemPorta.endsWith(`.${ROOT_DOMAIN}`)) return null
 

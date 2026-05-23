@@ -51,7 +51,7 @@ export default function PlanosPage() {
           className="rounded-2xl px-8 pt-10 pb-8 text-white mb-4 shadow-xl"
           style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
         >
-          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-3">Meu Menu+</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-3">Menuê+</p>
           <h1 className="text-3xl font-black leading-tight">Seu restaurante pronto para decolar 🚀</h1>
           <p className="text-white/60 text-sm mt-2">
             Conta criada com sucesso! Veja o que está incluso no seu plano.
@@ -97,7 +97,7 @@ export default function PlanosPage() {
           <div className="px-8 pb-6">
             <div className="bg-slate-50 rounded-xl p-4 text-xs text-slate-500 leading-relaxed">
               Ao clicar em <strong className="text-slate-700">"Concordar e acessar"</strong> você confirma
-              que está ciente dos valores acima e concorda com os termos de uso do Meu Menu+.
+              que está ciente dos valores acima e concorda com os termos de uso do Menuê+.
               O acesso ao sistema é liberado imediatamente após a confirmação.
               O faturamento é combinado diretamente com nossa equipe.
             </div>

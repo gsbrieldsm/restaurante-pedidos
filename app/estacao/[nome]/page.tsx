@@ -42,7 +42,7 @@ export default function EstacaoPage() {
 
   // Título da aba do browser
   useEffect(() => {
-    if (config) document.title = `${config.emoji} ${config.label} — Meu Menu+`
+    if (config) document.title = `${config.emoji} ${config.label} — Menuê+`
   }, [config])
 
   const buscarItens = useCallback(async () => {

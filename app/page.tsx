@@ -56,7 +56,7 @@ export default function HomePage() {
             style={{ textShadow: '0 0 80px rgba(26,155,138,0.4)' }}
           >
             Bem-vindo ao<br />
-            <span style={{ color: '#1A9B8A' }}>Meu Menu+</span>,<br />
+            <span style={{ color: '#1A9B8A' }}>Menuê+</span>,<br />
             uma experiência épica!
           </h1>
           <p className="text-white/40 text-base font-light tracking-wide">
@@ -102,7 +102,7 @@ export default function HomePage() {
 
         {/* Rodapé */}
         <p className="text-white/15 text-xs tracking-widest uppercase">
-          Meu Menu+ · {new Date().getFullYear()}
+          Menuê+ · {new Date().getFullYear()}
         </p>
       </div>
     </div>

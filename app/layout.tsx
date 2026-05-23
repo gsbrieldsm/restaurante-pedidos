@@ -6,7 +6,7 @@ import './globals.css'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Meu Menu+',
+  title: 'Menuê+',
   description: 'Cardápio digital com pedidos via QR Code',
 }
 

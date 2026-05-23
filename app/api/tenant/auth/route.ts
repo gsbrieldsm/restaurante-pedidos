@@ -84,9 +84,9 @@ export async function POST(req: Request) {
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY)
       resend.emails.send({
-        from:    process.env.RESEND_FROM ?? 'Meu Menu+ <noreply@meumenu.com.br>',
+        from:    process.env.RESEND_FROM ?? 'Menuê+ <noreply@menue.com.br>',
         to:      tenant.email,
-        subject: `Bem-vindo ao Meu Menu+, ${tenant.nome}! 🎉`,
+        subject: `Bem-vindo ao Menuê+, ${tenant.nome}! 🎉`,
         html:    emailBoasVindas({
           nome:             tenant.nome,
           nome_restaurante: tenant.nome_restaurante,

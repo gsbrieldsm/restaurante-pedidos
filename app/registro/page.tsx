@@ -51,7 +51,7 @@ export default function RegistroPage() {
         >
           <div className="flex items-center gap-2 mb-4">
             <ChefHat className="w-5 h-5 text-teal-400" />
-            <p className="text-xs font-bold tracking-widest uppercase text-teal-400">Meu Menu+</p>
+            <p className="text-xs font-bold tracking-widest uppercase text-teal-400">Menuê+</p>
           </div>
           <h1 className="text-3xl font-black leading-tight">Crie sua conta</h1>
           <p className="text-white/60 text-sm mt-2">
@@ -95,7 +95,7 @@ export default function RegistroPage() {
                       .replace(/[^a-z0-9]+/g, '-')
                       .replace(/^-|-$/g, '')
                       .slice(0, 30)}
-                    .meumenu.com.br
+                    .menue.com.br
                   </span>
                 </p>
               )}

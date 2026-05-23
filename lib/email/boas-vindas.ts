@@ -6,7 +6,7 @@ interface BoasVindasProps {
 }
 
 export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProps): string {
-  const painelUrl = `https://${slug}.meumenu.com.br/admin`
+  const painelUrl = `https://${slug}.menue.com.br/admin`
 
   return `
 <!DOCTYPE html>
@@ -14,7 +14,7 @@ export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProp
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bem-vindo ao Meu Menu+</title>
+  <title>Bem-vindo ao Menuê+</title>
 </head>
 <body style="margin:0;padding:0;background:#F0FAFA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FAFA;padding:40px 16px;">
@@ -25,7 +25,7 @@ export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProp
           <!-- Header -->
           <tr>
             <td style="background:linear-gradient(135deg,#0a2420 0%,#0f3d35 50%,#1A9B8A 100%);border-radius:16px 16px 0 0;padding:40px 40px 32px;">
-              <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#5eead4;">Meu Menu+</p>
+              <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#5eead4;">Menuê+</p>
               <h1 style="margin:0;font-size:28px;font-weight:900;color:#ffffff;line-height:1.2;">
                 Bem-vindo, ${nome}! 🎉
               </h1>
@@ -40,7 +40,7 @@ export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProp
             <td style="background:#ffffff;padding:36px 40px;border-radius:0 0 16px 16px;">
 
               <p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.6;">
-                O <strong>${nome_restaurante}</strong> já está configurado no Meu Menu+.
+                O <strong>${nome_restaurante}</strong> já está configurado no Menuê+.
                 Seu cardápio digital com QR Code está pronto para receber os primeiros pedidos.
               </p>
 
@@ -92,7 +92,7 @@ export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProp
 
               <p style="margin:0;font-size:12px;color:#cbd5e1;text-align:center;line-height:1.6;">
                 Dúvidas? Fale com a gente pelo WhatsApp.<br />
-                Meu Menu+ — Sistema de pedidos por QR Code.
+                Menuê+ — Sistema de pedidos por QR Code.
               </p>
 
             </td>

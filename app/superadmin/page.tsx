@@ -22,6 +22,7 @@ type Tenant = {
 
 const MENSALIDADE = 550
 const IMPLEMENTACAO = 2000
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://menue.com.br'
 
 export default function SuperAdminPage() {
   const router = useRouter()
@@ -31,7 +32,7 @@ export default function SuperAdminPage() {
   const [inicializando, setInicializando] = useState<string | null>(null)
 
   useEffect(() => {
-    document.title = 'Master — Meu Menu+'
+    document.title = 'Master — Menuê+'
     carregar()
   }, [])
 
@@ -103,10 +104,10 @@ export default function SuperAdminPage() {
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 border border-white/20">
-              <span className="text-lg font-black text-white">M</span>
+              <span className="text-lg font-black text-white">M+</span>
             </div>
             <div>
-              <p className="text-xs font-black tracking-widest uppercase text-teal-300 leading-none">Meu Menu+</p>
+              <p className="text-xs font-black tracking-widest uppercase text-teal-300 leading-none">Menuê+</p>
               <h1 className="text-xl font-black text-white leading-tight">Painel Master</h1>
             </div>
           </div>
@@ -207,8 +208,8 @@ export default function SuperAdminPage() {
                             <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
                           </button>
                         )}
-                        <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer"
-                          title="Abrir painel do cliente"
+                        <a href={`${APP_URL}/login`} target="_blank" rel="noopener noreferrer"
+                          title={`Abrir login do cliente (${APP_URL}/login)`}
                           className="p-1.5 rounded-lg text-slate-300 hover:text-teal-600 hover:bg-teal-50 transition-colors">
                           <ExternalLink className="w-4 h-4" />
                         </a>
@@ -274,7 +275,7 @@ export default function SuperAdminPage() {
                         <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
                       </button>
                     )}
-                    <a href={`https://${t.slug}.meumenu.com.br/admin`} target="_blank" rel="noopener noreferrer"
+                    <a href={`${APP_URL}/login`} target="_blank" rel="noopener noreferrer"
                       className="text-slate-300 hover:text-teal-600">
                       <ExternalLink className="w-4 h-4" />
                     </a>

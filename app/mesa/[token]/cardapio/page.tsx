@@ -52,7 +52,7 @@ export default function CardapioPage() {
     restaurante_nome:     string
     restaurante_logo_url: string | null
     cor_primaria:         string
-  }>({ restaurante_nome: 'Meu Menu+', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
+  }>({ restaurante_nome: 'Menuê+', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
 
   useEffect(() => {
     // Se veio via garçom com ?sessao=, salva no sessionStorage

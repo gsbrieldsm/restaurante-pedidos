@@ -3,7 +3,7 @@ import { headers, cookies } from 'next/headers'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 
 export const metadata: Metadata = {
-  title: 'Gestão — Meu Menu+',
+  title: 'Gestão — Menuê+',
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

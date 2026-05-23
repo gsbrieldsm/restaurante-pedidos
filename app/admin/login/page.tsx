@@ -129,7 +129,7 @@ export default function LoginPage() {
             <span className="text-2xl font-black text-white">M+</span>
           </div>
           <div className="text-center">
-            <h1 className="text-white font-black text-2xl">Meu Menu+</h1>
+            <h1 className="text-white font-black text-2xl">Menuê+</h1>
             <p className="text-white/30 text-xs tracking-widest uppercase mt-0.5">Acesso restrito</p>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function LoginPage() {
           <LoginForm />
         </Suspense>
 
-        <p className="text-white/15 text-xs">Meu Menu+ · Painel de Gestão</p>
+        <p className="text-white/15 text-xs">Menuê+ · Painel de Gestão</p>
       </div>
     </div>
   )

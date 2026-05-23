@@ -24,7 +24,7 @@ export default function IdentificacaoPage() {
     restaurante_nome:     string
     restaurante_logo_url: string | null
     cor_primaria:         string
-  }>({ restaurante_nome: 'Meu Menu+', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
+  }>({ restaurante_nome: 'Menuê+', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
 
   useEffect(() => {
     // Pré-preenche com dados salvos do último acesso

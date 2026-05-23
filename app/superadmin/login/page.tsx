@@ -40,9 +40,9 @@ export default function SuperAdminLogin() {
         <div className="text-center mb-8">
           <div className="inline-flex w-14 h-14 rounded-2xl items-center justify-center mb-4 mx-auto"
             style={{ background: 'linear-gradient(135deg, #0f3d35, #1A9B8A)' }}>
-            <span className="text-xl font-black text-white">M</span>
+            <span className="text-xl font-black text-white">M+</span>
           </div>
-          <p className="text-xs font-black tracking-widest uppercase mb-1 text-teal-600">Meu Menu+</p>
+          <p className="text-xs font-black tracking-widest uppercase mb-1 text-teal-600">Menuê+</p>
           <h1 className="text-2xl font-black text-slate-800">Acesso Master</h1>
           <p className="text-slate-400 text-sm mt-1">Painel exclusivo do sistema</p>
         </div>

@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Meu Menu+ — Cardápio digital e gestão de pedidos para restaurantes',
+  title: 'Menuê+ — Cardápio digital e gestão de pedidos para restaurantes',
   description: 'Transforme a experiência do seu restaurante com cardápio digital por QR code, pedidos em tempo real e gestão completa. Sem app, sem filas, sem erro.',
 }
 
@@ -79,7 +79,7 @@ const DIFERENCIAIS = [
 ]
 
 export default function LandingPage() {
-  const whatsapp = 'https://wa.me/5547988194822?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Meu%20Menu%2B'
+  const whatsapp = 'https://wa.me/5547988194822?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Menu%C3%AA%2B'
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -110,7 +110,7 @@ export default function LandingPage() {
             >
               <span className="text-white font-black text-sm">M+</span>
             </div>
-            <span className="text-white font-bold text-lg tracking-tight">Meu Menu+</span>
+            <span className="text-white font-bold text-lg tracking-tight">Menuê+</span>
           </div>
           <div className="hidden sm:flex items-center gap-2">
             <Link
@@ -198,7 +198,7 @@ export default function LandingPage() {
               <div className="rounded-[2.2rem] overflow-hidden">
                 <Image
                   src="/preview-cardapio.png"
-                  alt="Cardápio digital Meu Menu+"
+                  alt="Cardápio digital Menuê+"
                   width={288}
                   height={608}
                   className="w-full h-auto block"
@@ -277,7 +277,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
-              Por que Meu Menu+
+              Por que Menuê+
             </p>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-800 mb-6">
               Simples para o cliente.<br />Poderoso para você.
@@ -480,10 +480,10 @@ export default function LandingPage() {
           >
             <span className="text-white font-black text-xs">M+</span>
           </div>
-          <span className="text-white font-bold">Meu Menu+</span>
+          <span className="text-white font-bold">Menuê+</span>
         </div>
         <p className="text-teal-700 text-xs">
-          © {new Date().getFullYear()} Meu Menu+ · Cardápio digital para restaurantes
+          © {new Date().getFullYear()} Menuê+ · Cardápio digital para restaurantes
         </p>
       </footer>
     </div>

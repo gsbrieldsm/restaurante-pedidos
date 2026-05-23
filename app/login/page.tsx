@@ -57,7 +57,7 @@ export default function LoginPage() {
         >
           <div className="flex items-center gap-2 mb-4">
             <ChefHat className="w-5 h-5 text-teal-400" />
-            <p className="text-xs font-bold tracking-widest uppercase text-teal-400">Meu Menu+</p>
+            <p className="text-xs font-bold tracking-widest uppercase text-teal-400">Menuê+</p>
           </div>
           <h1 className="text-3xl font-black leading-tight">Bem-vindo de volta</h1>
           <p className="text-white/60 text-sm mt-2">Acesse o painel do seu restaurante.</p>

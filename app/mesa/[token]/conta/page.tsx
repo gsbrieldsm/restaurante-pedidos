@@ -29,7 +29,7 @@ function tocarSom() {
 }
 
 const PIX_KEY = process.env.NEXT_PUBLIC_PIX_KEY ?? '(não configurada)'
-const RESTAURANT_NAME = process.env.NEXT_PUBLIC_RESTAURANT_NAME ?? 'Meu Menu+'
+const RESTAURANT_NAME = process.env.NEXT_PUBLIC_RESTAURANT_NAME ?? 'Menuê+'
 
 const STATUS_CONFIG: Record<string, { label: string; cor: string; icon: React.ElementType }> = {
   aguardando: { label: 'Aguardando',  cor: 'bg-slate-100 text-slate-500',  icon: Clock        },
@@ -184,7 +184,7 @@ export default function ContaPage() {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold tracking-widest uppercase text-teal-400 leading-none">Meu Menu+</p>
+            <p className="text-xs font-bold tracking-widest uppercase text-teal-400 leading-none">Menuê+</p>
             <h1 className="text-white font-black text-2xl leading-tight">
               Mesa {mesaNumero}
             </h1>

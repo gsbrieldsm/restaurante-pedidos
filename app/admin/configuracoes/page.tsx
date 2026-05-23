@@ -375,7 +375,7 @@ export default function ConfiguracoesPage() {
   // --- Banner state ---
   const [banner, setBanner] = useState<BannerConfig>({
     banner_ativo:      false,
-    banner_titulo:     'Bem-vindo ao Meu Menu+! 🎉',
+    banner_titulo:     'Bem-vindo ao Menuê+! 🎉',
     banner_subtitulo:  'Veja nossas novidades do dia',
     banner_emoji:      '🍽️',
     banner_estilo:     'teal',
