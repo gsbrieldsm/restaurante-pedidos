@@ -85,9 +85,19 @@ export default function ParceirosPage() {
     e.preventDefault()
     if (!form.nome || !form.email || !form.whatsapp) return
     setEnviando(true)
-    // TODO: integrar API de cadastro de parceiros + Stripe Connect
-    await new Promise((r) => setTimeout(r, 900))
-    setEnviado(true)
+
+    const resp = await fetch('/api/parceiros/cadastro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+
+    if (resp.ok) {
+      setEnviado(true)
+    } else {
+      const data = await resp.json().catch(() => ({}))
+      alert(data.error || 'Erro ao enviar cadastro. Tente novamente.')
+    }
     setEnviando(false)
   }
 

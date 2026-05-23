@@ -2,7 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, Users, TrendingUp, DollarSign, Store, ExternalLink, ShieldOff, ShieldCheck, Settings2, RefreshCw } from 'lucide-react'
+import { LogOut, Users, TrendingUp, DollarSign, Store, ExternalLink, ShieldOff, ShieldCheck, Settings2, RefreshCw, Handshake, ChevronDown } from 'lucide-react'
+
+type Parceiro = {
+  id:        string
+  nome:      string
+  email:     string
+  whatsapp:  string
+  cidade:    string | null
+  como:      string | null
+  status:    'novo' | 'contactado' | 'aprovado' | 'recusado'
+  notas:     string | null
+  criado_em: string
+}
 
 type Tenant = {
   id: string
@@ -24,12 +36,29 @@ const MENSALIDADE = 550
 const IMPLEMENTACAO = 2000
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://menue.com.br'
 
+const STATUS_PARCEIRO: Record<string, { label: string; cor: string; bg: string }> = {
+  novo:        { label: 'Novo',        cor: '#0284c7', bg: '#e0f2fe' },
+  contactado:  { label: 'Contactado',  cor: '#d97706', bg: '#fef3c7' },
+  aprovado:    { label: 'Aprovado',    cor: '#16a34a', bg: '#dcfce7' },
+  recusado:    { label: 'Recusado',    cor: '#dc2626', bg: '#fee2e2' },
+}
+
+const COMO_LABEL: Record<string, string> = {
+  rede_pessoal:  'Rede pessoal',
+  redes_sociais: 'Redes sociais',
+  consultor:     'Consultor',
+  agencia:       'Agência',
+  outro:         'Outro',
+}
+
 export default function SuperAdminPage() {
   const router = useRouter()
-  const [tenants, setTenants] = useState<Tenant[]>([])
-  const [carregando, setCarregando] = useState(true)
+  const [tenants, setTenants]         = useState<Tenant[]>([])
+  const [parceiros, setParceiros]     = useState<Parceiro[]>([])
+  const [carregando, setCarregando]   = useState(true)
   const [atualizando, setAtualizando] = useState<string | null>(null)
   const [inicializando, setInicializando] = useState<string | null>(null)
+  const [statusEditando, setStatusEditando] = useState<string | null>(null)
 
   useEffect(() => {
     document.title = 'Master — Menuê+'
@@ -38,11 +67,27 @@ export default function SuperAdminPage() {
 
   async function carregar() {
     setCarregando(true)
-    const res = await fetch('/api/superadmin/tenants')
-    if (res.status === 401) { router.push('/superadmin/login'); return }
-    const { tenants } = await res.json()
+    const [resTenants, resParceiros] = await Promise.all([
+      fetch('/api/superadmin/tenants'),
+      fetch('/api/superadmin/parceiros'),
+    ])
+    if (resTenants.status === 401) { router.push('/superadmin/login'); return }
+    const { tenants }   = await resTenants.json()
+    const { parceiros } = await resParceiros.json()
     setTenants(tenants ?? [])
+    setParceiros(parceiros ?? [])
     setCarregando(false)
+  }
+
+  async function atualizarStatusParceiro(id: string, status: string) {
+    setStatusEditando(id)
+    await fetch('/api/superadmin/parceiros', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    })
+    setParceiros((prev) => prev.map((p) => p.id === id ? { ...p, status: status as Parceiro['status'] } : p))
+    setStatusEditando(null)
   }
 
   async function forcarSetup(tenant: Tenant) {
@@ -288,6 +333,135 @@ export default function SuperAdminPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── Parceiros ── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Handshake className="w-4 h-4 text-teal-600" />
+              <h2 className="font-bold text-slate-800">
+                Parceiros
+                <span className="ml-2 text-sm font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-600">{parceiros.length}</span>
+              </h2>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-400">
+              <span className="font-semibold text-blue-600">{parceiros.filter(p => p.status === 'novo').length} novos</span>
+              <span className="font-semibold text-green-600">{parceiros.filter(p => p.status === 'aprovado').length} aprovados</span>
+            </div>
+          </div>
+
+          {parceiros.length === 0 ? (
+            <div className="px-6 py-12 text-center text-slate-300 text-sm">
+              Nenhum cadastro de parceiro ainda.
+            </div>
+          ) : (
+            <>
+              {/* Desktop */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100">
+                      {['Nome', 'Email', 'WhatsApp', 'Cidade', 'Como indica', 'Cadastro', 'Status', ''].map((h, i) => (
+                        <th key={i} className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 text-left">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {parceiros.map((p) => {
+                      const s = STATUS_PARCEIRO[p.status] ?? STATUS_PARCEIRO.novo
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-5 py-4 font-bold text-slate-800">{p.nome}</td>
+                          <td className="px-5 py-4 text-slate-500 text-xs">{p.email}</td>
+                          <td className="px-5 py-4">
+                            <a
+                              href={`https://wa.me/55${p.whatsapp}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-mono px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100 hover:bg-green-100 transition-colors"
+                            >
+                              {p.whatsapp}
+                            </a>
+                          </td>
+                          <td className="px-5 py-4 text-slate-500 text-xs">{p.cidade ?? '—'}</td>
+                          <td className="px-5 py-4 text-slate-500 text-xs">{p.como ? (COMO_LABEL[p.como] ?? p.como) : '—'}</td>
+                          <td className="px-5 py-4 text-slate-400 text-xs whitespace-nowrap">
+                            {new Date(p.criado_em).toLocaleDateString('pt-BR')}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span
+                              className="text-xs px-2.5 py-1 rounded-full font-semibold"
+                              style={{ background: s.bg, color: s.cor }}
+                            >
+                              {s.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="relative flex items-center">
+                              <select
+                                value={p.status}
+                                disabled={statusEditando === p.id}
+                                onChange={(e) => atualizarStatusParceiro(p.id, e.target.value)}
+                                className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 cursor-pointer hover:border-teal-300 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-40"
+                              >
+                                <option value="novo">Novo</option>
+                                <option value="contactado">Contactado</option>
+                                <option value="aprovado">Aprovado</option>
+                                <option value="recusado">Recusado</option>
+                              </select>
+                              <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none" />
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {parceiros.map((p) => {
+                  const s = STATUS_PARCEIRO[p.status] ?? STATUS_PARCEIRO.novo
+                  return (
+                    <div key={p.id} className="px-5 py-4 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-slate-800">{p.nome}</p>
+                          <p className="text-slate-400 text-xs mt-0.5">{p.email}</p>
+                        </div>
+                        <span className="text-xs px-2.5 py-1 rounded-full font-semibold shrink-0" style={{ background: s.bg, color: s.cor }}>
+                          {s.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-500">
+                        <a href={`https://wa.me/55${p.whatsapp}`} target="_blank" rel="noopener noreferrer"
+                          className="font-mono px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100">
+                          {p.whatsapp}
+                        </a>
+                        {p.cidade && <span>{p.cidade}</span>}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400 text-xs">{new Date(p.criado_em).toLocaleDateString('pt-BR')}</span>
+                        <select
+                          value={p.status}
+                          disabled={statusEditando === p.id}
+                          onChange={(e) => atualizarStatusParceiro(p.id, e.target.value)}
+                          className="text-xs px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 disabled:opacity-40"
+                        >
+                          <option value="novo">Novo</option>
+                          <option value="contactado">Contactado</option>
+                          <option value="aprovado">Aprovado</option>
+                          <option value="recusado">Recusado</option>
+                        </select>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── Breakdown de receita & uso ── */}
