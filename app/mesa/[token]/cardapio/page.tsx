@@ -297,8 +297,8 @@ export default function CardapioPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-teal-50">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: cor }} />
       </div>
     )
   }
@@ -337,7 +337,7 @@ export default function CardapioPage() {
               className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-xl font-medium transition-all ${
                 garcomChamado
                   ? 'bg-green-500/20 text-green-300'
-                  : 'text-teal-300 hover:text-white hover:bg-white/10'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
               }`}
             >
               {chamandoGarcom ? (
@@ -353,7 +353,7 @@ export default function CardapioPage() {
             {/* Minha conta */}
             <button
               onClick={() => router.push(`/mesa/${token}/conta`)}
-              className="flex items-center gap-1.5 text-sm text-teal-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 transition-colors font-medium"
+              className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 transition-colors font-medium"
             >
               <Receipt className="w-4 h-4" />
               <span>Conta</span>
@@ -374,9 +374,9 @@ export default function CardapioPage() {
         {/* Barra de busca */}
         <div className="px-4 pb-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
             <input
-              className="w-full bg-white/10 placeholder-teal-400 text-white rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:bg-white/20 transition-colors"
+              className="w-full bg-white/10 placeholder-white/40 text-white rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:bg-white/20 transition-colors"
               placeholder="Buscar no cardápio..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
@@ -530,7 +530,7 @@ export default function CardapioPage() {
                     </p>
                   )}
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="text-teal-700 font-black text-base">
+                    <span className="font-black text-base" style={{ color: cor }}>
                       R$ {item.preco.toFixed(2).replace('.', ',')}
                     </span>
                     <span className="flex items-center gap-1 text-sm text-slate-400">
@@ -554,14 +554,16 @@ export default function CardapioPage() {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => removerItem(item.id)}
-                        className="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center"
+                        className="w-9 h-9 rounded-full flex items-center justify-center"
+                        style={{ background: `${cor}22`, color: cor }}
                       >
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="font-black text-lg w-5 text-center text-slate-800">{qtd}</span>
                       <button
                         onClick={() => adicionarItem(item)}
-                        className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center"
+                        className="w-9 h-9 rounded-full text-white flex items-center justify-center"
+                        style={{ background: cor }}
                       >
                         <Plus className="w-4 h-4" />
                       </button>
@@ -639,30 +641,30 @@ export default function CardapioPage() {
                         <button
                           key={opcao.id}
                           onClick={() => toggleSelecao(grupo, opcao.id)}
-                          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all ${
-                            selecionado
-                              ? 'border-teal-500 bg-teal-50'
-                              : 'border-slate-200 bg-white hover:border-slate-300'
-                          }`}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all border-slate-200 bg-white hover:border-slate-300"
+                          style={selecionado ? { borderColor: cor, background: `${cor}12` } : undefined}
                         >
                           <div className="flex items-center gap-3">
-                            <div className={`shrink-0 flex items-center justify-center transition-colors ${
-                              grupo.multiplo
-                                ? `w-5 h-5 rounded border-2 ${selecionado ? 'border-teal-500 bg-teal-500' : 'border-slate-300'}`
-                                : `w-5 h-5 rounded-full border-2 ${selecionado ? 'border-teal-500' : 'border-slate-300'}`
-                            }`}>
+                            <div
+                              className={`shrink-0 flex items-center justify-center transition-colors border-2 ${
+                                grupo.multiplo ? 'w-5 h-5 rounded' : 'w-5 h-5 rounded-full'
+                              }`}
+                              style={selecionado
+                                ? { borderColor: cor, background: grupo.multiplo ? cor : 'transparent' }
+                                : { borderColor: '#cbd5e1' }}
+                            >
                               {selecionado && (
                                 grupo.multiplo
                                   ? <span className="text-white text-xs font-black">✓</span>
-                                  : <div className="w-2.5 h-2.5 rounded-full bg-teal-500" />
+                                  : <div className="w-2.5 h-2.5 rounded-full" style={{ background: cor }} />
                               )}
                             </div>
-                            <span className={`text-sm font-medium ${selecionado ? 'text-teal-800' : 'text-slate-700'}`}>
+                            <span className="text-sm font-medium text-slate-700">
                               {opcao.nome}
                             </span>
                           </div>
                           {opcao.preco_adicional > 0 && (
-                            <span className={`text-sm font-bold shrink-0 ${selecionado ? 'text-teal-700' : 'text-slate-500'}`}>
+                            <span className="text-sm font-bold shrink-0 text-slate-500">
                               +R$ {opcao.preco_adicional.toFixed(2).replace('.', ',')}
                             </span>
                           )}
@@ -731,7 +733,7 @@ export default function CardapioPage() {
             {/* Cabeçalho */}
             <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-teal-600" />
+                <ShoppingCart className="w-5 h-5" style={{ color: cor }} />
                 <span className="font-bold text-lg text-slate-800">Meu Pedido</span>
               </div>
               <button
@@ -760,7 +762,8 @@ export default function CardapioPage() {
                       <span className="font-bold text-base w-5 text-center">{c.quantidade}</span>
                       <button
                         onClick={() => adicionarMaisNoCarrinho(c.carrinhoKey)}
-                        className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center"
+                        className="w-9 h-9 rounded-full text-white flex items-center justify-center"
+                        style={{ background: cor }}
                       >
                         <Plus className="w-4 h-4" />
                       </button>
@@ -772,14 +775,17 @@ export default function CardapioPage() {
                           {c.opcoes_selecionadas.map((o) => o.opcao_nome).join(' · ')}
                         </p>
                       )}
-                      <p className="text-sm text-teal-700 font-medium mt-0.5">
+                      <p className="text-sm font-medium mt-0.5" style={{ color: cor }}>
                         R$ {(c.preco_unitario * c.quantidade).toFixed(2).replace('.', ',')}
                       </p>
                     </div>
                   </div>
                   {c.opcoes_selecionadas.length === 0 && (
                     <input
-                      className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none focus:border-teal-400"
+                      className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none transition-colors"
+                      style={{ '--tw-ring-color': cor } as React.CSSProperties}
+                      onFocus={(e) => (e.target.style.borderColor = cor)}
+                      onBlur={(e) => (e.target.style.borderColor = '')}
                       placeholder="Alguma observação? (ex: sem cebola)"
                       value={observacoes[c.item.id] || ''}
                       onChange={(e) =>
@@ -800,7 +806,7 @@ export default function CardapioPage() {
               <div className="shrink-0 px-5 pt-3 pb-2 border-t border-slate-100 space-y-3 bg-white">
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-lg text-slate-800">Total</span>
-                  <span className="font-black text-2xl text-teal-700">
+                  <span className="font-black text-2xl" style={{ color: cor }}>
                     R$ {totalCarrinho.toFixed(2).replace('.', ',')}
                   </span>
                 </div>
