@@ -260,6 +260,17 @@ export default function CardapioPage() {
     }
   }
 
+  // Gera gradiente do header a partir da cor primária do restaurante
+  function darkenHex(hex: string, factor: number): string {
+    const h = hex.replace('#', '')
+    const r = parseInt(h.slice(0, 2), 16)
+    const g = parseInt(h.slice(2, 4), 16)
+    const b = parseInt(h.slice(4, 6), 16)
+    return `rgb(${Math.round(r * factor)},${Math.round(g * factor)},${Math.round(b * factor)})`
+  }
+  const cor = branding.cor_primaria ?? '#1A9B8A'
+  const headerGradient = `linear-gradient(135deg, ${darkenHex(cor, 0.10)} 0%, ${darkenHex(cor, 0.28)} 50%, ${cor} 100%)`
+
   const BANNER_ESTILOS: Record<string, { gradient: string; subColor: string }> = {
     teal:   { gradient: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)', subColor: '#5eead4' },
     ocean:  { gradient: 'linear-gradient(135deg, #0a1628 0%, #0d2d5e 50%, #1a6eb5 100%)', subColor: '#93c5fd' },
@@ -296,7 +307,7 @@ export default function CardapioPage() {
       {/* Header */}
       <div
         className="text-white sticky top-0 z-10 shadow-lg"
-        style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
+        style={{ background: headerGradient }}
       >
         {/* Linha superior: marca + ações */}
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
@@ -349,7 +360,7 @@ export default function CardapioPage() {
             <button onClick={() => setCarrinhoAberto(true)} className="relative p-1.5">
               <ShoppingCart className="w-6 h-6" />
               {qtdCarrinho > 0 && (
-                <span className="absolute -top-1 -right-1 bg-white text-teal-700 text-xs font-black rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-white text-xs font-black rounded-full w-5 h-5 flex items-center justify-center" style={{ color: cor }}>
                   {qtdCarrinho}
                 </span>
               )}
@@ -379,9 +390,10 @@ export default function CardapioPage() {
                 onClick={() => setCategoriaAtiva(cat)}
                 className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
                   categoriaAtiva === cat
-                    ? 'bg-white text-teal-800 font-bold shadow'
-                    : 'bg-white/10 text-teal-200 hover:bg-white/20'
+                    ? 'bg-white font-bold shadow'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20'
                 }`}
+                style={categoriaAtiva === cat ? { color: cor } : undefined}
               >
                 {cat}
               </button>
