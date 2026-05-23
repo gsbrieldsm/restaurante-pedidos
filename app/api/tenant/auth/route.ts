@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     // Dispara e-mails (não bloqueia a resposta se falhar)
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY)
-      const from = process.env.RESEND_FROM ?? 'Menuê+ <noreply@menue.com.br>'
+      const from = process.env.RESEND_FROM ?? 'Menue+ <noreply@menue.com.br>'
 
       // E-mail de confirmação de e-mail (prioritário)
       resend.emails.send({
