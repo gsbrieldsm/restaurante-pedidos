@@ -129,13 +129,13 @@ export default function CardapioAdminPage() {
     }
 
     if (editando) {
-      await fetch(`/api/cardapio/${editando.id}`, {
+      await fetch(`/api/admin/cardapio/${editando.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
     } else {
-      await fetch('/api/cardapio', {
+      await fetch('/api/admin/cardapio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, disponivel: true }),
@@ -153,7 +153,7 @@ export default function CardapioAdminPage() {
     setItens((prev) =>
       prev.map((i) => i.id === item.id ? { ...i, disponivel: !i.disponivel } : i)
     )
-    await fetch(`/api/cardapio/${item.id}`, {
+    await fetch(`/api/admin/cardapio/${item.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ disponivel: !item.disponivel }),
@@ -163,7 +163,7 @@ export default function CardapioAdminPage() {
 
   async function deletar(item: CardapioItem) {
     if (!confirm(`Remover "${item.nome}" do cardápio?`)) return
-    await fetch(`/api/cardapio/${item.id}`, { method: 'DELETE' })
+    await fetch(`/api/admin/cardapio/${item.id}`, { method: 'DELETE' })
     buscarItens()
   }
 

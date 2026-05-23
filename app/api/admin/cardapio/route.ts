@@ -16,3 +16,20 @@ export async function GET() {
 
   return NextResponse.json({ itens: data ?? [] })
 }
+
+export async function POST(req: Request) {
+  const supabase  = createServiceClient()
+  const tenantId  = await getTenantId()
+  if (!tenantId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  const body = await req.json()
+
+  const { data, error } = await supabase
+    .from('cardapio_itens')
+    .insert({ ...body, tenant_id: tenantId })
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ item: data }, { status: 201 })
+}
