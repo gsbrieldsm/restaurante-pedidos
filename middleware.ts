@@ -5,8 +5,9 @@ import type { NextRequest } from 'next/server'
 const SESSION_TOKEN = 'mmu-admin-v1'
 
 const STAFF_PUBLIC = [
-  '/admin/login',
+  '/admin/login',    // mantido como redirect para /operador/login
   '/admin/setup',
+  '/operador/login',
   '/api/admin/auth',
   '/api/admin/setup',
 ]
@@ -103,7 +104,7 @@ export function middleware(request: NextRequest) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
-    const loginUrl = new URL('/admin/login', request.url)
+    const loginUrl = new URL('/operador/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
@@ -125,6 +126,8 @@ export const config = {
     '/admin',
     '/admin/:path*',
     '/api/admin/:path*',
+    '/operador',
+    '/operador/:path*',
     '/estacao/:path*',
     '/garcom',
     '/registro',

@@ -37,7 +37,7 @@ export function AdminSidebar({ cargo }: { cargo: 'admin' | 'operador' }) {
 
   async function sair() {
     await fetch('/api/admin/auth', { method: 'DELETE' })
-    router.push('/admin/login')
+    router.push('/operador/login')
     router.refresh()
   }
 

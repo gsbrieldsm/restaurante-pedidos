@@ -20,7 +20,7 @@ export default function SetupPage() {
       .then(({ semUsuarios }) => {
         if (!semUsuarios) {
           // Já tem usuários — vai pro login normal
-          router.replace('/admin/login')
+          router.replace('/operador/login')
         } else {
           setVerificando(false)
         }
@@ -44,7 +44,7 @@ export default function SetupPage() {
     if (!resp.ok) { setErro(data.error ?? 'Erro ao criar usuário'); return }
 
     // Criou — vai pro login para entrar com as credenciais novas
-    router.push('/admin/login')
+    router.push('/operador/login')
   }
 
   if (verificando) {
