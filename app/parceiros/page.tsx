@@ -287,9 +287,8 @@ export default function ParceirosPage() {
             </p>
           </div>
 
-          {/* Tabela */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-            {/* Header */}
+          {/* Desktop — tabela */}
+          <div className="hidden sm:block overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
             <div className="grid grid-cols-4 gap-0" style={{ background: '#0f3d35' }}>
               {['Clientes ativos', 'Implementação', 'Recorrente/mês', 'Ganho mensal est.'].map((h) => (
                 <div key={h} className="px-5 py-4">
@@ -309,34 +308,24 @@ export default function ParceirosPage() {
                   className="grid grid-cols-4 gap-0 border-t border-slate-100"
                   style={{ background: isDestaque ? '#F0FDF4' : i % 2 === 0 ? '#fff' : '#FAFFFE' }}
                 >
-                  {/* Clientes */}
                   <div className="px-5 py-4 flex items-center gap-2">
                     <span className="font-black text-slate-800 text-sm">{tier.label}</span>
                     {isDestaque && (
-                      <span
-                        className="text-xs font-bold px-2 py-0.5 rounded-full"
-                        style={{ background: '#dcfce7', color: '#16a34a' }}
-                      >
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#dcfce7', color: '#16a34a' }}>
                         popular
                       </span>
                     )}
                   </div>
-                  {/* Implementação */}
                   <div className="px-5 py-4 flex items-center">
                     <span className="text-slate-700 font-bold text-sm">
                       30% · <span className="text-slate-500 font-normal">{fmt(porImpl)}/cliente</span>
                     </span>
                   </div>
-                  {/* % recorrente */}
                   <div className="px-5 py-4 flex items-center">
-                    <span
-                      className="font-black text-2xl"
-                      style={{ color: tier.cor }}
-                    >
+                    <span className="font-black text-2xl" style={{ color: tier.cor }}>
                       {(tier.recorrente * 100).toFixed(0)}%
                     </span>
                   </div>
-                  {/* Ganho estimado */}
                   <div className="px-5 py-4 flex items-center">
                     <span className="font-black text-slate-800 text-sm">
                       ~{fmt(ganhoMensal)}<span className="text-slate-400 font-normal text-xs">/mês</span>
@@ -347,8 +336,52 @@ export default function ParceirosPage() {
             })}
           </div>
 
+          {/* Mobile — cards */}
+          <div className="sm:hidden space-y-3">
+            {TIERS.map((tier) => {
+              const midClientes = tier.max === Infinity ? tier.min + 2 : Math.floor((tier.min + tier.max) / 2)
+              const ganhoMensal = midClientes * MENSALIDADE_BASE * tier.recorrente
+              const isDestaque  = tier.min === 10
+
+              return (
+                <div
+                  key={tier.label}
+                  className="rounded-2xl p-5 border"
+                  style={{
+                    background: isDestaque ? '#F0FDF4' : '#fff',
+                    borderColor: isDestaque ? '#bbf7d0' : '#e2e8f0',
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-slate-800">{tier.label}</span>
+                      {isDestaque && (
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#dcfce7', color: '#16a34a' }}>
+                          popular
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-black text-3xl" style={{ color: tier.cor }}>
+                      {(tier.recorrente * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <p className="text-slate-400 text-xs">Implementação</p>
+                      <p className="text-slate-700 font-semibold">{fmt(porImpl)}/cliente</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-slate-400 text-xs">Ganho recorrente est.</p>
+                      <p className="font-black text-slate-800">~{fmt(ganhoMensal)}<span className="text-slate-400 font-normal text-xs">/mês</span></p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
           <p className="text-slate-400 text-xs text-center mt-4">
-            * Ganho mensal estimado com base na mensalidade mínima de R$ 550/restaurante. Restaurantes que faturam mais pagam proporcionalmente — sua comissão também sobe.
+            * Ganho mensal estimado com base na mensalidade média de R$ 450/restaurante.
           </p>
         </div>
       </section>
