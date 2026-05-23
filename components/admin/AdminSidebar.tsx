@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Clock, DollarSign,
-  BookOpen, QrCode, ConciergeBell, Users, ChevronDown, ChevronRight, Settings, LogOut, Menu, X
+  BookOpen, QrCode, ConciergeBell, Users, ChevronDown, ChevronRight, Settings, LogOut, Menu, X, UserCog
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -16,6 +16,7 @@ const NAV = [
   { href: '/admin/faturamento',    label: 'Financeiro',    icon: DollarSign,      apenasAdmin: true  },
   { href: '/admin/cardapio',       label: 'Cardápio',      icon: BookOpen,        apenasAdmin: true  },
   { href: '/admin/mesas',          label: 'Mesas & QR',    icon: QrCode,          apenasAdmin: true  },
+  { href: '/admin/equipe',         label: 'Equipe',        icon: UserCog,         apenasAdmin: true  },
   { href: '/admin/configuracoes',  label: 'Configurações', icon: Settings,        apenasAdmin: true  },
 ]
 

@@ -1,45 +1,53 @@
 import { NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import { createServiceClient } from '@/lib/supabase/server'
-import { hashSenha } from '@/lib/auth-utils'
+import { getTenantId } from '@/lib/tenant'
+import { Resend } from 'resend'
+import { emailConvite } from '@/lib/email/convite'
 
-// PUT — atualiza usuário (nome, email, cargo, ativo e/ou nova senha)
-export async function PUT(
+export const dynamic = 'force-dynamic'
+
+const CARGO_LABEL: Record<string, string> = {
+  admin:    'Administrador',
+  operador: 'Operador',
+}
+
+// ── PATCH — atualiza cargo ou status ativo ───────────────────────────────────
+export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
+  const { id }   = await params
   const supabase = createServiceClient()
-  const { nome, email, cargo, ativo, senha } = await req.json() as {
-    nome?: string
-    email?: string
+  const tenantId = await getTenantId()
+
+  const { cargo, ativo } = await req.json() as {
     cargo?: 'admin' | 'operador'
     ativo?: boolean
-    senha?: string
   }
 
   const updates: Record<string, unknown> = {}
-  if (nome  !== undefined) updates.nome  = nome.trim()
-  if (email !== undefined) updates.email = email.toLowerCase().trim()
   if (cargo !== undefined) updates.cargo = cargo
   if (ativo !== undefined) updates.ativo = ativo
-  if (senha)               updates.senha_hash = hashSenha(senha)
 
   if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: 'Nada para atualizar' }, { status: 400 })
+    return NextResponse.json({ error: 'Nada para atualizar.' }, { status: 400 })
   }
 
-  // Garante que não estamos desativando o último admin
+  // Não permite remover o último admin ativo
   if (ativo === false || cargo === 'operador') {
-    const { count } = await supabase
+    let q = supabase
       .from('usuarios')
       .select('id', { count: 'exact', head: true })
       .eq('cargo', 'admin')
       .eq('ativo', true)
       .neq('id', id)
+    if (tenantId) q = (q as any).eq('tenant_id', tenantId)
+    const { count } = await q
 
     if (!count || count === 0) {
       return NextResponse.json(
-        { error: 'Não é possível remover o último administrador ativo' },
+        { error: 'Não é possível remover o último administrador ativo.' },
         { status: 409 }
       )
     }
@@ -49,44 +57,108 @@ export async function PUT(
     .from('usuarios')
     .update(updates)
     .eq('id', id)
-    .select('id, nome, email, cargo, ativo, criado_em')
+    .select('id, nome, email, cargo, ativo, convite_aceito, criado_em')
     .single()
 
-  if (error) {
-    if (error.code === '23505') {
-      return NextResponse.json({ error: 'Este email já está em uso' }, { status: 409 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ usuario: data })
 }
 
-// DELETE — remove usuário (não pode remover o último admin)
+// ── POST { action: 'reenviar' } — reenvia e-mail de convite ─────────────────
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id }   = await params
+  const supabase = createServiceClient()
+  const tenantId = await getTenantId()
+
+  const body = await req.json() as { action: string }
+
+  if (body.action !== 'reenviar') {
+    return NextResponse.json({ error: 'Ação inválida.' }, { status: 400 })
+  }
+
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('id, nome, email, cargo, convite_aceito, tenant_id')
+    .eq('id', id)
+    .single()
+
+  if (!usuario) {
+    return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 })
+  }
+
+  if (usuario.convite_aceito) {
+    return NextResponse.json({ error: 'Este usuário já aceitou o convite.' }, { status: 409 })
+  }
+
+  const convite_token     = randomBytes(32).toString('hex')
+  const convite_expira_em = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  await supabase
+    .from('usuarios')
+    .update({ convite_token, convite_expira_em })
+    .eq('id', id)
+
+  // Busca nome do restaurante
+  let nomeRestaurante = 'Seu Restaurante'
+  const tid = tenantId ?? usuario.tenant_id
+  if (tid) {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('nome_restaurante')
+      .eq('id', tid)
+      .single()
+    if (tenant) nomeRestaurante = tenant.nome_restaurante
+  }
+
+  if (process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    resend.emails.send({
+      from:    process.env.RESEND_FROM ?? 'Menuê+ <noreply@menue.com.br>',
+      to:      usuario.email,
+      subject: `Convite Menuê+ — ${nomeRestaurante}`,
+      html:    emailConvite({
+        nomeConvidado:   usuario.nome,
+        nomeRestaurante,
+        cargoLabel:      CARGO_LABEL[usuario.cargo] ?? usuario.cargo,
+        token:           convite_token,
+      }),
+    }).catch((err) => console.error('[resend] erro ao reenviar convite:', err))
+  }
+
+  return NextResponse.json({ ok: true })
+}
+
+// ── DELETE — remove usuário ──────────────────────────────────────────────────
 export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
+  const { id }   = await params
   const supabase = createServiceClient()
+  const tenantId = await getTenantId()
 
-  // Verifica se é o último admin
   const { data: alvo } = await supabase
     .from('usuarios')
-    .select('cargo')
+    .select('cargo, ativo')
     .eq('id', id)
     .single()
 
-  if (alvo?.cargo === 'admin') {
-    const { count } = await supabase
+  if (alvo?.cargo === 'admin' && alvo?.ativo) {
+    let q = supabase
       .from('usuarios')
       .select('id', { count: 'exact', head: true })
       .eq('cargo', 'admin')
       .eq('ativo', true)
+    if (tenantId) q = (q as any).eq('tenant_id', tenantId)
+    const { count } = await q
 
     if (!count || count <= 1) {
       return NextResponse.json(
-        { error: 'Não é possível remover o único administrador' },
+        { error: 'Não é possível remover o único administrador.' },
         { status: 409 }
       )
     }

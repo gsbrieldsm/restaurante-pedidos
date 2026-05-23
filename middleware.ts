@@ -19,6 +19,8 @@ const ADMIN_ONLY = [
   '/admin/faturamento',
   '/admin/tempo',
   '/admin/mesas',
+  '/admin/equipe',
+  '/api/admin/usuarios',
 ]
 
 // ─── Rotas públicas de tenant (sem auth de staff exigida) ────────────────────
@@ -31,6 +33,7 @@ const TENANT_PUBLIC = [
   '/recuperar-senha',
   '/nova-senha',
   '/aguardando-verificacao',
+  '/aceitar-convite',
   '/api/tenant/',
 ]
 
@@ -141,6 +144,7 @@ export const config = {
     '/recuperar-senha',
     '/nova-senha',
     '/aguardando-verificacao',
+    '/aceitar-convite',
     '/api/tenant/:path*',
     '/superadmin',
     '/superadmin/:path*',
