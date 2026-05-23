@@ -115,3 +115,42 @@ export async function PATCH(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+
+// DELETE — exclui um tenant e todos os dados relacionados
+export async function DELETE(req: Request) {
+  if (!await checkAuth()) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  }
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id obrigatório.' }, { status: 422 })
+
+  const supabase = createServiceClient()
+
+  // Deleta na ordem correta (filhos antes dos pais)
+  const tabelas: string[] = [
+    'chamadas_garcom',
+    'pedido_itens',
+    'pedidos',
+    'sessoes_mesa',
+    'mesas',
+    'cardapio_opcoes',
+    'cardapio_grupos_opcao',
+    'cardapio_itens',
+    'pagamentos',
+    'configuracoes',
+    'usuarios',
+  ]
+
+  for (const tabela of tabelas) {
+    const { error } = await supabase.from(tabela as any).delete().eq('tenant_id', id)
+    if (error) console.error(`[delete tenant] erro em ${tabela}:`, error.message)
+  }
+
+  // Por último, deleta o tenant
+  const { error } = await supabase.from('tenants').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}

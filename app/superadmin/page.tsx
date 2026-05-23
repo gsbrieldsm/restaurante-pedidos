@@ -8,6 +8,7 @@ import {
   RefreshCw, Handshake, ChevronDown, CreditCard,
   Gauge, HeadphonesIcon, Menu, X, Copy, Check, Link2,
   Banknote, History, CheckCircle2, CircleDashed, Trash2, ChevronRight,
+  AlertTriangle,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -125,6 +126,8 @@ export default function SuperAdminPage() {
   const [copiado,      setCopiado]      = useState<string | null>(null)
   const [expandido,    setExpandido]    = useState<string | null>(null)
   const [pagamentos,   setPagamentos]   = useState<Record<string, Pagamento[]>>({})
+  const [confirmDelete, setConfirmDelete] = useState<Tenant | null>(null)
+  const [deletando,    setDeletando]    = useState(false)
   const [pagandoId,    setPagandoId]    = useState<string | null>(null)
   const [mesRef,       setMesRef]       = useState(() => {
     const d = new Date(); return `${d.toLocaleString('pt-BR', { month: 'long' })} ${d.getFullYear()}`
@@ -180,6 +183,16 @@ export default function SuperAdminPage() {
     })
     setTenants((prev) => prev.map((t) => t.id === tenant.id ? { ...t, status: novoStatus } : t))
     setAtualizando(null)
+  }
+
+  async function excluirTenant(tenant: Tenant) {
+    setDeletando(true)
+    const res = await fetch(`/api/superadmin/tenants?id=${tenant.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setTenants((prev) => prev.filter((t) => t.id !== tenant.id))
+    }
+    setDeletando(false)
+    setConfirmDelete(null)
   }
 
   async function atualizarStatusParceiro(id: string, status: string) {
@@ -349,6 +362,50 @@ export default function SuperAdminPage() {
         </div>
       </aside>
 
+      {/* ── Modal de confirmação de exclusão ── */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <p className="font-black text-slate-800">Excluir conta permanentemente</p>
+                <p className="text-xs text-slate-400 mt-0.5">Esta ação não pode ser desfeita</p>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                Você está prestes a excluir <strong className="text-slate-800">{confirmDelete.nome_restaurante}</strong> e <strong className="text-red-600">todos os dados relacionados</strong> — mesas, pedidos, cardápio, usuários e histórico.
+              </p>
+              <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-xs text-red-700 font-semibold">
+                ⚠️ Isso apagará permanentemente: {confirmDelete.total_pedidos} pedidos, {confirmDelete.total_mesas} mesas e todo o cardápio.
+              </div>
+            </div>
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                disabled={deletando}
+                className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => excluirTenant(confirmDelete)}
+                disabled={deletando}
+                className="flex-1 py-3 rounded-xl bg-red-600 text-sm font-bold text-white hover:bg-red-700 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {deletando
+                  ? <><CircleDashed className="w-4 h-4 animate-spin" /> Excluindo...</>
+                  : <><Trash2 className="w-4 h-4" /> Sim, excluir tudo</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Conteúdo principal ── */}
       <div className="flex-1 flex flex-col min-w-0">
 
@@ -459,6 +516,11 @@ export default function SuperAdminPage() {
                                     : 'text-slate-300 hover:text-green-600 hover:bg-green-50'
                                 }`}>
                                 {t.status === 'ativo' ? <ShieldOff className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                              </button>
+                              <button onClick={() => setConfirmDelete(t)}
+                                title="Excluir conta"
+                                className="p-1 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </td>
