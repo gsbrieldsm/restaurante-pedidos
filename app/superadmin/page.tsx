@@ -67,16 +67,22 @@ export default function SuperAdminPage() {
 
   async function carregar() {
     setCarregando(true)
-    const [resTenants, resParceiros] = await Promise.all([
-      fetch('/api/superadmin/tenants'),
-      fetch('/api/superadmin/parceiros'),
-    ])
-    if (resTenants.status === 401) { router.push('/superadmin/login'); return }
-    const { tenants }   = await resTenants.json()
-    const { parceiros } = await resParceiros.json()
-    setTenants(tenants ?? [])
-    setParceiros(parceiros ?? [])
-    setCarregando(false)
+    try {
+      const resTenants = await fetch('/api/superadmin/tenants')
+      if (resTenants.status === 401) { router.push('/superadmin/login'); return }
+      const { tenants } = await resTenants.json()
+      setTenants(tenants ?? [])
+
+      const resParceiros = await fetch('/api/superadmin/parceiros')
+      if (resParceiros.ok) {
+        const { parceiros } = await resParceiros.json()
+        setParceiros(parceiros ?? [])
+      }
+    } catch (err) {
+      console.error('[superadmin] erro ao carregar:', err)
+    } finally {
+      setCarregando(false)
+    }
   }
 
   async function atualizarStatusParceiro(id: string, status: string) {
@@ -182,6 +188,13 @@ export default function SuperAdminPage() {
           <MetricCard icon={<Users className="w-5 h-5" />} label="Pedidos gerados"
             value={totalPedidos.toLocaleString('pt-BR')} sub={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em vendas`} accent="#7c3aed" />
         </div>
+
+        {/* ── Parceiros — leads do programa de indicação ── */}
+        <ParceirosSection
+          parceiros={parceiros}
+          statusEditando={statusEditando}
+          onStatusChange={atualizarStatusParceiro}
+        />
 
         {/* ── Tabela de restaurantes ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -335,135 +348,6 @@ export default function SuperAdminPage() {
           </div>
         </div>
 
-        {/* ── Parceiros ── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Handshake className="w-4 h-4 text-teal-600" />
-              <h2 className="font-bold text-slate-800">
-                Parceiros
-                <span className="ml-2 text-sm font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-600">{parceiros.length}</span>
-              </h2>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-slate-400">
-              <span className="font-semibold text-blue-600">{parceiros.filter(p => p.status === 'novo').length} novos</span>
-              <span className="font-semibold text-green-600">{parceiros.filter(p => p.status === 'aprovado').length} aprovados</span>
-            </div>
-          </div>
-
-          {parceiros.length === 0 ? (
-            <div className="px-6 py-12 text-center text-slate-300 text-sm">
-              Nenhum cadastro de parceiro ainda.
-            </div>
-          ) : (
-            <>
-              {/* Desktop */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100">
-                      {['Nome', 'Email', 'WhatsApp', 'Cidade', 'Como indica', 'Cadastro', 'Status', ''].map((h, i) => (
-                        <th key={i} className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 text-left">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {parceiros.map((p) => {
-                      const s = STATUS_PARCEIRO[p.status] ?? STATUS_PARCEIRO.novo
-                      return (
-                        <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-5 py-4 font-bold text-slate-800">{p.nome}</td>
-                          <td className="px-5 py-4 text-slate-500 text-xs">{p.email}</td>
-                          <td className="px-5 py-4">
-                            <a
-                              href={`https://wa.me/55${p.whatsapp}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs font-mono px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100 hover:bg-green-100 transition-colors"
-                            >
-                              {p.whatsapp}
-                            </a>
-                          </td>
-                          <td className="px-5 py-4 text-slate-500 text-xs">{p.cidade ?? '—'}</td>
-                          <td className="px-5 py-4 text-slate-500 text-xs">{p.como ? (COMO_LABEL[p.como] ?? p.como) : '—'}</td>
-                          <td className="px-5 py-4 text-slate-400 text-xs whitespace-nowrap">
-                            {new Date(p.criado_em).toLocaleDateString('pt-BR')}
-                          </td>
-                          <td className="px-5 py-4">
-                            <span
-                              className="text-xs px-2.5 py-1 rounded-full font-semibold"
-                              style={{ background: s.bg, color: s.cor }}
-                            >
-                              {s.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="relative flex items-center">
-                              <select
-                                value={p.status}
-                                disabled={statusEditando === p.id}
-                                onChange={(e) => atualizarStatusParceiro(p.id, e.target.value)}
-                                className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 cursor-pointer hover:border-teal-300 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-40"
-                              >
-                                <option value="novo">Novo</option>
-                                <option value="contactado">Contactado</option>
-                                <option value="aprovado">Aprovado</option>
-                                <option value="recusado">Recusado</option>
-                              </select>
-                              <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none" />
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile */}
-              <div className="md:hidden divide-y divide-slate-100">
-                {parceiros.map((p) => {
-                  const s = STATUS_PARCEIRO[p.status] ?? STATUS_PARCEIRO.novo
-                  return (
-                    <div key={p.id} className="px-5 py-4 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-bold text-slate-800">{p.nome}</p>
-                          <p className="text-slate-400 text-xs mt-0.5">{p.email}</p>
-                        </div>
-                        <span className="text-xs px-2.5 py-1 rounded-full font-semibold shrink-0" style={{ background: s.bg, color: s.cor }}>
-                          {s.label}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-slate-500">
-                        <a href={`https://wa.me/55${p.whatsapp}`} target="_blank" rel="noopener noreferrer"
-                          className="font-mono px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100">
-                          {p.whatsapp}
-                        </a>
-                        {p.cidade && <span>{p.cidade}</span>}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400 text-xs">{new Date(p.criado_em).toLocaleDateString('pt-BR')}</span>
-                        <select
-                          value={p.status}
-                          disabled={statusEditando === p.id}
-                          onChange={(e) => atualizarStatusParceiro(p.id, e.target.value)}
-                          className="text-xs px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 disabled:opacity-40"
-                        >
-                          <option value="novo">Novo</option>
-                          <option value="contactado">Contactado</option>
-                          <option value="aprovado">Aprovado</option>
-                          <option value="recusado">Recusado</option>
-                        </select>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </>
-          )}
-        </div>
-
         {/* ── Breakdown de receita & uso ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">
@@ -511,6 +395,136 @@ function RevenueItem({ label, value, sub, color }: { label: string; value: strin
       <p className="text-slate-500 text-sm mb-1 font-medium">{label}</p>
       <p className="text-2xl font-black" style={{ color }}>{value}</p>
       <p className="text-slate-400 text-xs mt-0.5">{sub}</p>
+    </div>
+  )
+}
+
+function ParceirosSection({ parceiros, statusEditando, onStatusChange }: {
+  parceiros: Parceiro[]
+  statusEditando: string | null
+  onStatusChange: (id: string, status: string) => void
+}) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Handshake className="w-4 h-4 text-teal-600" />
+          <h2 className="font-bold text-slate-800">
+            Leads de Parceiros
+            <span className="ml-2 text-sm font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-600">
+              {parceiros.length}
+            </span>
+          </h2>
+        </div>
+        <div className="flex items-center gap-3 text-xs">
+          <span className="font-semibold text-blue-600">{parceiros.filter(p => p.status === 'novo').length} novos</span>
+          <span className="font-semibold text-green-600">{parceiros.filter(p => p.status === 'aprovado').length} aprovados</span>
+        </div>
+      </div>
+
+      {parceiros.length === 0 ? (
+        <div className="px-6 py-12 text-center text-slate-300 text-sm">
+          Nenhum cadastro de parceiro ainda. Os leads virão de <strong className="text-slate-400">/parceiros</strong>.
+        </div>
+      ) : (
+        <>
+          {/* Desktop */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  {['Nome', 'Email', 'WhatsApp', 'Cidade', 'Como indica', 'Cadastro', 'Status', 'Alterar'].map((h) => (
+                    <th key={h} className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 text-left">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {parceiros.map((p) => {
+                  const s = STATUS_PARCEIRO[p.status] ?? STATUS_PARCEIRO.novo
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-5 py-4 font-bold text-slate-800">{p.nome}</td>
+                      <td className="px-5 py-4 text-slate-500 text-xs">{p.email}</td>
+                      <td className="px-5 py-4">
+                        <a href={`https://wa.me/55${p.whatsapp}`} target="_blank" rel="noopener noreferrer"
+                          className="text-xs font-mono px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100 hover:bg-green-100 transition-colors">
+                          {p.whatsapp}
+                        </a>
+                      </td>
+                      <td className="px-5 py-4 text-slate-500 text-xs">{p.cidade ?? '—'}</td>
+                      <td className="px-5 py-4 text-slate-500 text-xs">{p.como ? (COMO_LABEL[p.como] ?? p.como) : '—'}</td>
+                      <td className="px-5 py-4 text-slate-400 text-xs whitespace-nowrap">
+                        {new Date(p.criado_em).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
+                          style={{ background: s.bg, color: s.cor }}>
+                          {s.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="relative flex items-center">
+                          <select
+                            value={p.status}
+                            disabled={statusEditando === p.id}
+                            onChange={(e) => onStatusChange(p.id, e.target.value)}
+                            className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 cursor-pointer hover:border-teal-300 focus:outline-none focus:border-teal-400 transition-colors disabled:opacity-40"
+                          >
+                            <option value="novo">Novo</option>
+                            <option value="contactado">Contactado</option>
+                            <option value="aprovado">Aprovado</option>
+                            <option value="recusado">Recusado</option>
+                          </select>
+                          <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none" />
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {parceiros.map((p) => {
+              const s = STATUS_PARCEIRO[p.status] ?? STATUS_PARCEIRO.novo
+              return (
+                <div key={p.id} className="px-5 py-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-bold text-slate-800">{p.nome}</p>
+                      <p className="text-slate-400 text-xs mt-0.5">{p.email}</p>
+                    </div>
+                    <span className="text-xs px-2.5 py-1 rounded-full font-semibold shrink-0"
+                      style={{ background: s.bg, color: s.cor }}>
+                      {s.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-slate-500">
+                    <a href={`https://wa.me/55${p.whatsapp}`} target="_blank" rel="noopener noreferrer"
+                      className="font-mono px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100">
+                      {p.whatsapp}
+                    </a>
+                    {p.cidade && <span>{p.cidade}</span>}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 text-xs">{new Date(p.criado_em).toLocaleDateString('pt-BR')}</span>
+                    <select value={p.status} disabled={statusEditando === p.id}
+                      onChange={(e) => onStatusChange(p.id, e.target.value)}
+                      className="text-xs px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 disabled:opacity-40">
+                      <option value="novo">Novo</option>
+                      <option value="contactado">Contactado</option>
+                      <option value="aprovado">Aprovado</option>
+                      <option value="recusado">Recusado</option>
+                    </select>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
     </div>
   )
 }
