@@ -58,7 +58,7 @@ const MOTIVOS = [
   { emoji: '⚡', title: 'Implantação em 1 dia útil', desc: 'O restaurante assina hoje, está funcionando amanhã. Sem obra, sem hardware caro.' },
   { emoji: '💰', title: 'ROI imediato para o restaurante', desc: 'Reduz erros de pedido, aumenta ticket médio e libera garçons para mais mesas.' },
   { emoji: '🔒', title: 'Contrato sem fidelidade obrigatória', desc: 'Proposta sem pegadinha facilita a decisão e aumenta sua taxa de fechamento.' },
-  { emoji: '🏆', title: 'Produto premiado e testado', desc: 'Restaurantes reais em produção. Você indica algo que já funciona de verdade.' },
+  { emoji: '🎨', title: 'Cardápio com a cara do restaurante', desc: 'Cada restaurante usa o sistema com a própria logo e cores. Seus clientes veem a marca do estabelecimento — não a nossa.' },
   { emoji: '📊', title: 'Dashboard de acompanhamento', desc: 'Você verá seus clientes ativos e comissões em tempo real no seu painel de parceiro.' },
 ]
 

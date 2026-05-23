@@ -6,20 +6,30 @@ import {
   LogOut, Users, TrendingUp, DollarSign, Store,
   ExternalLink, ShieldOff, ShieldCheck, Settings2,
   RefreshCw, Handshake, ChevronDown, CreditCard,
-  Gauge, HeadphonesIcon, Menu, X,
+  Gauge, HeadphonesIcon, Menu, X, Copy, Check, Link2,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
+type RestauranteIndicado = {
+  id:              string
+  nome_restaurante: string
+  plano:           string
+  plano_aceito_em: string | null
+  criado_em:       string
+}
+
 type Parceiro = {
-  id:        string
-  nome:      string
-  email:     string
-  whatsapp:  string
-  cidade:    string | null
-  como:      string | null
-  status:    'novo' | 'contactado' | 'aprovado' | 'recusado'
-  notas:     string | null
-  criado_em: string
+  id:                    string
+  nome:                  string
+  email:                 string
+  whatsapp:              string
+  cidade:                string | null
+  como:                  string | null
+  status:                'novo' | 'contactado' | 'aprovado' | 'recusado'
+  notas:                 string | null
+  criado_em:             string
+  codigo_indicacao:      string | null
+  restaurantes_indicados: RestauranteIndicado[]
 }
 
 type Tenant = {
@@ -41,9 +51,31 @@ type Tenant = {
 type Aba = 'assinaturas' | 'performance' | 'suporte' | 'parceiros'
 
 // ── Constantes ──────────────────────────────────────────────────────────────
-const MENSALIDADE  = 550
+const MENSALIDADE   = 550
 const IMPLEMENTACAO = 2000
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://menue.com.br'
+
+const TIERS_COMISSAO = [
+  { min: 1,  max: 4,  pct: 0.10, label: '10%' },
+  { min: 5,  max: 9,  pct: 0.15, label: '15%' },
+  { min: 10, max: 14, pct: 0.20, label: '20%' },
+  { min: 15, max: 19, pct: 0.25, label: '25%' },
+  { min: 20, max: Infinity, pct: 0.30, label: '30%' },
+]
+
+function calcComissao(qtd: number) {
+  const tier = TIERS_COMISSAO.find(t => qtd >= t.min && qtd <= t.max) ?? TIERS_COMISSAO[0]
+  return {
+    pct:       tier.pct,
+    label:     tier.label,
+    mensal:    Math.round(qtd * MENSALIDADE * tier.pct),
+    impl:      Math.round(qtd * IMPLEMENTACAO * 0.30),
+  }
+}
+
+function fmt(v: number) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+}
 
 const STATUS_PARCEIRO: Record<string, { label: string; cor: string; bg: string }> = {
   novo:       { label: 'Novo',       cor: '#0284c7', bg: '#e0f2fe' },
@@ -78,6 +110,8 @@ export default function SuperAdminPage() {
   const [inicializando,setInicializando]= useState<string | null>(null)
   const [statusEdit,   setStatusEdit]   = useState<string | null>(null)
   const [sidebarOpen,  setSidebarOpen]  = useState(false)
+  const [copiado,      setCopiado]      = useState<string | null>(null)
+  const [expandido,    setExpandido]    = useState<string | null>(null)
 
   useEffect(() => {
     document.title = 'Master — Menuê+'
@@ -133,14 +167,25 @@ export default function SuperAdminPage() {
 
   async function atualizarStatusParceiro(id: string, status: string) {
     setStatusEdit(id)
-    await fetch('/api/superadmin/parceiros', {
+    const res = await fetch('/api/superadmin/parceiros', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status }),
     })
-    setParceiros((prev) => prev.map((p) => p.id === id
-      ? { ...p, status: status as Parceiro['status'] } : p))
+    const data = await res.json()
+    setParceiros((prev) => prev.map((p) => p.id === id ? {
+      ...p,
+      status: status as Parceiro['status'],
+      codigo_indicacao: data.parceiro?.codigo_indicacao ?? p.codigo_indicacao,
+    } : p))
     setStatusEdit(null)
+  }
+
+  function copiarLink(codigo: string) {
+    const link = `${APP_URL}/registro?ref=${codigo}`
+    navigator.clipboard.writeText(link).catch(() => {})
+    setCopiado(codigo)
+    setTimeout(() => setCopiado(null), 2000)
   }
 
   async function sair() {
@@ -452,121 +497,155 @@ export default function SuperAdminPage() {
             <>
               <div>
                 <h2 className="text-xl font-black text-slate-800">Parceiros</h2>
-                <p className="text-slate-400 text-sm mt-1">Leads do programa de indicação. Gerencie o status de cada cadastro.</p>
+                <p className="text-slate-400 text-sm mt-1">Gerencie os leads do programa de indicação e acompanhe as comissões.</p>
               </div>
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard icon={<Handshake className="w-5 h-5" />} label="Total de leads" value={parceiros.length.toString()} sub="desde o início" accent="#1A9B8A" />
                 <MetricCard icon={<Users className="w-5 h-5" />} label="Novos" value={parceiros.filter(p => p.status === 'novo').length.toString()} sub="aguardando contato" accent="#0284c7" />
-                <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="Contactados" value={parceiros.filter(p => p.status === 'contactado').length.toString()} sub="em negociação" accent="#d97706" />
-                <MetricCard icon={<DollarSign className="w-5 h-5" />} label="Aprovados" value={parceiros.filter(p => p.status === 'aprovado').length.toString()} sub="parceiros ativos" accent="#16a34a" />
+                <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="Aprovados" value={parceiros.filter(p => p.status === 'aprovado').length.toString()} sub="parceiros ativos" accent="#16a34a" />
+                <MetricCard icon={<DollarSign className="w-5 h-5" />} label="Indicações confirmadas"
+                  value={parceiros.reduce((s, p) => s + (p.restaurantes_indicados?.filter(r => r.plano_aceito_em).length ?? 0), 0).toString()}
+                  sub="restaurantes convertidos" accent="#d97706" />
               </div>
 
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-800">Cadastros recebidos</h3>
-                </div>
-
+              {/* Lista de parceiros */}
+              <div className="space-y-3">
                 {parceiros.length === 0 ? (
-                  <div className="px-6 py-16 text-center">
+                  <div className="bg-white rounded-2xl border border-slate-200 px-6 py-16 text-center">
                     <Handshake className="w-10 h-10 text-slate-200 mx-auto mb-3" />
                     <p className="text-slate-400 font-semibold">Nenhum cadastro ainda</p>
                     <p className="text-slate-300 text-sm mt-1">Os leads virão da página <strong className="text-slate-400">/parceiros</strong>.</p>
                   </div>
-                ) : (
-                  <>
-                    {/* Desktop */}
-                    <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-slate-50 border-b border-slate-100">
-                            {['Nome', 'Email', 'WhatsApp', 'Cidade', 'Como indica', 'Cadastro', 'Status', 'Alterar'].map((h) => (
-                              <th key={h} className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 text-left">{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {parceiros.map((p) => {
-                            const s = STATUS_PARCEIRO[p.status] ?? STATUS_PARCEIRO.novo
-                            return (
-                              <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-5 py-4 font-bold text-slate-800">{p.nome}</td>
-                                <td className="px-5 py-4 text-slate-500 text-xs">{p.email}</td>
-                                <td className="px-5 py-4">
-                                  <a href={`https://wa.me/55${p.whatsapp}`} target="_blank" rel="noopener noreferrer"
-                                    className="text-xs font-mono px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100 hover:bg-green-100 transition-colors">
-                                    {p.whatsapp}
-                                  </a>
-                                </td>
-                                <td className="px-5 py-4 text-slate-500 text-xs">{p.cidade ?? '—'}</td>
-                                <td className="px-5 py-4 text-slate-500 text-xs">{p.como ? (COMO_LABEL[p.como] ?? p.como) : '—'}</td>
-                                <td className="px-5 py-4 text-slate-400 text-xs whitespace-nowrap">
-                                  {new Date(p.criado_em).toLocaleDateString('pt-BR')}
-                                </td>
-                                <td className="px-5 py-4">
-                                  <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: s.bg, color: s.cor }}>
-                                    {s.label}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-4">
-                                  <div className="relative flex items-center">
-                                    <select value={p.status} disabled={statusEdit === p.id}
-                                      onChange={(e) => atualizarStatusParceiro(p.id, e.target.value)}
-                                      className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 cursor-pointer hover:border-teal-300 focus:outline-none disabled:opacity-40">
-                                      <option value="novo">Novo</option>
-                                      <option value="contactado">Contactado</option>
-                                      <option value="aprovado">Aprovado</option>
-                                      <option value="recusado">Recusado</option>
-                                    </select>
-                                    <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none" />
-                                  </div>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                ) : parceiros.map((p) => {
+                  const s        = STATUS_PARCEIRO[p.status] ?? STATUS_PARCEIRO.novo
+                  const ativos   = p.restaurantes_indicados?.filter(r => r.plano_aceito_em).length ?? 0
+                  const total    = p.restaurantes_indicados?.length ?? 0
+                  const com      = calcComissao(ativos)
+                  const aberto   = expandido === p.id
+                  const linkRef  = p.codigo_indicacao ? `${APP_URL}/registro?ref=${p.codigo_indicacao}` : null
 
-                    {/* Mobile */}
-                    <div className="md:hidden divide-y divide-slate-100">
-                      {parceiros.map((p) => {
-                        const s = STATUS_PARCEIRO[p.status] ?? STATUS_PARCEIRO.novo
-                        return (
-                          <div key={p.id} className="px-5 py-4 space-y-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <p className="font-bold text-slate-800">{p.nome}</p>
-                                <p className="text-slate-400 text-xs mt-0.5">{p.email}</p>
+                  return (
+                    <div key={p.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                      {/* Cabeçalho do card */}
+                      <div className="px-5 py-4 flex items-start gap-3">
+                        {/* Avatar */}
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black text-sm text-white"
+                          style={{ background: s.cor }}>
+                          {p.nome.charAt(0).toUpperCase()}
+                        </div>
+
+                        {/* Dados */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-bold text-slate-800">{p.nome}</p>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: s.bg, color: s.cor }}>{s.label}</span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-slate-400">
+                            <span>{p.email}</span>
+                            <a href={`https://wa.me/55${p.whatsapp}`} target="_blank" rel="noopener noreferrer"
+                              className="text-green-600 hover:underline font-mono">{p.whatsapp}</a>
+                            {p.cidade && <span>{p.cidade}</span>}
+                            <span>{new Date(p.criado_em).toLocaleDateString('pt-BR')}</span>
+                          </div>
+
+                          {/* Link de indicação */}
+                          {linkRef && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="flex-1 min-w-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-teal-50 border border-teal-100">
+                                <Link2 className="w-3 h-3 text-teal-500 shrink-0" />
+                                <span className="text-xs font-mono text-teal-700 truncate">{linkRef}</span>
                               </div>
-                              <span className="text-xs px-2.5 py-1 rounded-full font-semibold shrink-0" style={{ background: s.bg, color: s.cor }}>
-                                {s.label}
+                              <button onClick={() => copiarLink(p.codigo_indicacao!)}
+                                title="Copiar link" className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-teal-600 hover:border-teal-200 hover:bg-teal-50 transition-colors shrink-0">
+                                {copiado === p.codigo_indicacao
+                                  ? <Check className="w-3.5 h-3.5 text-green-500" />
+                                  : <Copy className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Comissão estimada (apenas se aprovado e tem indicações ativas) */}
+                          {p.status === 'aprovado' && ativos > 0 && (
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                              <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100 font-semibold">
+                                {ativos} ativo{ativos > 1 ? 's' : ''} · comissão {com.label}
+                              </span>
+                              <span className="text-slate-500">
+                                ~{fmt(com.mensal)}/mês + {fmt(com.impl)} impl.
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-xs">
-                              <a href={`https://wa.me/55${p.whatsapp}`} target="_blank" rel="noopener noreferrer"
-                                className="font-mono px-2 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100">
-                                {p.whatsapp}
-                              </a>
-                              {p.cidade && <span className="text-slate-500">{p.cidade}</span>}
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-slate-400 text-xs">{new Date(p.criado_em).toLocaleDateString('pt-BR')}</span>
-                              <select value={p.status} disabled={statusEdit === p.id}
-                                onChange={(e) => atualizarStatusParceiro(p.id, e.target.value)}
-                                className="text-xs px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 disabled:opacity-40">
-                                <option value="novo">Novo</option>
-                                <option value="contactado">Contactado</option>
-                                <option value="aprovado">Aprovado</option>
-                                <option value="recusado">Recusado</option>
-                              </select>
+                          )}
+                        </div>
+
+                        {/* Ações direita */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {/* Alterar status */}
+                          <div className="relative">
+                            <select value={p.status} disabled={statusEdit === p.id}
+                              onChange={(e) => atualizarStatusParceiro(p.id, e.target.value)}
+                              className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 cursor-pointer hover:border-teal-300 focus:outline-none disabled:opacity-40">
+                              <option value="novo">Novo</option>
+                              <option value="contactado">Contactado</option>
+                              <option value="aprovado">Aprovado</option>
+                              <option value="recusado">Recusado</option>
+                            </select>
+                            <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          </div>
+
+                          {/* Expandir restaurantes */}
+                          {total > 0 && (
+                            <button onClick={() => setExpandido(aberto ? null : p.id)}
+                              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:border-teal-200 hover:text-teal-600 hover:bg-teal-50 transition-colors">
+                              <Store className="w-3.5 h-3.5" />
+                              <span>{total}</span>
+                              <ChevronDown className={`w-3 h-3 transition-transform ${aberto ? 'rotate-180' : ''}`} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Restaurantes indicados (expandível) */}
+                      {aberto && total > 0 && (
+                        <div className="border-t border-slate-100 bg-slate-50">
+                          <div className="px-5 py-3">
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                              Restaurantes indicados por {p.nome.split(' ')[0]}
+                            </p>
+                            <div className="space-y-2">
+                              {p.restaurantes_indicados.map((r) => (
+                                <div key={r.id} className="flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-slate-800 text-sm">{r.nome_restaurante}</p>
+                                    <p className="text-xs text-slate-400 mt-0.5">
+                                      Cadastrado em {new Date(r.criado_em).toLocaleDateString('pt-BR')}
+                                    </p>
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    {r.plano_aceito_em ? (
+                                      <>
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100 font-semibold block">
+                                          {r.plano ?? 'ativo'}
+                                        </span>
+                                        <p className="text-xs text-slate-400 mt-0.5">
+                                          desde {new Date(r.plano_aceito_em).toLocaleDateString('pt-BR')}
+                                        </p>
+                                      </>
+                                    ) : (
+                                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 font-semibold">
+                                        pendente
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
-                        )
-                      })}
+                        </div>
+                      )}
                     </div>
-                  </>
-                )}
+                  )
+                })}
               </div>
             </>
           )}

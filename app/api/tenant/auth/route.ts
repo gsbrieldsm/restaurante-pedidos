@@ -27,7 +27,7 @@ function gerarSlug(nome: string): string {
 
 // ── POST /api/tenant/auth — registro ──
 export async function POST(req: Request) {
-  const { acao, nome, nome_restaurante, email, senha } = await req.json()
+  const { acao, nome, nome_restaurante, email, senha, ref_codigo } = await req.json()
 
   const supabase = createServiceClient()
 
@@ -77,6 +77,7 @@ export async function POST(req: Request) {
         status:             'pendente', // ativo após aceitar o plano
         email_verificado:   false,
         verificacao_token,
+        ...(ref_codigo ? { indicado_por: ref_codigo } : {}),
       })
       .select('id, slug, nome, nome_restaurante, email, status')
       .single()

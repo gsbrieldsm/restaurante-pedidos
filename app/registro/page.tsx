@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,7 +9,8 @@ import { Loader2, ArrowRight, ChefHat } from 'lucide-react'
 import Link from 'next/link'
 
 export default function RegistroPage() {
-  const router = useRouter()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
 
   const [nome,            setNome]            = useState('')
   const [nomeRestaurante, setNomeRestaurante] = useState('')
@@ -17,6 +18,19 @@ export default function RegistroPage() {
   const [senha,           setSenha]           = useState('')
   const [salvando,        setSalvando]        = useState(false)
   const [erro,            setErro]            = useState('')
+  const [refCodigo,       setRefCodigo]       = useState<string | null>(null)
+
+  useEffect(() => {
+    // Captura ?ref= da URL e persiste em sessionStorage
+    const ref = searchParams.get('ref')
+    if (ref) {
+      sessionStorage.setItem('ref_indicacao', ref)
+      setRefCodigo(ref)
+    } else {
+      const salvo = sessionStorage.getItem('ref_indicacao')
+      if (salvo) setRefCodigo(salvo)
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -26,7 +40,14 @@ export default function RegistroPage() {
     const resp = await fetch('/api/tenant/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acao: 'registrar', nome, nome_restaurante: nomeRestaurante, email, senha }),
+      body: JSON.stringify({
+        acao: 'registrar',
+        nome,
+        nome_restaurante: nomeRestaurante,
+        email,
+        senha,
+        ref_codigo: refCodigo ?? undefined,
+      }),
     })
 
     const data = await resp.json()
