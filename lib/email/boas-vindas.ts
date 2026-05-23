@@ -5,9 +5,11 @@ interface BoasVindasProps {
   slug:             string
 }
 
-export function emailBoasVindas({ nome, nome_restaurante }: BoasVindasProps): string {
-  const APP_URL   = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.menue.com.br'
-  const painelUrl = `${APP_URL}/login`
+export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProps): string {
+  const APP_URL    = process.env.NEXT_PUBLIC_APP_URL   ?? 'https://www.menue.com.br'
+  const ROOT       = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'menue.com.br'
+  const painelUrl  = `${APP_URL}/login`
+  const cardapioUrl = `https://${slug}.${ROOT}`
 
   return `
 <!DOCTYPE html>
@@ -44,6 +46,15 @@ export function emailBoasVindas({ nome, nome_restaurante }: BoasVindasProps): st
               Seu cardápio digital com QR Code está pronto para receber os primeiros pedidos.
             </p>
 
+            <!-- URL do restaurante -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;margin-bottom:28px;">
+              <tr><td style="padding:16px 20px;">
+                <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#16a34a;">🌐 Seu restaurante online</p>
+                <a href="${cardapioUrl}" style="font-size:15px;font-weight:700;color:#1A9B8A;text-decoration:none;font-family:monospace;">${cardapioUrl}</a>
+                <p style="margin:6px 0 0;font-size:12px;color:#64748b;">Compartilhe este endereço com seus clientes ou use os QR Codes das mesas.</p>
+              </td></tr>
+            </table>
+
             <!-- Resumo do plano -->
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:28px;">
               <tr><td style="padding:16px 20px;">
@@ -70,13 +81,6 @@ export function emailBoasVindas({ nome, nome_restaurante }: BoasVindasProps): st
                 </a>
               </td></tr>
             </table>
-
-            <p style="margin:0 0 6px;font-size:12px;color:#94a3b8;text-align:center;">
-              Seu painel está em:
-            </p>
-            <p style="margin:0 0 0;font-size:13px;font-family:monospace;color:#1A9B8A;text-align:center;">
-              ${painelUrl}
-            </p>
 
             <hr style="border:none;border-top:1px solid #f1f5f9;margin:28px 0;" />
             <p style="margin:0;font-size:12px;color:#cbd5e1;text-align:center;line-height:1.6;">

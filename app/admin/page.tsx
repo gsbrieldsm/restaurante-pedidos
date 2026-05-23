@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Separator } from '@/components/ui/separator'
 import {
   XCircle, Loader2, AlertTriangle,
-  ConciergeBell, Banknote, QrCode, CreditCard, CheckCircle2, User, Clock
+  ConciergeBell, Banknote, QrCode, CreditCard, CheckCircle2, User, Clock,
+  Globe, Copy, Check,
 } from 'lucide-react'
 import type { Pedido, PedidoItem } from '@/lib/supabase/types'
 
@@ -77,6 +78,52 @@ function tempoAberto(iso: string) {
   const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
   if (min < 60) return `${min}min`
   return `${Math.floor(min / 60)}h${min % 60 > 0 ? String(min % 60).padStart(2, '0') : ''}`
+}
+
+function CardSubdominio() {
+  const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'menue.com.br'
+  const [slug, setSlug]         = useState<string | null>(null)
+  const [copiado, setCopiado]   = useState(false)
+
+  useEffect(() => {
+    // tenant_slug é cookie não-httpOnly, acessível via JS
+    const match = document.cookie.match(/(?:^|;\s*)tenant_slug=([^;]+)/)
+    if (match) setSlug(decodeURIComponent(match[1]))
+  }, [])
+
+  if (!slug) return null
+
+  const url = `https://${slug}.${ROOT}`
+
+  function copiar() {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    })
+  }
+
+  return (
+    <div className="flex items-center gap-3 bg-teal-50 border border-teal-200 rounded-2xl px-4 py-3">
+      <Globe className="w-5 h-5 text-teal-600 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-teal-600 font-semibold mb-0.5">Seu restaurante online</p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-mono font-bold text-teal-800 hover:underline truncate block"
+        >
+          {url}
+        </a>
+      </div>
+      <button
+        onClick={copiar}
+        className="shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-white border border-teal-200 text-teal-700 hover:bg-teal-100 transition-colors"
+      >
+        {copiado ? <><Check className="w-3.5 h-3.5" /> Copiado!</> : <><Copy className="w-3.5 h-3.5" /> Copiar</>}
+      </button>
+    </div>
+  )
 }
 
 export default function AdminDashboard() {
@@ -199,6 +246,9 @@ export default function AdminDashboard() {
           </p>
         </div>
       </div>
+
+      {/* ── URL do restaurante ── */}
+      <CardSubdominio />
 
       {/* ── Hero KPIs ── */}
       <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 40%, #1A9B8A 100%)' }}>
