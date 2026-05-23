@@ -77,8 +77,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── 1. Rotas públicas de tenant — sempre passam ──────────────────────────────
+  // ── 1. Rotas públicas de tenant e páginas públicas — sempre passam ───────────
   if (TENANT_PUBLIC.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next()
+  }
+
+  // Páginas e APIs públicas (sem auth)
+  if (pathname === '/parceiros' || pathname.startsWith('/api/parceiros/')) {
     return NextResponse.next()
   }
 
@@ -146,6 +151,8 @@ export const config = {
     '/aguardando-verificacao',
     '/aceitar-convite',
     '/api/tenant/:path*',
+    '/parceiros',
+    '/api/parceiros/:path*',
     '/superadmin',
     '/superadmin/:path*',
     '/api/superadmin/:path*',

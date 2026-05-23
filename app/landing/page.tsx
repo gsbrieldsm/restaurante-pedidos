@@ -114,6 +114,12 @@ export default function LandingPage() {
           </div>
           <div className="hidden sm:flex items-center gap-2">
             <Link
+              href="/parceiros"
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-white/70 hover:text-white transition-colors"
+            >
+              Seja parceiro
+            </Link>
+            <Link
               href="/login"
               className="px-4 py-2 rounded-xl text-sm font-semibold text-white/70 hover:text-white transition-colors"
             >
@@ -513,6 +519,9 @@ export default function LandingPage() {
         <p className="text-teal-700 text-xs">
           © {new Date().getFullYear()} Menuê+ · Cardápio digital para restaurantes
         </p>
+        <Link href="/parceiros" className="text-teal-700 text-xs hover:text-teal-500 underline underline-offset-2 mt-1 inline-block transition-colors">
+          Programa de Parceiros →
+        </Link>
       </footer>
     </div>
   )
