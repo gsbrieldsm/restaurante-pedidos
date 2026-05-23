@@ -10,13 +10,16 @@ const DEFAULT_BRANDING = {
   cor_primaria:         '#1A9B8A',
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const supabase     = createServiceClient()
   const cookieStore  = await cookies()
   const headersList  = await headers()
+  const { searchParams } = new URL(req.url)
+
+  let tenantId: string | null = null
 
   // 1. Tenta pegar tenant_id do cookie (painel admin ou mesa autenticada)
-  let tenantId = cookieStore.get('tenant_id')?.value ?? null
+  tenantId = cookieStore.get('tenant_id')?.value ?? null
 
   // 2. Fallback: tenta pelo slug do subdomínio (header x-tenant-slug do middleware)
   if (!tenantId) {
@@ -28,6 +31,19 @@ export async function GET() {
         .eq('slug', slug)
         .single()
       tenantId = data?.id ?? null
+    }
+  }
+
+  // 3. Fallback: tenta pelo token da mesa (cliente via QR code)
+  if (!tenantId) {
+    const mesaToken = searchParams.get('mesa_token')
+    if (mesaToken) {
+      const { data } = await supabase
+        .from('mesas')
+        .select('tenant_id')
+        .eq('qr_token', mesaToken)
+        .single()
+      tenantId = data?.tenant_id ?? null
     }
   }
 

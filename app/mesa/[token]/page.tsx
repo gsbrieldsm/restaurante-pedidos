@@ -33,8 +33,8 @@ export default function IdentificacaoPage() {
     if (nomeSalvo) setNome(nomeSalvo)
     if (whatsappSalvo) setWhatsapp(whatsappSalvo)
 
-    // Carrega branding do restaurante
-    fetch('/api/configuracoes/banner')
+    // Carrega branding do restaurante (passa token para resolver o tenant via mesa)
+    fetch(`/api/configuracoes/banner?mesa_token=${token}`)
       .then((r) => r.json())
       .then((d) => { if (d.branding) setBranding(d.branding) })
       .catch(() => {})
