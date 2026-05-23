@@ -7,6 +7,7 @@ import {
   ExternalLink, ShieldOff, ShieldCheck, Settings2,
   RefreshCw, Handshake, ChevronDown, CreditCard,
   Gauge, HeadphonesIcon, Menu, X, Copy, Check, Link2,
+  Banknote, History, CheckCircle2, CircleDashed, Trash2, ChevronRight,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -16,6 +17,17 @@ type RestauranteIndicado = {
   plano:           string
   plano_aceito_em: string | null
   criado_em:       string
+}
+
+type Pagamento = {
+  id:          string
+  parceiro_id: string
+  tenant_id:   string | null
+  tipo:        'implementacao' | 'recorrente'
+  valor:       number
+  referencia:  string
+  observacao:  string | null
+  pago_em:     string
 }
 
 type Parceiro = {
@@ -112,6 +124,11 @@ export default function SuperAdminPage() {
   const [sidebarOpen,  setSidebarOpen]  = useState(false)
   const [copiado,      setCopiado]      = useState<string | null>(null)
   const [expandido,    setExpandido]    = useState<string | null>(null)
+  const [pagamentos,   setPagamentos]   = useState<Record<string, Pagamento[]>>({})
+  const [pagandoId,    setPagandoId]    = useState<string | null>(null)
+  const [mesRef,       setMesRef]       = useState(() => {
+    const d = new Date(); return `${d.toLocaleString('pt-BR', { month: 'long' })} ${d.getFullYear()}`
+  })
 
   useEffect(() => {
     document.title = 'Master — Menuê+'
@@ -186,6 +203,54 @@ export default function SuperAdminPage() {
     navigator.clipboard.writeText(link).catch(() => {})
     setCopiado(codigo)
     setTimeout(() => setCopiado(null), 2000)
+  }
+
+  async function carregarPagamentos(parceiroId: string) {
+    if (pagamentos[parceiroId]) return // já carregado
+    const res = await fetch(`/api/superadmin/pagamentos?parceiro_id=${parceiroId}`)
+    if (res.ok) {
+      const data = await res.json()
+      setPagamentos(prev => ({ ...prev, [parceiroId]: data.pagamentos ?? [] }))
+    }
+  }
+
+  async function registrarPagamento(
+    parceiroId: string,
+    tipo: 'implementacao' | 'recorrente',
+    valor: number,
+    referencia: string,
+    tenantId?: string,
+  ) {
+    setPagandoId(`${parceiroId}-${tipo}-${referencia}`)
+    const res = await fetch('/api/superadmin/pagamentos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parceiro_id: parceiroId, tenant_id: tenantId ?? null, tipo, valor, referencia }),
+    })
+    const data = await res.json()
+    if (data.ok) {
+      setPagamentos(prev => ({
+        ...prev,
+        [parceiroId]: [data.pagamento, ...(prev[parceiroId] ?? [])],
+      }))
+    }
+    setPagandoId(null)
+  }
+
+  async function desfazerPagamento(parceiroId: string, pagamentoId: string) {
+    await fetch(`/api/superadmin/pagamentos?id=${pagamentoId}`, { method: 'DELETE' })
+    setPagamentos(prev => ({
+      ...prev,
+      [parceiroId]: (prev[parceiroId] ?? []).filter(p => p.id !== pagamentoId),
+    }))
+  }
+
+  function implJaPaga(parceiroId: string, tenantId: string) {
+    return (pagamentos[parceiroId] ?? []).some(p => p.tipo === 'implementacao' && p.tenant_id === tenantId)
+  }
+
+  function recorrenteJaPaga(parceiroId: string, ref: string) {
+    return (pagamentos[parceiroId] ?? []).some(p => p.tipo === 'recorrente' && p.referencia === ref)
   }
 
   async function sair() {
@@ -594,52 +659,152 @@ export default function SuperAdminPage() {
                           </div>
 
                           {/* Expandir restaurantes */}
-                          {total > 0 && (
-                            <button onClick={() => setExpandido(aberto ? null : p.id)}
+                          {(p.status === 'aprovado' || total > 0) && (
+                            <button onClick={() => {
+                              const novoAberto = aberto ? null : p.id
+                              setExpandido(novoAberto)
+                              if (novoAberto) carregarPagamentos(p.id)
+                            }}
                               className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:border-teal-200 hover:text-teal-600 hover:bg-teal-50 transition-colors">
-                              <Store className="w-3.5 h-3.5" />
-                              <span>{total}</span>
+                              {p.status === 'aprovado' ? <Banknote className="w-3.5 h-3.5" /> : <Store className="w-3.5 h-3.5" />}
+                              {total > 0 && <span>{total}</span>}
                               <ChevronDown className={`w-3 h-3 transition-transform ${aberto ? 'rotate-180' : ''}`} />
                             </button>
                           )}
                         </div>
                       </div>
 
-                      {/* Restaurantes indicados (expandível) */}
-                      {aberto && total > 0 && (
+                      {/* Painel expandido: pagamentos */}
+                      {aberto && (
                         <div className="border-t border-slate-100 bg-slate-50">
-                          <div className="px-5 py-3">
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                              Restaurantes indicados por {p.nome.split(' ')[0]}
-                            </p>
-                            <div className="space-y-2">
-                              {p.restaurantes_indicados.map((r) => (
-                                <div key={r.id} className="flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3">
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-slate-800 text-sm">{r.nome_restaurante}</p>
-                                    <p className="text-xs text-slate-400 mt-0.5">
-                                      Cadastrado em {new Date(r.criado_em).toLocaleDateString('pt-BR')}
-                                    </p>
-                                  </div>
-                                  <div className="text-right shrink-0">
-                                    {r.plano_aceito_em ? (
-                                      <>
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100 font-semibold block">
-                                          {r.plano ?? 'ativo'}
-                                        </span>
-                                        <p className="text-xs text-slate-400 mt-0.5">
-                                          desde {new Date(r.plano_aceito_em).toLocaleDateString('pt-BR')}
-                                        </p>
-                                      </>
-                                    ) : (
-                                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 font-semibold">
-                                        pendente
+                          <div className="px-5 py-4 space-y-5">
+
+                            {/* ── Implementações ── */}
+                            {total > 0 && (
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                                  <Store className="w-3.5 h-3.5" /> Implementações (30% = {fmt(IMPLEMENTACAO * 0.30)}/restaurante)
+                                </p>
+                                <div className="space-y-2">
+                                  {p.restaurantes_indicados.map((r) => {
+                                    const pago    = implJaPaga(p.id, r.id)
+                                    const valor   = Math.round(IMPLEMENTACAO * 0.30)
+                                    const chave   = `${p.id}-implementacao-${r.id}`
+                                    const loading = pagandoId === chave
+                                    return (
+                                      <div key={r.id} className="flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3">
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-semibold text-slate-800 text-sm">{r.nome_restaurante}</p>
+                                          <p className="text-xs text-slate-400 mt-0.5">
+                                            {r.plano_aceito_em
+                                              ? `Ativo desde ${new Date(r.plano_aceito_em).toLocaleDateString('pt-BR')}`
+                                              : 'Ainda pendente de plano'}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span className="text-sm font-black text-slate-700">{fmt(valor)}</span>
+                                          {pago ? (
+                                            <span className="flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-lg">
+                                              <CheckCircle2 className="w-3.5 h-3.5" /> Pago
+                                            </span>
+                                          ) : (
+                                            <button
+                                              disabled={!r.plano_aceito_em || loading}
+                                              onClick={() => registrarPagamento(p.id, 'implementacao', valor, r.nome_restaurante, r.id)}
+                                              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                              {loading ? <CircleDashed className="w-3.5 h-3.5 animate-spin" /> : <Banknote className="w-3.5 h-3.5" />}
+                                              Marcar pago
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* ── Recorrente mensal ── */}
+                            {p.status === 'aprovado' && ativos > 0 && (
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                                  <TrendingUp className="w-3.5 h-3.5" /> Recorrente mensal ({com.label} = {fmt(com.mensal)}/mês)
+                                </p>
+                                <div className="bg-white rounded-xl border border-slate-200 px-4 py-3">
+                                  <div className="flex items-center gap-3 flex-wrap">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-semibold text-slate-700">{ativos} restaurante{ativos > 1 ? 's' : ''} ativo{ativos > 1 ? 's' : ''}</p>
+                                      <p className="text-xs text-slate-400 mt-0.5">Referência do mês:</p>
+                                    </div>
+                                    <input
+                                      value={mesRef}
+                                      onChange={e => setMesRef(e.target.value)}
+                                      placeholder="Ex: Maio 2026"
+                                      className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 w-32 text-slate-700 focus:outline-none focus:border-teal-300"
+                                    />
+                                    <span className="text-sm font-black text-slate-700">{fmt(com.mensal)}</span>
+                                    {recorrenteJaPaga(p.id, mesRef) ? (
+                                      <span className="flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-lg">
+                                        <CheckCircle2 className="w-3.5 h-3.5" /> Pago
                                       </span>
+                                    ) : (
+                                      <button
+                                        disabled={!mesRef || pagandoId === `${p.id}-recorrente-${mesRef}`}
+                                        onClick={() => registrarPagamento(p.id, 'recorrente', com.mensal, mesRef)}
+                                        className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors disabled:opacity-40"
+                                      >
+                                        {pagandoId === `${p.id}-recorrente-${mesRef}`
+                                          ? <CircleDashed className="w-3.5 h-3.5 animate-spin" />
+                                          : <Banknote className="w-3.5 h-3.5" />}
+                                        Marcar pago
+                                      </button>
                                     )}
                                   </div>
                                 </div>
-                              ))}
-                            </div>
+                              </div>
+                            )}
+
+                            {/* ── Histórico de pagamentos ── */}
+                            {(pagamentos[p.id] ?? []).length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                                  <History className="w-3.5 h-3.5" /> Histórico de pagamentos
+                                </p>
+                                <div className="space-y-1.5">
+                                  {(pagamentos[p.id] ?? []).map(pg => (
+                                    <div key={pg.id} className="flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-4 py-2.5">
+                                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${pg.tipo === 'implementacao' ? 'bg-blue-400' : 'bg-green-400'}`} />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-semibold text-slate-700">
+                                          {pg.tipo === 'implementacao' ? '🏗️ Impl.' : '📅 Recorrente'} — {pg.referencia}
+                                        </p>
+                                        <p className="text-xs text-slate-400">{new Date(pg.pago_em).toLocaleDateString('pt-BR')}</p>
+                                      </div>
+                                      <span className="text-sm font-black text-green-600">{fmt(pg.valor)}</span>
+                                      <button
+                                        onClick={() => desfazerPagamento(p.id, pg.id)}
+                                        title="Desfazer pagamento"
+                                        className="p-1 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-slate-400 mt-2 text-right">
+                                  Total pago: <span className="font-black text-slate-600">
+                                    {fmt((pagamentos[p.id] ?? []).reduce((s, pg) => s + Number(pg.valor), 0))}
+                                  </span>
+                                </p>
+                              </div>
+                            )}
+
+                            {total === 0 && ativos === 0 && (pagamentos[p.id] ?? []).length === 0 && (
+                              <p className="text-sm text-slate-400 text-center py-4">
+                                Nenhuma indicação ainda. Compartilhe o link com o parceiro.
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}
