@@ -178,7 +178,7 @@ export default function SuperAdminPage() {
       {/* ── Sidebar ── */}
       <aside className={[
         'fixed md:sticky top-0 h-screen z-30 flex flex-col transition-transform duration-200',
-        'w-64 shrink-0',
+        'w-56 shrink-0',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
       ].join(' ')}
         style={{ background: 'linear-gradient(160deg, #0a2420 0%, #0f3d35 100%)' }}
@@ -253,7 +253,7 @@ export default function SuperAdminPage() {
           </button>
         </header>
 
-        <main className="flex-1 p-6 space-y-6">
+        <main className="flex-1 p-4 space-y-4">
 
           {/* ── ABA: Controle de assinatura ── */}
           {aba === 'assinaturas' && (
@@ -286,67 +286,69 @@ export default function SuperAdminPage() {
 
                 {/* Desktop */}
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-100">
-                        {['Restaurante', 'Email', 'Slug', 'Mesas', 'Pedidos', 'Faturado', 'Plano', 'Status', 'Cadastro', ''].map((h, i) => (
-                          <th key={i} className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 text-left">{h}</th>
+                        {['Restaurante', 'Email', 'Slug', '⊞', 'Ped.', 'Faturado', 'Plano', 'Status', 'Cadastro', ''].map((h, i) => (
+                          <th key={i} className="px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-400 text-left whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {tenants.map((t) => (
                         <tr key={t.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-5 py-4">
-                            <p className="font-bold text-slate-800">{t.nome_restaurante}</p>
-                            <p className="text-slate-400 text-xs mt-0.5">{t.nome}</p>
+                          <td className="px-3 py-3 max-w-[140px]">
+                            <p className="font-bold text-slate-800 text-xs leading-tight truncate">{t.nome_restaurante}</p>
+                            <p className="text-slate-400 text-xs mt-0.5 truncate">{t.nome}</p>
                           </td>
-                          <td className="px-5 py-4 text-slate-600 text-xs">{t.email}</td>
-                          <td className="px-5 py-4">
-                            <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 border border-teal-100">
+                          <td className="px-3 py-3 max-w-[160px]">
+                            <span className="text-slate-500 text-xs truncate block">{t.email}</span>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-100 whitespace-nowrap">
                               {t.slug}
                             </span>
                           </td>
-                          <td className="px-4 py-4 font-semibold text-slate-700">{t.total_mesas}</td>
-                          <td className="px-4 py-4 font-semibold text-slate-700">{t.total_pedidos}</td>
-                          <td className="px-4 py-4 font-semibold text-slate-700">
+                          <td className="px-3 py-3 text-center font-semibold text-slate-700 whitespace-nowrap">{t.total_mesas}</td>
+                          <td className="px-3 py-3 text-center font-semibold text-slate-700 whitespace-nowrap">{t.total_pedidos}</td>
+                          <td className="px-3 py-3 font-semibold text-slate-700 whitespace-nowrap">
                             R$ {t.faturamento_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-3 py-3 whitespace-nowrap">
                             {t.plano_aceito_em
-                              ? <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-green-50 text-green-700 border border-green-100">{t.plano}</span>
-                              : <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-50 text-amber-700 border border-amber-100">pendente</span>}
+                              ? <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-green-50 text-green-700 border border-green-100">{t.plano}</span>
+                              : <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-700 border border-amber-100">pendente</span>}
                           </td>
-                          <td className="px-4 py-4">
-                            <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                          <td className="px-3 py-3 whitespace-nowrap">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                               t.status === 'ativo'
                                 ? 'bg-teal-50 text-teal-700 border border-teal-100'
                                 : 'bg-red-50 text-red-600 border border-red-100'
                             }`}>{t.status}</span>
                           </td>
-                          <td className="px-4 py-4 text-slate-400 text-xs">
+                          <td className="px-3 py-3 text-slate-400 text-xs whitespace-nowrap">
                             {new Date(t.criado_em).toLocaleDateString('pt-BR')}
                           </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-1.5 justify-end">
+                          <td className="px-3 py-3">
+                            <div className="flex items-center gap-1 justify-end">
                               {t.total_mesas === 0 && (
                                 <button onClick={() => forcarSetup(t)} disabled={inicializando === t.id}
-                                  title="Inicializar mesas" className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors disabled:opacity-40">
-                                  <Settings2 className={`w-4 h-4 ${inicializando === t.id ? 'animate-spin' : ''}`} />
+                                  title="Inicializar mesas" className="p-1 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors disabled:opacity-40">
+                                  <Settings2 className={`w-3.5 h-3.5 ${inicializando === t.id ? 'animate-spin' : ''}`} />
                                 </button>
                               )}
                               <a href={`${APP_URL}/login`} target="_blank" rel="noopener noreferrer"
-                                className="p-1.5 rounded-lg text-slate-300 hover:text-teal-600 hover:bg-teal-50 transition-colors">
-                                <ExternalLink className="w-4 h-4" />
+                                className="p-1 rounded-lg text-slate-300 hover:text-teal-600 hover:bg-teal-50 transition-colors">
+                                <ExternalLink className="w-3.5 h-3.5" />
                               </a>
                               <button onClick={() => toggleStatus(t)} disabled={atualizando === t.id}
                                 title={t.status === 'ativo' ? 'Suspender' : 'Reativar'}
-                                className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${
+                                className={`p-1 rounded-lg transition-colors disabled:opacity-40 ${
                                   t.status === 'ativo'
                                     ? 'text-slate-300 hover:text-red-500 hover:bg-red-50'
                                     : 'text-slate-300 hover:text-green-600 hover:bg-green-50'
                                 }`}>
-                                {t.status === 'ativo' ? <ShieldOff className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                                {t.status === 'ativo' ? <ShieldOff className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
                               </button>
                             </div>
                           </td>
