@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hashSenha, verificarSenha } from '@/lib/auth-utils'
 import { Resend } from 'resend'
 import { emailBoasVindas } from '@/lib/email/boas-vindas'
+import { emailVerificacao } from '@/lib/email/verificacao'
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -62,16 +64,19 @@ export async function POST(req: Request) {
     }
 
     const senha_hash = hashSenha(senha)
+    const verificacao_token = randomBytes(32).toString('hex')
 
     const { data: tenant, error } = await supabase
       .from('tenants')
       .insert({
         slug,
-        nome:             nome.trim(),
-        nome_restaurante: nome_restaurante.trim(),
-        email:            email.toLowerCase().trim(),
+        nome:               nome.trim(),
+        nome_restaurante:   nome_restaurante.trim(),
+        email:              email.toLowerCase().trim(),
         senha_hash,
-        status:           'pendente', // ativo após aceitar o plano
+        status:             'pendente', // ativo após aceitar o plano
+        email_verificado:   false,
+        verificacao_token,
       })
       .select('id, slug, nome, nome_restaurante, email, status')
       .single()
@@ -80,11 +85,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Erro ao criar conta. Tente novamente.' }, { status: 500 })
     }
 
-    // Dispara e-mail de boas-vindas (não bloqueia a resposta se falhar)
+    // Dispara e-mails (não bloqueia a resposta se falhar)
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY)
+      const from = process.env.RESEND_FROM ?? 'Menuê+ <noreply@menue.com.br>'
+
+      // E-mail de confirmação de e-mail (prioritário)
       resend.emails.send({
-        from:    process.env.RESEND_FROM ?? 'Menuê+ <noreply@menue.com.br>',
+        from,
+        to:      tenant.email,
+        subject: `Confirme seu e-mail no Menuê+`,
+        html:    emailVerificacao({ nome: tenant.nome, token: verificacao_token }),
+      }).catch((err) => console.error('[resend] erro ao enviar verificação:', err))
+
+      // E-mail de boas-vindas (informativo)
+      resend.emails.send({
+        from,
         to:      tenant.email,
         subject: `Bem-vindo ao Menuê+, ${tenant.nome}! 🎉`,
         html:    emailBoasVindas({
@@ -93,16 +109,12 @@ export async function POST(req: Request) {
           email:            tenant.email,
           slug:             tenant.slug,
         }),
-      }).catch((err) => console.error('[resend] erro ao enviar e-mail:', err))
+      }).catch((err) => console.error('[resend] erro ao enviar boas-vindas:', err))
     }
 
-    const resp = NextResponse.json({ ok: true, tenant })
-    resp.cookies.set('tenant_id',   tenant.id,   COOKIE_OPTS)
-    resp.cookies.set('tenant_slug', tenant.slug, { ...COOKIE_OPTS, httpOnly: false })
-    // Garante acesso ao painel /admin
-    resp.cookies.set('admin_auth', `mmu:${tenant.id}`, COOKIE_OPTS)
-    resp.cookies.set('mmu_cargo',  'admin', { ...COOKIE_OPTS, httpOnly: false })
-    return resp
+    // Após registro, NÃO definimos cookies de auth ainda (e-mail precisa ser verificado)
+    // O frontend vai redirecionar para a página de verificação
+    return NextResponse.json({ ok: true, aguardando_verificacao: true, tenant: { email: tenant.email } })
   }
 
   // ── LOGIN ──
@@ -113,12 +125,16 @@ export async function POST(req: Request) {
 
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('id, slug, nome, nome_restaurante, email, status, senha_hash, plano_aceito_em')
+      .select('id, slug, nome, nome_restaurante, email, status, senha_hash, plano_aceito_em, email_verificado')
       .eq('email', email.toLowerCase().trim())
       .single()
 
     if (!tenant || !verificarSenha(senha, tenant.senha_hash)) {
       return NextResponse.json({ error: 'E-mail ou senha incorretos.' }, { status: 401 })
+    }
+
+    if (!tenant.email_verificado) {
+      return NextResponse.json({ error: 'email_nao_verificado', email: tenant.email }, { status: 403 })
     }
 
     if (tenant.status === 'suspenso') {

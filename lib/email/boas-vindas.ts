@@ -5,8 +5,9 @@ interface BoasVindasProps {
   slug:             string
 }
 
-export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProps): string {
-  const painelUrl = `https://${slug}.menue.com.br/admin`
+export function emailBoasVindas({ nome, nome_restaurante }: BoasVindasProps): string {
+  const APP_URL   = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.menue.com.br'
+  const painelUrl = `${APP_URL}/login`
 
   return `
 <!DOCTYPE html>
@@ -85,7 +86,7 @@ export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProp
                 Seu painel está em:
               </p>
               <p style="margin:0;font-size:13px;font-family:monospace;color:#1A9B8A;text-align:center;">
-                ${painelUrl}
+                ${APP_URL}/login
               </p>
 
               <hr style="border:none;border-top:1px solid #f1f5f9;margin:28px 0;" />

@@ -27,6 +27,10 @@ const TENANT_PUBLIC = [
   '/registro',
   '/login',
   '/planos',
+  '/verificar-email',
+  '/recuperar-senha',
+  '/nova-senha',
+  '/aguardando-verificacao',
   '/api/tenant/',
 ]
 
@@ -133,6 +137,10 @@ export const config = {
     '/registro',
     '/login',
     '/planos',
+    '/verificar-email',
+    '/recuperar-senha',
+    '/nova-senha',
+    '/aguardando-verificacao',
     '/api/tenant/:path*',
     '/superadmin',
     '/superadmin/:path*',

@@ -5,20 +5,22 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, LogIn, ChefHat } from 'lucide-react'
+import { Loader2, LogIn, ChefHat, Mail } from 'lucide-react'
 import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
 
-  const [email,    setEmail]    = useState('')
-  const [senha,    setSenha]    = useState('')
-  const [entrando, setEntrando] = useState(false)
-  const [erro,     setErro]     = useState('')
+  const [email,             setEmail]             = useState('')
+  const [senha,             setSenha]             = useState('')
+  const [entrando,          setEntrando]          = useState(false)
+  const [erro,              setErro]              = useState('')
+  const [emailNaoVerificado, setEmailNaoVerificado] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErro('')
+    setEmailNaoVerificado(false)
     setEntrando(true)
 
     const resp = await fetch('/api/tenant/auth', {
@@ -30,7 +32,11 @@ export default function LoginPage() {
     const data = await resp.json()
 
     if (!resp.ok) {
-      setErro(data.error || 'Erro ao entrar.')
+      if (data.error === 'email_nao_verificado') {
+        setEmailNaoVerificado(true)
+      } else {
+        setErro(data.error || 'Erro ao entrar.')
+      }
       setEntrando(false)
       return
     }
@@ -81,7 +87,15 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="senha">Senha</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="senha">Senha</Label>
+                <Link
+                  href="/recuperar-senha"
+                  className="text-xs text-teal-600 hover:underline font-medium"
+                >
+                  Esqueceu a senha?
+                </Link>
+              </div>
               <Input
                 id="senha"
                 type="password"
@@ -93,6 +107,25 @@ export default function LoginPage() {
               />
             </div>
 
+            {emailNaoVerificado && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
+                <div className="flex items-center gap-2 font-medium mb-1">
+                  <Mail className="w-4 h-4" />
+                  Confirme seu e-mail para continuar
+                </div>
+                <p className="text-xs text-amber-600">
+                  Enviamos um link de confirmação para <strong>{email}</strong>.{' '}
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/aguardando-verificacao?email=${encodeURIComponent(email)}`)}
+                    className="underline font-medium"
+                  >
+                    Reenviar e-mail
+                  </button>
+                </p>
+              </div>
+            )}
+
             {erro && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
                 {erro}
@@ -101,7 +134,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base font-bold text-black hover:opacity-90"
+              className="w-full h-12 text-base font-bold text-white hover:opacity-90"
               style={{ background: '#1A9B8A' }}
               disabled={entrando}
             >

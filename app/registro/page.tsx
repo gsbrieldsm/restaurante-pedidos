@@ -37,8 +37,8 @@ export default function RegistroPage() {
       return
     }
 
-    // Redireciona para página de planos
-    router.push('/planos')
+    // Redireciona para confirmar e-mail
+    router.push(`/aguardando-verificacao?email=${encodeURIComponent(email)}`)
   }
 
   return (
