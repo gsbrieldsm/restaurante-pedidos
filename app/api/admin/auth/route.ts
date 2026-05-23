@@ -6,11 +6,10 @@ const COOKIE_OPTS = {
   httpOnly: true,
   secure:   process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  maxAge:   60 * 60 * 24 * 7, // 7 dias
+  maxAge:   60 * 60 * 24 * 7,
   path:     '/',
 }
 
-// Cargo cookie não precisa ser httpOnly — não é segredo, middleware lê normalmente
 const CARGO_OPTS = {
   httpOnly: false,
   secure:   process.env.NODE_ENV === 'production',
@@ -19,7 +18,18 @@ const CARGO_OPTS = {
   path:     '/',
 }
 
-// POST — login com email + senha (ou senha legada via env var)
+function setLoginCookies(
+  resp: NextResponse,
+  usuario: { id: string; cargo: string; tenant_id: string | null }
+) {
+  resp.cookies.set('admin_auth', `mmu:${usuario.id}`, COOKIE_OPTS)
+  resp.cookies.set('mmu_cargo', usuario.cargo, CARGO_OPTS)
+  if (usuario.tenant_id) {
+    resp.cookies.set('tenant_id', usuario.tenant_id, COOKIE_OPTS)
+  }
+}
+
+// ── POST /api/admin/auth — login ─────────────────────────────────────────────
 export async function POST(req: Request) {
   const { email, senha } = await req.json() as { email?: string; senha: string }
 
@@ -29,33 +39,57 @@ export async function POST(req: Request) {
 
   const supabase = createServiceClient()
 
-  // ── Autenticação via tabela de usuários ──
+  // ── Autenticação via tabela de usuários ──────────────────────────────────
   if (email) {
-    const { data: usuario } = await supabase
+    // Busca TODOS os registros com esse e-mail (pode estar em vários tenants)
+    const { data: candidatos } = await supabase
       .from('usuarios')
-      .select('id, nome, cargo, senha_hash, ativo, tenant_id')
+      .select('id, nome, cargo, senha_hash, ativo, tenant_id, convite_aceito')
       .eq('email', email.toLowerCase().trim())
-      .single()
 
-    if (!usuario || !usuario.ativo) {
+    if (!candidatos || candidatos.length === 0) {
       return NextResponse.json({ error: 'Email ou senha incorretos' }, { status: 401 })
     }
 
-    if (!verificarSenha(senha, usuario.senha_hash)) {
+    // Filtra: ativo + senha correta + convite aceito
+    const validos = candidatos.filter(
+      (u) => u.ativo && u.convite_aceito && u.senha_hash && verificarSenha(senha, u.senha_hash)
+    )
+
+    if (validos.length === 0) {
       return NextResponse.json({ error: 'Email ou senha incorretos' }, { status: 401 })
     }
 
-    const resp = NextResponse.json({ ok: true, nome: usuario.nome, cargo: usuario.cargo })
-    resp.cookies.set('admin_auth', `mmu:${usuario.id}`, COOKIE_OPTS)
-    resp.cookies.set('mmu_cargo', usuario.cargo, CARGO_OPTS)
-    // Propaga tenant_id para que estação/garçom filtrem pelo tenant correto
-    if (usuario.tenant_id) {
-      resp.cookies.set('tenant_id', usuario.tenant_id, COOKIE_OPTS)
+    // ── Apenas 1 restaurante → login direto ─────────────────────────────
+    if (validos.length === 1) {
+      const u = validos[0]
+      const resp = NextResponse.json({ ok: true, nome: u.nome, cargo: u.cargo })
+      setLoginCookies(resp, u)
+      return resp
     }
-    return resp
+
+    // ── Múltiplos restaurantes → retorna lista para escolha ─────────────
+    const tenantIds = validos.map((u) => u.tenant_id).filter(Boolean) as string[]
+
+    const { data: tenants } = await supabase
+      .from('tenants')
+      .select('id, nome_restaurante')
+      .in('id', tenantIds)
+
+    const tenantMap = Object.fromEntries(tenants?.map((t) => [t.id, t.nome_restaurante]) ?? [])
+
+    const opcoes = validos.map((u) => ({
+      usuario_id:      u.id,
+      nome:            u.nome,
+      cargo:           u.cargo,
+      tenant_id:       u.tenant_id,
+      nome_restaurante: u.tenant_id ? (tenantMap[u.tenant_id] ?? 'Restaurante') : 'Restaurante',
+    }))
+
+    return NextResponse.json({ ok: true, multiplos_tenants: true, opcoes })
   }
 
-  // ── Fallback: senha única via env var (quando não há usuários cadastrados) ──
+  // ── Fallback: senha única via env var ────────────────────────────────────
   const { count } = await supabase
     .from('usuarios')
     .select('id', { count: 'exact', head: true })
@@ -63,7 +97,6 @@ export async function POST(req: Request) {
   const semUsuarios = !count || count === 0
 
   if (!semUsuarios) {
-    // Já existem usuários — exige email
     return NextResponse.json({ error: 'Informe o email de acesso' }, { status: 400 })
   }
 
@@ -77,7 +110,7 @@ export async function POST(req: Request) {
   return resp
 }
 
-// DELETE — logout
+// ── DELETE /api/admin/auth — logout ─────────────────────────────────────────
 export async function DELETE() {
   const resp = NextResponse.json({ ok: true })
   resp.cookies.delete('admin_auth')
