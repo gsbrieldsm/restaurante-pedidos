@@ -6,10 +6,7 @@ export const dynamic = 'force-dynamic'
 
 async function autenticar() {
   const cookieStore = await cookies()
-  const token = cookieStore.get('superadmin_token')?.value
-  const senha = process.env.SUPERADMIN_PASSWORD
-  if (!token || !senha || token !== `sa:${senha}`) return false
-  return true
+  return cookieStore.get('superadmin_auth')?.value === 'sa-ok'
 }
 
 // GET /api/superadmin/parceiros — lista todos os leads
