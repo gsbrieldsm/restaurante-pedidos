@@ -37,12 +37,16 @@ export async function POST(req: Request) {
 
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY)
-    resend.emails.send({
-      from:    process.env.RESEND_FROM ?? 'Menue+ <noreply@menue.com.br>',
-      to:      tenant.email,
-      subject: 'Redefinir senha — Menuê+',
-      html:    emailResetSenha({ nome: tenant.nome, token: reset_token }),
-    }).catch((err) => console.error('[resend] erro ao enviar reset de senha:', err))
+    try {
+      await resend.emails.send({
+        from:    process.env.RESEND_FROM ?? 'Menue+ <noreply@menue.com.br>',
+        to:      tenant.email,
+        subject: 'Redefinir senha — Menuê+',
+        html:    emailResetSenha({ nome: tenant.nome, token: reset_token }),
+      })
+    } catch (err) {
+      console.error('[resend] erro ao enviar reset de senha:', err)
+    }
   }
 
   return NextResponse.json({ ok: true })

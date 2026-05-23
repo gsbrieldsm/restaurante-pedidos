@@ -90,26 +90,34 @@ export async function POST(req: Request) {
       const resend = new Resend(process.env.RESEND_API_KEY)
       const from = process.env.RESEND_FROM ?? 'Menue+ <noreply@menue.com.br>'
 
-      // E-mail de confirmação de e-mail (prioritário)
-      resend.emails.send({
-        from,
-        to:      tenant.email,
-        subject: `Confirme seu e-mail no Menuê+`,
-        html:    emailVerificacao({ nome: tenant.nome, token: verificacao_token }),
-      }).catch((err) => console.error('[resend] erro ao enviar verificação:', err))
+      try {
+        // E-mail de confirmação (prioritário) — aguarda para não ser cortado pelo serverless
+        await resend.emails.send({
+          from,
+          to:      tenant.email,
+          subject: `Confirme seu e-mail no Menuê+`,
+          html:    emailVerificacao({ nome: tenant.nome, token: verificacao_token }),
+        })
+      } catch (err) {
+        console.error('[resend] erro ao enviar verificação:', err)
+      }
 
-      // E-mail de boas-vindas (informativo)
-      resend.emails.send({
-        from,
-        to:      tenant.email,
-        subject: `Bem-vindo ao Menuê+, ${tenant.nome}! 🎉`,
-        html:    emailBoasVindas({
-          nome:             tenant.nome,
-          nome_restaurante: tenant.nome_restaurante,
-          email:            tenant.email,
-          slug:             tenant.slug,
-        }),
-      }).catch((err) => console.error('[resend] erro ao enviar boas-vindas:', err))
+      try {
+        // E-mail de boas-vindas (informativo)
+        await resend.emails.send({
+          from,
+          to:      tenant.email,
+          subject: `Bem-vindo ao Menuê+, ${tenant.nome}! 🎉`,
+          html:    emailBoasVindas({
+            nome:             tenant.nome,
+            nome_restaurante: tenant.nome_restaurante,
+            email:            tenant.email,
+            slug:             tenant.slug,
+          }),
+        })
+      } catch (err) {
+        console.error('[resend] erro ao enviar boas-vindas:', err)
+      }
     }
 
     // Após registro, NÃO definimos cookies de auth ainda (e-mail precisa ser verificado)

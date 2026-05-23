@@ -97,17 +97,21 @@ export async function POST(req: Request) {
   // Envia e-mail de convite
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY)
-    resend.emails.send({
-      from:    process.env.RESEND_FROM ?? 'Menue+ <noreply@menue.com.br>',
-      to:      email.toLowerCase().trim(),
-      subject: `Você foi convidado para o Menuê+ — ${nomeRestaurante}`,
-      html:    emailConvite({
-        nomeConvidado:   nome.trim(),
-        nomeRestaurante,
-        cargoLabel:      CARGO_LABEL[cargo] ?? cargo,
-        token:           convite_token,
-      }),
-    }).catch((err) => console.error('[resend] erro ao enviar convite:', err))
+    try {
+      await resend.emails.send({
+        from:    process.env.RESEND_FROM ?? 'Menue+ <noreply@menue.com.br>',
+        to:      email.toLowerCase().trim(),
+        subject: `Você foi convidado para o Menuê+ — ${nomeRestaurante}`,
+        html:    emailConvite({
+          nomeConvidado:   nome.trim(),
+          nomeRestaurante,
+          cargoLabel:      CARGO_LABEL[cargo] ?? cargo,
+          token:           convite_token,
+        }),
+      })
+    } catch (err) {
+      console.error('[resend] erro ao enviar convite:', err)
+    }
   }
 
   return NextResponse.json({ usuario }, { status: 201 })
