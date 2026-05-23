@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Loader2, ArrowRight, ChefHat } from 'lucide-react'
 import Link from 'next/link'
 
-export default function RegistroPage() {
+function RegistroForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
@@ -176,5 +176,17 @@ export default function RegistroPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegistroPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F0FAFA' }}>
+        <div className="w-8 h-8 rounded-full border-2 border-teal-500 border-t-transparent animate-spin" />
+      </div>
+    }>
+      <RegistroForm />
+    </Suspense>
   )
 }
