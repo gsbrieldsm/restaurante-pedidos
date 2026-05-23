@@ -33,29 +33,32 @@ export async function POST(req: Request) {
 
   const { data: usuario } = await supabase
     .from('usuarios')
-    .select('id, nome, cargo, ativo, convite_aceito, tenant_id')
+    .select('id, nome, cargo, ativo, convite_aceito, senha_hash, tenant_id, email')
     .eq('id', usuario_id)
     .single()
 
-  if (!usuario || !usuario.ativo || !usuario.convite_aceito) {
+  // Aceita tanto operadores convidados (convite_aceito) quanto donos diretos (senha_hash)
+  if (!usuario || !usuario.ativo || (!usuario.convite_aceito && !usuario.senha_hash)) {
     return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 })
   }
 
-  // Verifica se realmente o usuário logado tem esse e-mail
-  // (segurança extra: garante que o usuario_id pertence ao e-mail da sessão atual)
+  // Segurança: garante que o usuario_id pertence ao mesmo e-mail da sessão atual
   const cookieStore = await cookies()
   const authCookie  = cookieStore.get('admin_auth')?.value
 
   if (authCookie && authCookie.startsWith('mmu:')) {
     const currentId = authCookie.replace('mmu:', '')
 
-    // Busca e-mail do usuário atual e do alvo — devem ser o mesmo
-    const [{ data: atual }, { data: alvo }] = await Promise.all([
-      supabase.from('usuarios').select('email').eq('id', currentId).single(),
-      supabase.from('usuarios').select('email').eq('id', usuario_id).single(),
-    ])
+    // Busca e-mail do usuário atual (pode estar em usuarios ou tenants)
+    const { data: usuarioAtual } = await supabase
+      .from('usuarios')
+      .select('email')
+      .eq('id', currentId)
+      .single()
 
-    if (atual && alvo && atual.email !== alvo.email) {
+    const emailAtual = usuarioAtual?.email
+
+    if (emailAtual && usuario.email && emailAtual !== usuario.email) {
       return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 })
     }
   }
