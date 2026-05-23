@@ -66,10 +66,11 @@ const MOTIVOS = [
 export default function ParceirosPage() {
   // Calculadora
   const [clientes, setClientes] = useState(5)
-  const tier      = getTier(clientes)
-  const mensal    = clientes * MENSALIDADE_BASE * tier.recorrente
-  const porImpl   = VALOR_IMPL * COMISSAO_IMPL
-  const anual     = mensal * 12 + clientes * porImpl
+  const tier        = getTier(clientes)
+  const mensal      = clientes * MENSALIDADE_BASE * tier.recorrente
+  const porImpl     = VALOR_IMPL * COMISSAO_IMPL
+  const anual       = mensal * 12 + clientes * porImpl
+  const sliderPct   = ((clientes - 1) / 29) * 100
 
   // Formulário
   const [form, setForm]       = useState({ nome: '', email: '', whatsapp: '', cidade: '', como: '' })
@@ -372,8 +373,35 @@ export default function ParceirosPage() {
                 max={30}
                 value={clientes}
                 onChange={(e) => setClientes(Number(e.target.value))}
-                className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                style={{ accentColor: '#1A9B8A' }}
+                className={[
+                  'w-full h-2 rounded-full appearance-none cursor-grab active:cursor-grabbing',
+                  // thumb — webkit
+                  '[&::-webkit-slider-thumb]:appearance-none',
+                  '[&::-webkit-slider-thumb]:w-6',
+                  '[&::-webkit-slider-thumb]:h-6',
+                  '[&::-webkit-slider-thumb]:rounded-full',
+                  '[&::-webkit-slider-thumb]:bg-white',
+                  '[&::-webkit-slider-thumb]:border-[3px]',
+                  '[&::-webkit-slider-thumb]:border-teal-500',
+                  '[&::-webkit-slider-thumb]:shadow-md',
+                  '[&::-webkit-slider-thumb]:shadow-teal-200',
+                  '[&::-webkit-slider-thumb]:cursor-grab',
+                  '[&::-webkit-slider-thumb]:active:cursor-grabbing',
+                  '[&::-webkit-slider-thumb]:transition-transform',
+                  '[&::-webkit-slider-thumb]:hover:scale-110',
+                  // thumb — firefox
+                  '[&::-moz-range-thumb]:w-6',
+                  '[&::-moz-range-thumb]:h-6',
+                  '[&::-moz-range-thumb]:rounded-full',
+                  '[&::-moz-range-thumb]:bg-white',
+                  '[&::-moz-range-thumb]:border-[3px]',
+                  '[&::-moz-range-thumb]:border-teal-500',
+                  '[&::-moz-range-thumb]:shadow-md',
+                  '[&::-moz-range-thumb]:cursor-grab',
+                ].join(' ')}
+                style={{
+                  background: `linear-gradient(to right, #1A9B8A ${sliderPct}%, #e2e8f0 ${sliderPct}%)`,
+                }}
               />
               <div className="flex justify-between text-xs text-slate-400">
                 <span>1 cliente</span>
