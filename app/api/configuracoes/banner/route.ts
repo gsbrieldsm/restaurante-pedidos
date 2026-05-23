@@ -1,30 +1,56 @@
 export const dynamic = 'force-dynamic'
 
-import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { cookies, headers } from 'next/headers'
+import { createServiceClient } from '@/lib/supabase/server'
+
+const DEFAULT_BRANDING = {
+  restaurante_nome:     'Meu Restaurante',
+  restaurante_logo_url: null,
+  cor_primaria:         '#1A9B8A',
+}
 
 export async function GET() {
-  const supabase = createServiceClient()
+  const supabase     = createServiceClient()
+  const cookieStore  = await cookies()
+  const headersList  = await headers()
 
-  const { data, error } = await supabase
+  // 1. Tenta pegar tenant_id do cookie (painel admin ou mesa autenticada)
+  let tenantId = cookieStore.get('tenant_id')?.value ?? null
+
+  // 2. Fallback: tenta pelo slug do subdomínio (header x-tenant-slug do middleware)
+  if (!tenantId) {
+    const slug = headersList.get('x-tenant-slug')
+    if (slug) {
+      const { data } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('slug', slug)
+        .single()
+      tenantId = data?.id ?? null
+    }
+  }
+
+  if (!tenantId) {
+    return NextResponse.json({ banner: null, branding: DEFAULT_BRANDING })
+  }
+
+  const { data } = await supabase
     .from('configuracoes')
     .select('banner_ativo, banner_titulo, banner_subtitulo, banner_emoji, banner_estilo, banner_imagem_url, restaurante_nome, restaurante_logo_url, cor_primaria')
-    .eq('id', 1)
-    .single()
+    .eq('tenant_id', tenantId)
+    .maybeSingle()
 
-  if (error || !data) {
-    return NextResponse.json({
-      banner: null,
-      branding: { restaurante_nome: 'Meu Restaurante', restaurante_logo_url: null, cor_primaria: '#1A9B8A' },
-    })
+  if (!data) {
+    return NextResponse.json({ banner: null, branding: DEFAULT_BRANDING })
   }
 
   return NextResponse.json({
-    banner: data,
+    banner:   data,
     branding: {
-      restaurante_nome:     data.restaurante_nome     ?? 'Meu Restaurante',
+      restaurante_nome:     data.restaurante_nome     ?? DEFAULT_BRANDING.restaurante_nome,
       restaurante_logo_url: data.restaurante_logo_url ?? null,
-      cor_primaria:         data.cor_primaria         ?? '#1A9B8A',
+      cor_primaria:         data.cor_primaria         ?? DEFAULT_BRANDING.cor_primaria,
     },
   })
 }
