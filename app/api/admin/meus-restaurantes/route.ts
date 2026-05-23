@@ -29,12 +29,13 @@ export async function GET() {
   }
 
   // Busca todos os registros ativos com esse e-mail
+  // Inclui convite_aceito = true E contas criadas diretamente (convite_aceito = false/null com senha_hash)
   const { data: registros } = await supabase
     .from('usuarios')
-    .select('id, nome, cargo, tenant_id')
+    .select('id, nome, cargo, tenant_id, convite_aceito, senha_hash')
     .eq('email', atual.email)
     .eq('ativo', true)
-    .eq('convite_aceito', true)
+    .or('convite_aceito.eq.true,senha_hash.not.is.null')
 
   if (!registros || registros.length === 0) {
     return NextResponse.json({ restaurantes: [] })
