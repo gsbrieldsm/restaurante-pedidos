@@ -6,6 +6,7 @@ import { CheckCircle2, Clock, ChefHat, Loader2, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import type { Pedido, PedidoItem } from '@/lib/supabase/types'
+import { hexToRgbParts, headerGradient, corFundoClaro, corFundoMedio } from '@/lib/cor'
 
 const STATUS_LABEL: Record<string, string> = {
   aguardando: 'Aguardando',
@@ -16,7 +17,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const STATUS_COLOR: Record<string, string> = {
   aguardando: 'bg-slate-100 text-slate-600',
-  em_preparo: 'bg-teal-100 text-teal-700',
+  em_preparo: '',
   pronto:     'bg-green-100 text-green-700',
   entregue:   'bg-blue-100 text-blue-700',
 }
@@ -45,7 +46,16 @@ export default function ConfirmacaoPage() {
   const [pedido, setPedido] = useState<Pedido & { pedido_itens: PedidoItem[] } | null>(null)
   const [loading, setLoading] = useState(true)
   const [countdown, setCountdown] = useState(6)
+  const [corPrimaria, setCorPrimaria] = useState('#1A9B8A')
   const statusAnterior = useRef<string | null>(null)
+
+  // Carrega cor primária do restaurante via token da mesa
+  useEffect(() => {
+    fetch(`/api/configuracoes/banner?mesa_token=${token}`)
+      .then((r) => r.json())
+      .then((d) => { setCorPrimaria(d.branding?.cor_primaria ?? '#1A9B8A') })
+      .catch(() => {})
+  }, [token])
 
   useEffect(() => {
     const pedidoId = sessionStorage.getItem('ultimo_pedido_id')
@@ -89,10 +99,13 @@ export default function ConfirmacaoPage() {
     }
   }, [token, router])
 
+  const rgb      = hexToRgbParts(corPrimaria)
+  const gradient = headerGradient(corPrimaria)
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-teal-50">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: corFundoClaro(rgb) }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: corPrimaria }} />
       </div>
     )
   }
@@ -100,16 +113,16 @@ export default function ConfirmacaoPage() {
   return (
     <div className="min-h-screen" style={{ background: '#F0FAFA' }}>
       {/* Header */}
-      <div className="shadow-lg" style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}>
+      <div className="shadow-lg" style={{ background: gradient }}>
         <div className="px-5 pt-5 pb-6">
-          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">Menuê+</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: `rgba(${rgb}, 0.75)` }}>Menuê+</p>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center shrink-0 shadow-lg">
               <CheckCircle2 className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
               <h1 className="text-white font-black text-2xl leading-tight">Pedido Enviado!</h1>
-              <p className="text-teal-300 text-sm font-medium">
+              <p className="text-sm font-medium" style={{ color: `rgba(${rgb}, 0.85)` }}>
                 Olá, <span className="text-white font-bold">{pedido?.cliente_nome}</span>!
               </p>
             </div>
@@ -138,19 +151,22 @@ export default function ConfirmacaoPage() {
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-slate-700">Status</span>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLOR[pedido?.status_geral || 'aguardando']}`}>
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLOR[pedido?.status_geral || 'aguardando']}`}
+              style={pedido?.status_geral === 'em_preparo' ? { background: corFundoMedio(rgb), color: corPrimaria } : {}}
+            >
               {STATUS_LABEL[pedido?.status_geral || 'aguardando']}
             </span>
           </div>
 
           {pedido?.status_geral === 'aguardando' && (
-            <div className="flex items-center gap-2 text-sm text-teal-700 bg-teal-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-sm rounded-lg p-3" style={{ color: corPrimaria, background: corFundoClaro(rgb) }}>
               <Clock className="w-4 h-4 shrink-0" />
               <span>Aguardando a cozinha/bar receber seu pedido...</span>
             </div>
           )}
           {pedido?.status_geral === 'em_preparo' && (
-            <div className="flex items-center gap-2 text-sm text-teal-700 bg-teal-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-sm rounded-lg p-3" style={{ color: corPrimaria, background: corFundoClaro(rgb) }}>
               <ChefHat className="w-4 h-4 shrink-0" />
               <span>Seu pedido está sendo preparado!</span>
             </div>
@@ -168,7 +184,10 @@ export default function ConfirmacaoPage() {
                   <span className="text-slate-700">{item.item_nome}</span>
                   {item.observacao && <span className="text-xs text-slate-400">({item.observacao})</span>}
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOR[item.status]}`}>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOR[item.status]}`}
+                  style={item.status === 'em_preparo' ? { background: corFundoMedio(rgb), color: corPrimaria } : {}}
+                >
                   {STATUS_LABEL[item.status]}
                 </span>
               </div>
@@ -176,14 +195,14 @@ export default function ConfirmacaoPage() {
           </div>
           <div className="mt-3 pt-3 border-t flex justify-between font-bold">
             <span>Total</span>
-            <span className="text-teal-700">R$ {pedido?.total.toFixed(2).replace('.', ',')}</span>
+            <span style={{ color: corPrimaria }}>R$ {pedido?.total.toFixed(2).replace('.', ',')}</span>
           </div>
         </div>
 
         <Button
           onClick={() => router.push(`/mesa/${token}/conta`)}
           className="w-full h-12 font-bold text-black"
-          style={{ background: '#1A9B8A' }}
+          style={{ background: corPrimaria }}
         >
           <Receipt className="w-5 h-5 mr-2" /> Ver minha conta completa
         </Button>
@@ -191,7 +210,8 @@ export default function ConfirmacaoPage() {
         <Button
           onClick={() => router.push(`/mesa/${token}/cardapio`)}
           variant="outline"
-          className="w-full h-12 border-teal-500 text-teal-700 hover:bg-teal-50"
+          className="w-full h-12"
+          style={{ borderColor: corPrimaria, color: corPrimaria }}
         >
           + Adicionar mais itens
         </Button>

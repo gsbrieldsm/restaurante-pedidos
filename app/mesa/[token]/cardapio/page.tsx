@@ -11,6 +11,7 @@ import {
   Clock, Loader2, Search, Receipt, ConciergeBell, CheckCircle2, X
 } from 'lucide-react'
 import type { CardapioItem, GrupoOpcao, OpcaoSelecionada, ItemCarrinho } from '@/lib/supabase/types'
+import { darkenHex, hexToRgbParts } from '@/lib/cor'
 
 const ESTACAO_EMOJI: Record<string, string> = {
   cozinha: '🍳',
@@ -262,13 +263,6 @@ export default function CardapioPage() {
   }
 
   // Gera gradiente do header a partir da cor primária do restaurante
-  function darkenHex(hex: string, factor: number): string {
-    const h = hex.replace('#', '')
-    const r = parseInt(h.slice(0, 2), 16)
-    const g = parseInt(h.slice(2, 4), 16)
-    const b = parseInt(h.slice(4, 6), 16)
-    return `rgb(${Math.round(r * factor)},${Math.round(g * factor)},${Math.round(b * factor)})`
-  }
   const cor = branding.cor_primaria ?? '#1A9B8A'
   const headerGradient = `linear-gradient(135deg, ${darkenHex(cor, 0.10)} 0%, ${darkenHex(cor, 0.28)} 50%, ${cor} 100%)`
 
@@ -510,7 +504,7 @@ export default function CardapioPage() {
                   className="w-36 h-36 object-cover shrink-0"
                 />
               ) : (
-                <div className="w-36 h-36 bg-gradient-to-br from-slate-50 to-teal-50 flex items-center justify-center shrink-0">
+                <div className="w-36 h-36 flex items-center justify-center shrink-0" style={{ background: `linear-gradient(135deg, #f8fafc, rgba(${hexToRgbParts(cor)}, 0.08))` }}>
                   <span className="text-4xl opacity-30">{ESTACAO_EMOJI[item.estacao]}</span>
                 </div>
               )}
@@ -581,7 +575,7 @@ export default function CardapioPage() {
         <span className="text-xs text-slate-300 font-medium">Powered by</span>
         <span
           className="text-xs font-black tracking-tight"
-          style={{ color: '#1A9B8A', opacity: 0.7 }}
+          style={{ color: cor, opacity: 0.7 }}
         >
           Menuê+
         </span>
@@ -692,7 +686,10 @@ export default function CardapioPage() {
               <div>
                 <p className="font-bold text-slate-800 text-sm mb-2">Observação</p>
                 <input
-                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none focus:border-teal-400"
+                  className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 placeholder-slate-400 outline-none"
+                  style={{ '--tw-ring-color': cor } as React.CSSProperties}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = cor)}
+                  onBlur={(e)  => (e.currentTarget.style.borderColor = '')}
                   placeholder="Alguma observação? (ex: sem cebola)"
                   value={obsOpcional}
                   onChange={(e) => setObsOpcional(e.target.value)}

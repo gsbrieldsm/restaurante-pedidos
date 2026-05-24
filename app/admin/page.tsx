@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getTenantIdClient } from '@/lib/tenant-client'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -157,11 +158,19 @@ export default function AdminDashboard() {
   useEffect(() => {
     buscarTudo()
     const supabase = createClient()
+    const tenantId = getTenantIdClient()
+
+    function filtro(table: string) {
+      return tenantId
+        ? { event: '*' as const, schema: 'public', table, filter: `tenant_id=eq.${tenantId}` }
+        : { event: '*' as const, schema: 'public', table }
+    }
+
     const channel = supabase
-      .channel('admin-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, buscarTudo)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sessoes_mesa' }, buscarTudo)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_itens' }, buscarTudo)
+      .channel(`admin-live-${tenantId ?? 'anon'}`)
+      .on('postgres_changes', filtro('pedidos'),      buscarTudo)
+      .on('postgres_changes', filtro('sessoes_mesa'), buscarTudo)
+      .on('postgres_changes', filtro('pedido_itens'), buscarTudo)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [buscarTudo])

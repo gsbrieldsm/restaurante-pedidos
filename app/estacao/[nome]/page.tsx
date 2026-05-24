@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getTenantIdClient } from '@/lib/tenant-client'
 import { CardPedidoItem } from '@/components/estacao/CardPedidoItem'
 import { Loader2, WifiOff } from 'lucide-react'
 import type { EstacaoTipo, ViewFilaEstacao } from '@/lib/supabase/types'
@@ -69,20 +70,16 @@ export default function EstacaoPage() {
   useEffect(() => {
     buscarItens()
 
-    // Realtime via Supabase
-    const supabase = createClient()
+    // Realtime via Supabase — filtra por tenant para não receber eventos de outros restaurantes
+    const supabase  = createClient()
+    const tenantId  = getTenantIdClient()
+    const filtroItens  = tenantId ? { event: '*' as const, schema: 'public', table: 'pedido_itens',  filter: `tenant_id=eq.${tenantId}` } : { event: '*' as const, schema: 'public', table: 'pedido_itens'  }
+    const filtroPedido = tenantId ? { event: '*' as const, schema: 'public', table: 'pedidos',       filter: `tenant_id=eq.${tenantId}` } : { event: '*' as const, schema: 'public', table: 'pedidos'       }
+
     const channel = supabase
-      .channel(`estacao-${estacao}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'pedido_itens' },
-        () => buscarItens()
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'pedidos' },
-        () => buscarItens()
-      )
+      .channel(`estacao-${estacao}-${tenantId ?? 'anon'}`)
+      .on('postgres_changes', filtroItens,  () => buscarItens())
+      .on('postgres_changes', filtroPedido, () => buscarItens())
       .subscribe()
 
     // Polling de segurança: garante atualização mesmo se o realtime falhar

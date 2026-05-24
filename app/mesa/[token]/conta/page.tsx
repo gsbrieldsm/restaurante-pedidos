@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import type { Pedido, PedidoItem } from '@/lib/supabase/types'
+import { hexToRgbParts, headerGradient, corFundoClaro, corFundoMedio, corBorda } from '@/lib/cor'
 
 function tocarSom() {
   try {
@@ -32,7 +33,7 @@ const RESTAURANT_NAME = process.env.NEXT_PUBLIC_RESTAURANT_NAME ?? 'Menuê+'
 
 const STATUS_CONFIG: Record<string, { label: string; cor: string; icon: React.ElementType }> = {
   aguardando: { label: 'Aguardando',  cor: 'bg-slate-100 text-slate-500',  icon: Clock        },
-  em_preparo: { label: 'Preparando', cor: 'bg-teal-100 text-teal-700',    icon: ChefHat      },
+  em_preparo: { label: 'Preparando', cor: '',                              icon: ChefHat      },
   pronto:     { label: 'Pronto!',    cor: 'bg-green-100 text-green-700',  icon: CheckCircle2 },
   entregue:   { label: 'Entregue',   cor: 'bg-blue-100 text-blue-600',    icon: CheckCircle2 },
 }
@@ -60,15 +61,19 @@ export default function ContaPage() {
   const [garcomChamado, setGarcomChamado] = useState(false)
   const [garcomPix, setGarcomPix] = useState(false)
   const [pixChave, setPixChave] = useState<string | null>(null)
+  const [corPrimaria, setCorPrimaria] = useState('#1A9B8A')
 
   // IDs de itens que já sabemos que estão "pronto" — para detectar novos
   const prontosSabidos = useRef<Set<string>>(new Set())
 
-  // Carrega chave PIX do restaurante via configurações públicas
+  // Carrega chave PIX e cor primária do restaurante
   useEffect(() => {
     fetch(`/api/configuracoes/banner?mesa_token=${token}`)
       .then((r) => r.json())
-      .then((d) => { setPixChave(d.branding?.pix_chave ?? null) })
+      .then((d) => {
+        setPixChave(d.branding?.pix_chave ?? null)
+        setCorPrimaria(d.branding?.cor_primaria ?? '#1A9B8A')
+      })
       .catch(() => {})
   }, [token])
 
@@ -168,10 +173,13 @@ export default function ContaPage() {
     }
   }
 
+  const rgb      = hexToRgbParts(corPrimaria)
+  const gradient = headerGradient(corPrimaria)
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#F0FAFA' }}>
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: corPrimaria }} />
       </div>
     )
   }
@@ -182,7 +190,7 @@ export default function ContaPage() {
       {/* Header */}
       <div
         className="sticky top-0 z-10 shadow-lg"
-        style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
+        style={{ background: gradient }}
       >
         <div className="flex items-center gap-3 px-4 pt-3 pb-4">
           <button
@@ -192,11 +200,11 @@ export default function ContaPage() {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold tracking-widest uppercase text-teal-400 leading-none">Menuê+</p>
+            <p className="text-xs font-bold tracking-widest uppercase leading-none" style={{ color: `rgba(${rgb}, 0.75)` }}>Menuê+</p>
             <h1 className="text-white font-black text-2xl leading-tight">
               Mesa {mesaNumero}
             </h1>
-            <p className="text-teal-300 text-sm font-medium">Minha conta · {clienteNome}</p>
+            <p className="text-sm font-medium" style={{ color: `rgba(${rgb}, 0.85)` }}>Minha conta · {clienteNome}</p>
           </div>
           <button
             onClick={buscarConta}
@@ -229,12 +237,12 @@ export default function ContaPage() {
         {/* Lista de pedidos */}
         {pedidos.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
-            <ShoppingBag className="w-12 h-12 mx-auto mb-3 text-teal-200" />
+            <ShoppingBag className="w-12 h-12 mx-auto mb-3" style={{ color: `rgba(${rgb}, 0.35)` }} />
             <p className="font-medium text-slate-600">Nenhum pedido ainda</p>
             <Button
               onClick={() => router.push(`/mesa/${token}/cardapio`)}
               className="mt-4 text-black font-bold"
-              style={{ background: '#1A9B8A' }}
+              style={{ background: corPrimaria }}
             >
               <Plus className="w-4 h-4 mr-2" /> Ver cardápio
             </Button>
@@ -254,8 +262,8 @@ export default function ContaPage() {
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-                      <span className="text-teal-700 font-bold text-sm">#{idx + 1}</span>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: corFundoMedio(rgb) }}>
+                      <span className="font-bold text-sm" style={{ color: corPrimaria }}>#{idx + 1}</span>
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-slate-800 text-sm">
@@ -265,7 +273,7 @@ export default function ContaPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-teal-700">{formatarReal(subtotal)}</span>
+                    <span className="font-bold" style={{ color: corPrimaria }}>{formatarReal(subtotal)}</span>
                     {aberto ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                   </div>
                 </button>
@@ -289,7 +297,10 @@ export default function ContaPage() {
                               {formatarReal(item.item_preco * item.quantidade)}
                             </p>
                           </div>
-                          <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${cfg.cor}`}>
+                          <span
+                            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${cfg.cor}`}
+                            style={item.status === 'em_preparo' ? { background: corFundoMedio(rgb), color: corPrimaria } : {}}
+                          >
                             <Icon className="w-3 h-3" />
                             {cfg.label}
                           </span>
@@ -307,17 +318,17 @@ export default function ContaPage() {
         {pedidos.length > 0 && (
           <div
             className="rounded-2xl p-5 text-white"
-            style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 40%, #1A9B8A 100%)' }}
+            style={{ background: gradient }}
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-teal-300 text-xs font-bold uppercase tracking-widest mb-1">Total da conta</p>
-                <p className="text-3xl font-black">{formatarReal(totalGeral)}</p>
+                <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: `rgba(${rgb}, 0.75)` }}>Total da conta</p>
+                <p className="text-3xl font-black text-white">{formatarReal(totalGeral)}</p>
               </div>
               <ShoppingBag className="w-10 h-10 text-white/20" />
             </div>
             {todosEntregues && (
-              <p className="text-teal-300 text-xs mt-2">✓ Todos os itens foram entregues</p>
+              <p className="text-xs mt-2" style={{ color: `rgba(${rgb}, 0.75)` }}>✓ Todos os itens foram entregues</p>
             )}
           </div>
         )}
@@ -333,11 +344,11 @@ export default function ContaPage() {
           </div>
         )}
         {garcomPix && (
-          <div className="bg-teal-50 border border-teal-200 rounded-2xl p-4 flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-teal-600 shrink-0" />
+          <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: corFundoClaro(rgb), border: `1px solid ${corBorda(rgb)}` }}>
+            <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color: corPrimaria }} />
             <div>
-              <p className="font-semibold text-teal-800 text-sm">Pagamento informado!</p>
-              <p className="text-teal-600 text-xs">O garçom verificará o PIX e encerrará sua mesa.</p>
+              <p className="font-semibold text-sm" style={{ color: corPrimaria }}>Pagamento informado!</p>
+              <p className="text-xs" style={{ color: corPrimaria }}>O garçom verificará o PIX e encerrará sua mesa.</p>
             </div>
           </div>
         )}
@@ -352,7 +363,7 @@ export default function ContaPage() {
               <Button
                 onClick={() => setModalPix(true)}
                 className="w-full h-12 text-black font-bold text-base"
-                style={{ background: '#1A9B8A' }}
+                style={{ background: corPrimaria }}
               >
                 <QrCode className="w-5 h-5 mr-2" />
                 Pagar via Pix — {formatarReal(totalGeral)}
@@ -364,7 +375,8 @@ export default function ContaPage() {
               onClick={() => chamarGarcom('conta')}
               disabled={chamandoGarcom}
               variant="outline"
-              className="w-full h-12 font-bold text-base border-teal-500 text-teal-700 hover:bg-teal-50"
+              className="w-full h-12 font-bold text-base"
+              style={{ borderColor: corPrimaria, color: corPrimaria }}
             >
               {chamandoGarcom
                 ? <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -390,17 +402,17 @@ export default function ContaPage() {
 
             {/* Header */}
             <div className="text-center">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: '#F0FAFA' }}>
-                <QrCode className="w-7 h-7 text-teal-600" />
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: corFundoClaro(rgb) }}>
+                <QrCode className="w-7 h-7" style={{ color: corPrimaria }} />
               </div>
               <h2 className="text-xl font-black text-slate-800">Pagar via Pix</h2>
               <p className="text-slate-500 text-sm mt-1">Copie a chave abaixo e pague pelo seu banco</p>
             </div>
 
             {/* Valor */}
-            <div className="bg-teal-50 rounded-2xl p-4 text-center">
-              <p className="text-xs text-teal-600 font-bold uppercase tracking-widest mb-1">Valor a pagar</p>
-              <p className="text-3xl font-black text-teal-700">{formatarReal(totalGeral)}</p>
+            <div className="rounded-2xl p-4 text-center" style={{ background: corFundoClaro(rgb) }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: corPrimaria }}>Valor a pagar</p>
+              <p className="text-3xl font-black" style={{ color: corPrimaria }}>{formatarReal(totalGeral)}</p>
             </div>
 
             {/* Chave PIX */}
@@ -411,8 +423,9 @@ export default function ContaPage() {
                 <button
                   onClick={copiarPix}
                   className={`shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
-                    copiado ? 'bg-green-100 text-green-700' : 'bg-teal-100 text-teal-700 hover:bg-teal-200'
+                    copiado ? 'bg-green-100 text-green-700' : ''
                   }`}
+                  style={!copiado ? { background: corFundoMedio(rgb), color: corPrimaria } : {}}
                 >
                   {copiado ? <><Check className="w-3.5 h-3.5" /> Copiado!</> : <><Copy className="w-3.5 h-3.5" /> Copiar</>}
                 </button>
@@ -425,7 +438,7 @@ export default function ContaPage() {
               onClick={() => chamarGarcom('pix_pago')}
               disabled={chamandoGarcom}
               className="w-full h-12 text-black font-bold"
-              style={{ background: '#1A9B8A' }}
+              style={{ background: corPrimaria }}
             >
               {chamandoGarcom
                 ? <Loader2 className="w-4 h-4 animate-spin mr-2" />

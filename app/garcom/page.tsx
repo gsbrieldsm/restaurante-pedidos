@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getTenantIdClient } from '@/lib/tenant-client'
 import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone, Search, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -265,12 +266,21 @@ export default function GarcomPage() {
   useEffect(() => {
     carregarTudo()
 
-    const supabase = createClient()
+    const supabase  = createClient()
+    const tenantId  = getTenantIdClient()
+
+    // Cria filtro Realtime por tenant — evita receber eventos de outros restaurantes
+    function filtro(table: string) {
+      return tenantId
+        ? { event: '*' as const, schema: 'public', table, filter: `tenant_id=eq.${tenantId}` }
+        : { event: '*' as const, schema: 'public', table }
+    }
+
     const channel = supabase
-      .channel('garcom-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_itens' }, carregarItens)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas_garcom' }, carregarChamadas)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sessoes_mesa' }, carregarComandas)
+      .channel(`garcom-live-${tenantId ?? 'anon'}`)
+      .on('postgres_changes', filtro('pedido_itens'),    carregarItens)
+      .on('postgres_changes', filtro('chamadas_garcom'), carregarChamadas)
+      .on('postgres_changes', filtro('sessoes_mesa'),    carregarComandas)
       .subscribe()
 
     // Polling de segurança: garante que chamadas e itens aparecem mesmo se o realtime falhar

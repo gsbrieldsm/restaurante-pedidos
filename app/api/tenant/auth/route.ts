@@ -162,7 +162,8 @@ export async function POST(req: Request) {
       ok: true,
       tenant: { id: tenant.id, slug: tenant.slug, nome: tenant.nome, status: tenant.status, plano_aceito_em: tenant.plano_aceito_em },
     })
-    resp.cookies.set('tenant_id',   tenant.id,   COOKIE_OPTS)
+    // tenant_id: não-httpOnly para permitir filtro Realtime no cliente (UUID, não é segredo)
+    resp.cookies.set('tenant_id',   tenant.id,   { ...COOKIE_OPTS, httpOnly: false })
     resp.cookies.set('tenant_slug', tenant.slug, { ...COOKIE_OPTS, httpOnly: false })
     resp.cookies.set('admin_auth',  `mmu:${tenant.id}`, COOKIE_OPTS)
     resp.cookies.set('mmu_cargo',    'admin',              { ...COOKIE_OPTS, httpOnly: false })
