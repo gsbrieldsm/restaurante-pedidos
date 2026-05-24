@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Loader2, ArrowRight, BookUser } from 'lucide-react'
+import { darkenHex, hexToRgbParts } from '@/lib/cor'
 
 export default function IdentificacaoPage() {
   const { token } = useParams() as { token: string }
@@ -26,15 +27,8 @@ export default function IdentificacaoPage() {
     cor_primaria:         string
   }>({ restaurante_nome: '', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
 
-  // Gradiente do hero derivado da cor primária do restaurante
-  function darkenHex(hex: string, factor: number): string {
-    const h = hex.replace('#', '')
-    const r = parseInt(h.slice(0, 2), 16)
-    const g = parseInt(h.slice(2, 4), 16)
-    const b = parseInt(h.slice(4, 6), 16)
-    return `rgb(${Math.round(r * factor)},${Math.round(g * factor)},${Math.round(b * factor)})`
-  }
-  const cor = branding.cor_primaria
+  const cor         = branding.cor_primaria
+  const rgb         = hexToRgbParts(cor)
   const heroGradient = `linear-gradient(135deg, ${darkenHex(cor, 0.10)} 0%, ${darkenHex(cor, 0.28)} 50%, ${cor} 100%)`
 
   useEffect(() => {
@@ -166,8 +160,8 @@ export default function IdentificacaoPage() {
   // ── Carregando ──
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-teal-50">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: `rgba(${rgb}, 0.06)` }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: cor }} />
       </div>
     )
   }
@@ -175,7 +169,7 @@ export default function IdentificacaoPage() {
   // ── Mesa não encontrada ──
   if (erro && !mesa) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-teal-50 p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: `rgba(${rgb}, 0.06)` }}>
         <Card className="w-full max-w-sm text-center">
           <CardContent className="pt-8 pb-8">
             <p className="text-red-500 font-medium">{erro}</p>
@@ -196,9 +190,9 @@ export default function IdentificacaoPage() {
           {branding.restaurante_logo_url && (
               <img src={branding.restaurante_logo_url} alt="Logo" className="w-10 h-10 rounded-xl object-cover mb-3 border border-white/20" />
             )}
-          <p className="text-xs font-bold tracking-widest uppercase text-teal-400 mb-1">{branding.restaurante_nome}</p>
+          <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: `rgba(${rgb}, 0.75)` }}>{branding.restaurante_nome}</p>
           <h1 className="text-3xl font-black leading-tight">Bem-vindo!</h1>
-          <p className="text-teal-300 text-lg font-semibold mt-1">
+          <p className="text-lg font-semibold mt-1" style={{ color: `rgba(${rgb}, 0.85)` }}>
             Mesa <span className="text-white font-black">{mesa?.numero}</span>
           </p>
           <p className="text-white/50 text-sm mt-2">Informe seu nome para abrir sua comanda</p>
