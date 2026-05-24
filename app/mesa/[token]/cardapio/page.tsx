@@ -576,6 +576,19 @@ export default function CardapioPage() {
         })}
       </div>
 
+      {/* Rodapé Menuê+ */}
+      <div className="flex items-center justify-center gap-1.5 py-6 pb-8">
+        <span className="text-xs text-slate-300 font-medium">Powered by</span>
+        <span
+          className="text-xs font-black tracking-tight"
+          style={{ color: '#1A9B8A', opacity: 0.7 }}
+        >
+          Menuê+
+        </span>
+        <span className="text-xs text-slate-300">•</span>
+        <span className="text-xs text-slate-300 font-medium">Sistema de Gestão</span>
+      </div>
+
       {/* Botão fixo do carrinho */}
       {qtdCarrinho > 0 && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg">
