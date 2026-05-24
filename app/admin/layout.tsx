@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { headers, cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
+import { TrialBanner } from '@/components/admin/TrialBanner'
 
 export const metadata: Metadata = {
   title: 'Gestão — Menuê+',
@@ -36,7 +37,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-screen bg-slate-100">
       <AdminSidebar cargo={cargo} nomeRestaurante={nomeRestaurante} />
-      <main className="flex-1 overflow-auto pt-14 md:pt-0">{children}</main>
+      <main className="flex-1 overflow-auto pt-14 md:pt-0">
+        <TrialBanner />
+        {children}
+      </main>
     </div>
   )
 }

@@ -1,9 +1,63 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ChefHat, Clock, MessageCircle, CheckCircle2 } from 'lucide-react'
+import { ChefHat, Clock, MessageCircle, CheckCircle2, Copy, Check } from 'lucide-react'
+
+const PLANOS_PRECO: Record<string, number> = {
+  starter:    350,
+  pro:        450,
+  business:   650,
+  enterprise: 900,
+}
+
+const PLANOS_NOME: Record<string, string> = {
+  starter:    'Starter',
+  pro:        'Pro',
+  business:   'Business',
+  enterprise: 'Enterprise',
+}
+
+const PIX_CHAVE  = '47988194822'   // Celular PIX
+const PIX_NOME   = 'Menuê+ / Gabriel Moraes'
+const WPP_NUMERO = '5547988194822'
 
 export default function TrialExpiradoPage() {
+  const [plano, setPlano]                 = useState('')
+  const [nomeRestaurante, setNomeRestaurante] = useState('')
+  const [copiado, setCopiado]             = useState(false)
+  const [carregando, setCarregando]       = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/perfil')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.plano)            setPlano(d.plano)
+        if (d.nome_restaurante) setNomeRestaurante(d.nome_restaurante)
+      })
+      .catch(() => {})
+      .finally(() => setCarregando(false))
+  }, [])
+
+  const nomePlano = PLANOS_NOME[plano] ?? (plano ? plano.charAt(0).toUpperCase() + plano.slice(1) : null)
+  const preco     = PLANOS_PRECO[plano] ?? null
+
+  const textoWpp = [
+    'Olá! Meu trial do Menuê+ expirou.',
+    nomeRestaurante ? `Restaurante: ${nomeRestaurante}.` : '',
+    nomePlano ? `Plano escolhido: ${nomePlano}${preco ? ` — R$ ${preco}/mês` : ''}.` : '',
+    'Quero continuar usando o sistema!',
+  ].filter(Boolean).join(' ')
+
+  const wppUrl = `https://wa.me/${WPP_NUMERO}?text=${encodeURIComponent(textoWpp)}`
+
+  function copiarPix() {
+    navigator.clipboard.writeText(PIX_CHAVE).then(() => {
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2500)
+    })
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4"
@@ -11,7 +65,7 @@ export default function TrialExpiradoPage() {
     >
       <div className="w-full max-w-md">
 
-        {/* Header */}
+        {/* ── Header ── */}
         <div
           className="rounded-2xl px-8 pt-10 pb-8 text-white mb-5 shadow-xl text-center"
           style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
@@ -25,14 +79,34 @@ export default function TrialExpiradoPage() {
           </div>
           <h1 className="text-2xl font-black leading-tight">Seu trial de 7 dias encerrou</h1>
           <p className="text-white/60 text-sm mt-2 leading-relaxed">
-            Esperamos que tenha gostado! Para continuar usando o Menuê+, fale com nossa equipe e ativamos seu plano.
+            Esperamos que tenha gostado! Para continuar, fale com nossa equipe e ativamos seu plano ainda hoje.
           </p>
         </div>
 
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
 
-          {/* O que você testou */}
+          {/* ── Plano escolhido ── */}
+          {!carregando && nomePlano && preco && (
+            <div className="px-8 py-5 border-b border-slate-100 bg-teal-50/60">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+                Seu plano escolhido
+              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-black text-slate-800">Plano {nomePlano}</p>
+                  {nomeRestaurante && (
+                    <p className="text-xs text-slate-500 mt-0.5">{nomeRestaurante}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black text-teal-600">R$ {preco}</p>
+                  <p className="text-xs text-slate-400">/mês</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── O que você testou ── */}
           <div className="px-8 py-6 border-b border-slate-100">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">
               O que você explorou no trial
@@ -43,7 +117,7 @@ export default function TrialExpiradoPage() {
                 'Pedidos em tempo real para cozinha e bar',
                 'Gestão de garçons e estações',
                 'Relatórios de vendas e performance',
-              ].map(item => (
+              ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <CheckCircle2 className="w-4 h-4 text-teal-500 shrink-0" />
                   <span className="text-sm text-slate-600">{item}</span>
@@ -52,24 +126,55 @@ export default function TrialExpiradoPage() {
             </div>
           </div>
 
-          {/* Próximo passo */}
+          {/* ── PIX ── */}
+          <div className="px-8 py-6 border-b border-slate-100">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+              Pagamento via PIX
+            </p>
+            <p className="text-sm text-slate-600 mb-3">
+              Após o pagamento, nosso time ativa seu acesso em minutos.
+            </p>
+            <div className="bg-slate-50 rounded-xl p-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs text-slate-400 mb-0.5">Chave PIX (celular)</p>
+                <p className="font-mono font-bold text-slate-800 text-base">{PIX_CHAVE}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{PIX_NOME}</p>
+              </div>
+              <button
+                onClick={copiarPix}
+                className="shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700 transition-colors"
+              >
+                {copiado
+                  ? <><Check className="w-3.5 h-3.5 text-teal-500" /> Copiado!</>
+                  : <><Copy className="w-3.5 h-3.5" /> Copiar</>
+                }
+              </button>
+            </div>
+            {preco && (
+              <p className="text-xs text-slate-400 mt-2 text-center">
+                Valor: <span className="font-bold text-slate-600">R$ {preco},00</span> — mensalidade do Plano {nomePlano}
+              </p>
+            )}
+          </div>
+
+          {/* ── CTA WhatsApp ── */}
           <div className="px-8 py-6">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">
-              Próximo passo
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+              Já fez o PIX? Avise nossa equipe
             </p>
             <p className="text-sm text-slate-600 leading-relaxed mb-5">
-              Entre em contato pelo WhatsApp e nossa equipe vai te passar os detalhes da implementação e ativar seu plano ainda hoje.
+              Mande o comprovante pelo WhatsApp e ativamos seu plano na hora.
             </p>
 
             <a
-              href="https://wa.me/5547988194822?text=Ol%C3%A1%21+Meu+trial+do+Menu%C3%AA%2B+expirou+e+quero+continuar+usando+o+sistema."
+              href={wppUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-base font-black text-white transition-all hover:opacity-90"
               style={{ background: '#1A9B8A' }}
             >
               <MessageCircle className="w-5 h-5" />
-              Falar com a equipe no WhatsApp
+              Enviar comprovante no WhatsApp
             </a>
           </div>
         </div>
