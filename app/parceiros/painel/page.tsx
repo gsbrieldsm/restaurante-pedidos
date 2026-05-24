@@ -58,11 +58,12 @@ interface CrmLead {
 }
 
 // ── modal de lead ─────────────────────────────────────────────────────────────
-function LeadModal({ lead, onSave, onDelete, onClose }: {
+function LeadModal({ lead, onSave, onDelete, onClose, erroExterno }: {
   lead: Partial<CrmLead> & { etapa: string }
   onSave: (data: Partial<CrmLead>) => Promise<void>
   onDelete?: () => Promise<void>
   onClose: () => void
+  erroExterno?: string
 }) {
   const [nome,     setNome]    = useState(lead.nome    ?? '')
   const [celular,  setCelular] = useState(lead.celular ?? '')
@@ -133,6 +134,12 @@ function LeadModal({ lead, onSave, onDelete, onClose }: {
               placeholder="Observações, próximo passo, contexto..." rows={3}
               className="w-full px-4 py-3 rounded-xl text-sm text-slate-800 placeholder-slate-300 outline-none focus:ring-2 focus:ring-teal-400 border border-slate-200 bg-white resize-none" />
           </div>
+          {erroExterno && (
+            <div className="rounded-xl px-4 py-3 text-sm text-red-600 bg-red-50 border border-red-200">
+              ⚠️ {erroExterno}
+            </div>
+          )}
+
           <div className="flex items-center gap-3 pt-1">
             <button type="submit" disabled={saving || !nome.trim()}
               className="flex-1 h-11 rounded-2xl text-sm font-black text-white transition-all hover:opacity-90 disabled:opacity-40"
@@ -216,29 +223,51 @@ function KanbanColuna({ etapa, leads, onAdd, onEdit }: {
 
 // ── CRM Board ─────────────────────────────────────────────────────────────────
 function CrmBoard() {
-  const [leads,   setLeads]   = useState<CrmLead[]>([])
-  const [loading, setLoading] = useState(true)
-  const [modal,   setModal]   = useState<{ lead: Partial<CrmLead> & { etapa: string } } | null>(null)
+  const [leads,    setLeads]    = useState<CrmLead[]>([])
+  const [loading,  setLoading]  = useState(true)
+  const [modal,    setModal]    = useState<{ lead: Partial<CrmLead> & { etapa: string } } | null>(null)
+  const [saveErro, setSaveErro] = useState('')
+  const [tabelaOk, setTabelaOk] = useState(true)
 
   useEffect(() => { carregarLeads() }, [])
 
   async function carregarLeads() {
     setLoading(true)
-    const res = await fetch('/api/parceiros/crm')
+    const res  = await fetch('/api/parceiros/crm')
     const data = await res.json()
-    setLeads(data.leads ?? [])
+    if (!res.ok) {
+      if (data.error?.includes('schema cache') || data.error?.includes('does not exist')) {
+        setTabelaOk(false)
+      }
+    } else {
+      setLeads(data.leads ?? [])
+    }
     setLoading(false)
   }
 
   async function salvar(dados: Partial<CrmLead>) {
+    setSaveErro('')
     if (modal?.lead.id) {
       const res = await fetch('/api/parceiros/crm', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: modal.lead.id, ...dados }) })
-      if (res.ok) { const { lead } = await res.json(); setLeads((p) => p.map((l) => l.id === lead.id ? lead : l)) }
+      if (res.ok) {
+        const { lead } = await res.json()
+        setLeads((p) => p.map((l) => l.id === lead.id ? lead : l))
+        setModal(null)
+      } else {
+        const d = await res.json()
+        setSaveErro(d.error ?? 'Erro ao salvar.')
+      }
     } else {
       const res = await fetch('/api/parceiros/crm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) })
-      if (res.ok) { const { lead } = await res.json(); setLeads((p) => [lead, ...p]) }
+      if (res.ok) {
+        const { lead } = await res.json()
+        setLeads((p) => [lead, ...p])
+        setModal(null)
+      } else {
+        const d = await res.json()
+        setSaveErro(d.error ?? 'Erro ao criar lead.')
+      }
     }
-    setModal(null)
   }
 
   async function deletar() {
@@ -258,6 +287,39 @@ function CrmBoard() {
           <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
           <span className="text-sm text-slate-500">Carregando CRM...</span>
         </div>
+      </div>
+    )
+  }
+
+  if (!tabelaOk) {
+    return (
+      <div className="bg-white rounded-2xl border border-amber-200 p-8 text-center shadow-sm">
+        <p className="text-3xl mb-3">🛠️</p>
+        <p className="text-slate-800 font-black text-lg mb-2">CRM não configurado</p>
+        <p className="text-slate-500 text-sm mb-5 max-w-md mx-auto leading-relaxed">
+          A tabela do CRM precisa ser criada no banco de dados.
+          Acesse o <strong>SQL Editor</strong> no painel do Supabase e execute o comando abaixo:
+        </p>
+        <pre className="text-left text-xs bg-slate-900 text-teal-300 rounded-xl p-4 overflow-x-auto max-w-lg mx-auto leading-relaxed">
+{`CREATE TABLE IF NOT EXISTS parceiro_crm_leads (
+  id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  parceiro_id   UUID NOT NULL REFERENCES parceiros_leads(id) ON DELETE CASCADE,
+  nome          TEXT NOT NULL,
+  celular       TEXT,
+  plano         TEXT CHECK (plano IN ('starter','pro','business','enterprise')),
+  etapa         TEXT NOT NULL DEFAULT 'prospeccao'
+                CHECK (etapa IN ('prospeccao','contato_ativo',
+                                 'agendar_demo','fechado','perdido')),
+  notas         TEXT,
+  criado_em     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT now()
+);`}
+        </pre>
+        <button onClick={() => { setTabelaOk(true); carregarLeads() }}
+          className="mt-5 px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+          style={{ background: '#1A9B8A' }}>
+          Já rodei o SQL — tentar novamente
+        </button>
       </div>
     )
   }
@@ -297,9 +359,13 @@ function CrmBoard() {
       </div>
 
       {modal && (
-        <LeadModal lead={modal.lead} onSave={salvar}
+        <LeadModal
+          lead={modal.lead}
+          onSave={salvar}
           onDelete={modal.lead.id ? deletar : undefined}
-          onClose={() => setModal(null)} />
+          onClose={() => { setModal(null); setSaveErro('') }}
+          erroExterno={saveErro}
+        />
       )}
     </div>
   )
