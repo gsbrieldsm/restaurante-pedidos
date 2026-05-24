@@ -83,8 +83,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Páginas e APIs públicas (sem auth)
-  if (pathname === '/parceiros' || pathname.startsWith('/api/parceiros/')) {
+  // Páginas e APIs de parceiros — sistema de auth próprio (não exige staff auth)
+  if (pathname.startsWith('/parceiros') || pathname.startsWith('/api/parceiros/')) {
     return NextResponse.next()
   }
 
@@ -182,6 +182,7 @@ export const config = {
     '/aceitar-convite',
     '/api/tenant/:path*',
     '/parceiros',
+    '/parceiros/:path*',
     '/api/parceiros/:path*',
     '/trial-expirado',
     '/superadmin',

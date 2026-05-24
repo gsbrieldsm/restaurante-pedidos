@@ -139,6 +139,12 @@ export default function ParceirosPage() {
             >
               Para restaurantes
             </Link>
+            <Link
+              href="/parceiros/login"
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-white/60 hover:text-white transition-colors"
+            >
+              Já sou parceiro
+            </Link>
             <a
               href="#cadastro"
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
