@@ -18,8 +18,8 @@ const PLANOS_NOME: Record<string, string> = {
   enterprise: 'Enterprise',
 }
 
-const PIX_CHAVE  = '47988194822'   // Celular PIX
-const PIX_NOME   = 'Menuê+ / Gabriel Moraes'
+const PIX_CHAVE  = '54.691.723/0001-03'   // CNPJ PIX
+const PIX_NOME   = 'Menuê+ Sistemas de Gestão'
 const WPP_NUMERO = '5547988194822'
 
 export default function TrialExpiradoPage() {
@@ -159,7 +159,7 @@ export default function TrialExpiradoPage() {
             </p>
             <div className="bg-slate-50 rounded-xl p-4 flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs text-slate-400 mb-0.5">Chave PIX (celular)</p>
+                <p className="text-xs text-slate-400 mb-0.5">Chave PIX (CNPJ)</p>
                 <p className="font-mono font-bold text-slate-800 text-base">{PIX_CHAVE}</p>
                 <p className="text-xs text-slate-400 mt-0.5">{PIX_NOME}</p>
               </div>
