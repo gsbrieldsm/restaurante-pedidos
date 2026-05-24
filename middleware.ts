@@ -88,8 +88,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── 2. Rotas de mesa / cardápio do cliente — sempre públicas ─────────────────
-  if (pathname.startsWith('/mesa/') || pathname.startsWith('/api/mesas/') || pathname.startsWith('/api/cardapio') || pathname.startsWith('/api/configuracoes/')) {
+  // ── 2. Rotas de mesa / cardápio / pub do cliente — sempre públicas ──────────
+  if (
+    pathname.startsWith('/mesa/') ||
+    pathname.startsWith('/api/mesas/') ||
+    pathname.startsWith('/api/cardapio') ||
+    pathname.startsWith('/api/configuracoes/') ||
+    pathname.startsWith('/api/pub/')
+  ) {
     return NextResponse.next()
   }
 
