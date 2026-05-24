@@ -5,10 +5,10 @@ import Link from 'next/link'
 import { ChefHat, Clock, MessageCircle, CheckCircle2, Copy, Check, CreditCard, Loader2 } from 'lucide-react'
 
 const PLANOS_PRECO: Record<string, number> = {
-  starter:    350,
-  pro:        450,
-  business:   650,
-  enterprise: 900,
+  starter:    397,
+  pro:        597,
+  business:   799,
+  enterprise: 0,
 }
 
 const PLANOS_NOME: Record<string, string> = {

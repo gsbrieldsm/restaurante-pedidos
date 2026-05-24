@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { Clock, MessageCircle, X } from 'lucide-react'
 
 const PLANOS_PRECO: Record<string, number> = {
-  starter:    350,
-  pro:        450,
-  business:   650,
-  enterprise: 900,
+  starter:    397,
+  pro:        597,
+  business:   799,
+  enterprise: 0,
 }
 
 const PLANOS_NOME: Record<string, string> = {

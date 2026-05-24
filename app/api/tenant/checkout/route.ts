@@ -30,10 +30,10 @@ import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 
 const PLANOS_PRECO: Record<string, number> = {
-  starter:    350,
-  pro:        450,
-  business:   650,
-  enterprise: 900,
+  starter:    397,
+  pro:        597,
+  business:   799,
+  enterprise: 0,   // negociado individualmente
 }
 
 const PLANOS_NOME: Record<string, string> = {
