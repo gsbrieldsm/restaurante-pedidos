@@ -91,7 +91,7 @@ const FEATURES: {
 const IMPL_INCLUSOS = [
   { ok: true,  texto: 'Configuração completa da plataforma' },
   { ok: true,  texto: 'Cadastro dos produtos (sem fotos)' },
-  { ok: true,  texto: 'QR codes impressos de todas as mesas' },
+  { ok: true,  texto: 'Arquivo de QR codes de todas as mesas (pronto para impressão)' },
   { ok: true,  texto: 'Treinamento da equipe no sistema' },
   { ok: true,  texto: 'Suporte dedicado no 1º mês' },
   { ok: false, texto: 'Cadastro com fotos dos produtos — orçado à parte' },
