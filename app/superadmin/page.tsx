@@ -310,9 +310,24 @@ export default function SuperAdminPage() {
     router.push('/superadmin/login')
   }
 
-  const ativos        = tenants.filter((t) => t.status === 'ativo' && t.plano_aceito_em)
-  const mrr           = ativos.length * MENSALIDADE
-  const receitaTotal  = ativos.length * IMPLEMENTACAO + mrr
+  const PLANOS_PRECO_MAP: Record<string, number> = { starter: 350, pro: 450, business: 650, enterprise: 900 }
+
+  const ativos       = tenants.filter((t) => t.status === 'ativo' && t.plano_aceito_em)
+  const mrr          = ativos.reduce((s, t) => s + (PLANOS_PRECO_MAP[t.plano] ?? MENSALIDADE), 0)
+  const receitaTotal = ativos.length * IMPLEMENTACAO + mrr
+
+  // Sub-texto do MRR: agrupa por plano e exibe "2 × R$ 450 + 1 × R$ 900"
+  const mrrSubTexto = (() => {
+    const contagem: Record<string, number> = {}
+    for (const t of ativos) {
+      const preco = PLANOS_PRECO_MAP[t.plano] ?? MENSALIDADE
+      contagem[preco] = (contagem[preco] ?? 0) + 1
+    }
+    const partes = Object.entries(contagem).map(([preco, qtd]) =>
+      `${qtd} × R$ ${Number(preco).toLocaleString('pt-BR')}`
+    )
+    return partes.length > 0 ? partes.join(' + ') + '/mês' : '—'
+  })()
   const totalPedidos  = tenants.reduce((s, t) => s + t.total_pedidos, 0)
   const totalFaturado = tenants.reduce((s, t) => s + t.faturamento_total, 0)
   const totalSessoes  = tenants.reduce((s, t) => s + t.total_sessoes, 0)
@@ -474,7 +489,7 @@ export default function SuperAdminPage() {
                 <MetricCard icon={<Store className="w-5 h-5" />} label="Restaurantes ativos"
                   value={ativos.length.toString()} sub={`${tenants.length} total`} accent="#1A9B8A" />
                 <MetricCard icon={<DollarSign className="w-5 h-5" />} label="MRR"
-                  value={`R$ ${mrr.toLocaleString('pt-BR')}`} sub={`${ativos.length} × R$ ${MENSALIDADE}/mês`} accent="#16a34a" />
+                  value={`R$ ${mrr.toLocaleString('pt-BR')}`} sub={mrrSubTexto} accent="#16a34a" />
                 <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="Receita total est."
                   value={`R$ ${receitaTotal.toLocaleString('pt-BR')}`} sub="impl. + mensalidades" accent="#d97706" />
                 <MetricCard icon={<Users className="w-5 h-5" />} label="Pedidos gerados"
@@ -685,7 +700,7 @@ export default function SuperAdminPage() {
                   <RevenueItem label="Implementações" value={`R$ ${(ativos.length * IMPLEMENTACAO).toLocaleString('pt-BR')}`}
                     sub={`${ativos.length} × R$ 2.000`} color="#d97706" />
                   <RevenueItem label="Mensalidades (MRR)" value={`R$ ${mrr.toLocaleString('pt-BR')}`}
-                    sub={`${ativos.length} × R$ ${MENSALIDADE}/mês`} color="#1A9B8A" />
+                    sub={mrrSubTexto} color="#1A9B8A" />
                   <RevenueItem label="Volume dos clientes" value={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                     sub="soma de todos os pedidos" color="#7c3aed" />
                   <RevenueItem label="Acessos ao cardápio" value={totalSessoes.toLocaleString('pt-BR')}
