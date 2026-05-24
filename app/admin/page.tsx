@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   XCircle, Loader2, AlertTriangle,
   ConciergeBell, Banknote, QrCode, CreditCard, CheckCircle2, User, Clock,
-  Globe, Copy, Check,
+  Globe, Copy, Check, Utensils, TableProperties, Settings2, ArrowRight,
 } from 'lucide-react'
 import type { Pedido, PedidoItem } from '@/lib/supabase/types'
 
@@ -258,6 +258,55 @@ export default function AdminDashboard() {
 
       {/* ── URL do restaurante ── */}
       <CardSubdominio />
+
+      {/* ── Onboarding (só aparece quando não há mesas cadastradas) ── */}
+      {!loading && mesas.length === 0 && (
+        <div className="rounded-2xl border-2 border-dashed border-teal-200 bg-teal-50/40 p-6">
+          <p className="text-xs font-bold tracking-widest uppercase text-teal-600 mb-1">Primeiros passos</p>
+          <h2 className="text-base font-bold text-slate-800 mb-4">Configure seu restaurante em 3 passos</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              {
+                step: '1',
+                icon: Settings2,
+                titulo: 'Configure o restaurante',
+                desc: 'Logo, cores e nome que aparecem para os clientes no cardápio.',
+                href: '/admin/configuracoes',
+              },
+              {
+                step: '2',
+                icon: Utensils,
+                titulo: 'Monte o cardápio',
+                desc: 'Adicione categorias, itens, fotos e preços.',
+                href: '/admin/cardapio',
+              },
+              {
+                step: '3',
+                icon: TableProperties,
+                titulo: 'Crie as mesas',
+                desc: 'Gere os QR Codes e imprima para colocar nas mesas.',
+                href: '/admin/mesas',
+              },
+            ].map(({ step, icon: Icon, titulo, desc, href }) => (
+              <a
+                key={step}
+                href={href}
+                className="group flex flex-col gap-2 bg-white rounded-xl border border-slate-100 p-4 hover:border-teal-300 hover:shadow-sm transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-teal-600 text-white text-xs font-black flex items-center justify-center shrink-0">
+                    {step}
+                  </span>
+                  <Icon className="w-4 h-4 text-teal-600" />
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-300 ml-auto group-hover:text-teal-400 group-hover:translate-x-0.5 transition-all" />
+                </div>
+                <p className="text-sm font-bold text-slate-800">{titulo}</p>
+                <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Hero KPIs ── */}
       <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 40%, #1A9B8A 100%)' }}>

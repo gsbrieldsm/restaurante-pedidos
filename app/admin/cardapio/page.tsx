@@ -29,6 +29,7 @@ export default function CardapioAdminPage() {
   const [salvando, setSalvando] = useState(false)
   const [filtroEstacao, setFiltroEstacao] = useState<string>('todas')
   const [togglendoId, setTogglendoId] = useState<string | null>(null)
+  const [erroForm, setErroForm] = useState<string | null>(null)
 
   // — Opcionais —
   const [modalOpcionaisItem, setModalOpcionaisItem] = useState<CardapioItem | null>(null)
@@ -66,11 +67,13 @@ export default function CardapioAdminPage() {
     setImagemAtual(null)
     setImagemPreview(null)
     setImagemFile(null)
+    setErroForm(null)
     setModalAberto(true)
   }
 
   function abrirEditar(item: CardapioItem) {
     setEditando(item)
+    setErroForm(null)
     setForm({
       nome: item.nome,
       descricao: item.descricao || '',
@@ -101,7 +104,10 @@ export default function CardapioAdminPage() {
   }
 
   async function salvar() {
-    if (!form.nome || !form.preco || !form.categoria) return
+    setErroForm(null)
+    if (!form.nome.trim()) { setErroForm('Informe o nome do item.'); return }
+    if (!form.preco)        { setErroForm('Informe o preço de venda.'); return }
+    if (!form.categoria.trim()) { setErroForm('Informe a categoria (ex: Carnes, Bebidas).'); return }
     setSalvando(true)
 
     let imagemUrl = imagemAtual ?? null
@@ -703,6 +709,12 @@ export default function CardapioAdminPage() {
                 </Select>
               </div>
             </div>
+            {erroForm && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                ⚠️ {erroForm}
+              </p>
+            )}
+
             <div className="flex gap-3 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => setModalAberto(false)}>
                 Cancelar

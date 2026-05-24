@@ -42,6 +42,7 @@ type Parceiro = {
   notas:                 string | null
   criado_em:             string
   codigo_indicacao:      string | null
+  chave_pix:             string | null
   restaurantes_indicados: RestauranteIndicado[]
 }
 
@@ -63,6 +64,23 @@ type Tenant = {
 }
 
 type Aba = 'assinaturas' | 'performance' | 'suporte' | 'parceiros'
+
+// ── Types de Performance ───────────────────────────────────────────────────
+type PerfData = {
+  pulso: {
+    pedidos_hoje: number; volume_hoje: number
+    pedidos_7d: number;   volume_7d: number
+    sessoes_abertas: number; sessoes_7d: number
+    novos_tenants_7d: number
+  }
+  saude: {
+    em_risco:         { id: string; nome_restaurante: string; email: string; plano: string; ultimo_pedido: string | null }[]
+    trial_expirando:  { id: string; nome_restaurante: string; email: string; trial_expira_em: string; dias_restantes: number }[]
+  }
+  top_tenants: { id: string; nome_restaurante: string; pedidos_7d: number; volume_7d: number; sessoes_7d: number }[]
+  crescimento: { label: string; tenants: number; pedidos: number }[]
+  atividade_tenants: { id: string; nome_restaurante: string; plano: string; ultimo_pedido: string | null; pedidos_7d: number; sessoes_abertas: number }[]
+}
 
 // ── Constantes ──────────────────────────────────────────────────────────────
 const MENSALIDADE   = 550
@@ -145,11 +163,29 @@ export default function SuperAdminPage() {
   const [mesRef,       setMesRef]       = useState(() => {
     const d = new Date(); return `${d.toLocaleString('pt-BR', { month: 'long' })} ${d.getFullYear()}`
   })
+  const [perfData,     setPerfData]     = useState<PerfData | null>(null)
+  const [perfLoading,  setPerfLoading]  = useState(false)
 
   useEffect(() => {
     document.title = 'Master — Menuê+'
     carregar()
   }, [])
+
+  useEffect(() => {
+    if (aba === 'performance' && !perfData && !perfLoading) {
+      carregarPerformance()
+    }
+  }, [aba, perfData, perfLoading])
+
+  async function carregarPerformance() {
+    setPerfLoading(true)
+    try {
+      const res  = await fetch('/api/superadmin/performance')
+      const data = await res.json()
+      if (res.ok) setPerfData(data)
+    } catch {}
+    setPerfLoading(false)
+  }
 
   async function carregar() {
     setCarregando(true)
@@ -725,23 +761,318 @@ export default function SuperAdminPage() {
           {/* ── ABA: Performance do sistema ── */}
           {aba === 'performance' && (
             <>
-              <div>
-                <h2 className="text-xl font-black text-slate-800">Performance do sistema</h2>
-                <p className="text-slate-400 text-sm mt-1">Métricas de uso e saúde da plataforma.</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-black text-slate-800">Performance do sistema</h2>
+                  <p className="text-slate-400 text-sm mt-1">Métricas de uso e saúde da plataforma.</p>
+                </div>
+                <button onClick={() => { setPerfData(null); carregarPerformance() }}
+                  disabled={perfLoading}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-teal-200 hover:bg-teal-50 transition-all disabled:opacity-40">
+                  <RefreshCw className={`w-3.5 h-3.5 ${perfLoading ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <MetricCard icon={<Store className="w-5 h-5" />} label="Tenants ativos" value={ativos.length.toString()} sub="plano confirmado" accent="#1A9B8A" />
-                <MetricCard icon={<Users className="w-5 h-5" />} label="Sessões de mesa" value={totalSessoes.toLocaleString('pt-BR')} sub="total histórico" accent="#7c3aed" />
-                <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="Pedidos gerados" value={totalPedidos.toLocaleString('pt-BR')} sub="total histórico" accent="#d97706" />
-                <MetricCard icon={<DollarSign className="w-5 h-5" />} label="Volume processado" value={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`} sub="nos restaurantes" accent="#16a34a" />
-              </div>
+              {perfLoading && !perfData && (
+                <div className="flex items-center justify-center py-24 text-slate-400 gap-3">
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <span className="text-sm">Carregando métricas...</span>
+                </div>
+              )}
 
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-                <Gauge className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                <p className="text-slate-400 font-semibold">Monitoramento avançado em breve</p>
-                <p className="text-slate-300 text-sm mt-1">Uptime, latência de API, erros por tenant e alertas em tempo real.</p>
-              </div>
+              {!perfLoading && !perfData && (
+                <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-4">
+                  <Gauge className="w-10 h-10 text-slate-300" />
+                  <p className="text-sm font-semibold text-slate-400">Dados não carregados ainda.</p>
+                  <button onClick={carregarPerformance}
+                    className="flex items-center gap-2 text-sm font-bold text-teal-600 border border-teal-200 bg-teal-50 hover:bg-teal-100 px-4 py-2 rounded-xl transition-all">
+                    <RefreshCw className="w-4 h-4" />
+                    Carregar agora
+                  </button>
+                </div>
+              )}
+
+              {perfData && (() => {
+                const { pulso, saude, top_tenants, crescimento, atividade_tenants } = perfData
+                const maxPedidos = Math.max(...crescimento.map(s => s.pedidos), 1)
+                const maxTenants = Math.max(...crescimento.map(s => s.tenants), 1)
+
+                return (
+                  <>
+                    {/* ── Pulso ── */}
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Pulso — últimas 24h e 7 dias</p>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        {[
+                          { label: 'Pedidos hoje',      value: pulso.pedidos_hoje.toString(),                                                  sub: `R$ ${pulso.volume_hoje.toLocaleString('pt-BR', { minimumFractionDigits: 0 })} em volume`,     accent: '#1A9B8A', dot: pulso.pedidos_hoje > 0 },
+                          { label: 'Pedidos (7 dias)',  value: pulso.pedidos_7d.toString(),                                                    sub: `R$ ${pulso.volume_7d.toLocaleString('pt-BR', { minimumFractionDigits: 0 })} em volume`,        accent: '#7c3aed', dot: false },
+                          { label: 'Sessões abertas',  value: pulso.sessoes_abertas.toString(),                                               sub: `${pulso.sessoes_7d} abertas nos últimos 7d`,                                                   accent: '#0284c7', dot: pulso.sessoes_abertas > 0 },
+                          { label: 'Novos tenants 7d', value: pulso.novos_tenants_7d.toString(),                                              sub: `${ativos.length} ativos no total`,                                                             accent: '#d97706', dot: pulso.novos_tenants_7d > 0 },
+                        ].map(({ label, value, sub, accent, dot }) => (
+                          <div key={label} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                            <div className="flex items-center justify-between mb-3">
+                              <p className="text-xs font-semibold text-slate-500">{label}</p>
+                              {dot && <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: accent }} />}
+                            </div>
+                            <p className="text-2xl font-black text-slate-800">{value}</p>
+                            <p className="text-xs text-slate-400 mt-1">{sub}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* ── Saúde ── */}
+                    <div className="grid lg:grid-cols-2 gap-4">
+
+                      {/* Em risco */}
+                      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                          <p className="font-bold text-slate-700 text-sm">Risco de churn</p>
+                          <span className="ml-auto text-xs font-bold bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-full">
+                            {saude.em_risco.length} tenant{saude.em_risco.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        {saude.em_risco.length === 0 ? (
+                          <div className="px-5 py-8 text-center">
+                            <p className="text-2xl mb-1">✅</p>
+                            <p className="text-slate-400 text-sm">Todos os tenants ativos usaram o sistema nos últimos 14 dias.</p>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-slate-100">
+                            {saude.em_risco.map(t => (
+                              <div key={t.id} className="px-5 py-3 flex items-center gap-3">
+                                <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                  <span className="text-red-600 font-bold text-xs">{t.nome_restaurante.charAt(0)}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-slate-800 truncate">{t.nome_restaurante}</p>
+                                  <p className="text-xs text-slate-400">
+                                    {t.ultimo_pedido
+                                      ? `Último pedido: ${new Date(t.ultimo_pedido).toLocaleDateString('pt-BR')}`
+                                      : 'Sem pedidos registrados'}
+                                  </p>
+                                </div>
+                                <a href={`https://wa.me/55?text=${encodeURIComponent(`Oi! Tudo bem com o ${t.nome_restaurante}?`)}`}
+                                  target="_blank" rel="noopener noreferrer"
+                                  className="shrink-0 text-xs font-semibold text-green-600 hover:underline">
+                                  WhatsApp
+                                </a>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Trial expirando */}
+                      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                          <p className="font-bold text-slate-700 text-sm">Trial expirando (7 dias)</p>
+                          <span className="ml-auto text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded-full">
+                            {saude.trial_expirando.length} tenant{saude.trial_expirando.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        {saude.trial_expirando.length === 0 ? (
+                          <div className="px-5 py-8 text-center">
+                            <p className="text-2xl mb-1">🎉</p>
+                            <p className="text-slate-400 text-sm">Nenhum trial expirando nos próximos 7 dias.</p>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-slate-100">
+                            {saude.trial_expirando.map(t => (
+                              <div key={t.id} className="px-5 py-3 flex items-center gap-3">
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 font-black text-xs ${
+                                  t.dias_restantes <= 2 ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {t.dias_restantes}d
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-slate-800 truncate">{t.nome_restaurante}</p>
+                                  <p className="text-xs text-slate-400">{t.email}</p>
+                                </div>
+                                <span className={`shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
+                                  t.dias_restantes <= 2 ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-700'
+                                }`}>
+                                  {t.dias_restantes <= 0 ? 'Expira hoje' : `${t.dias_restantes}d restantes`}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ── Top tenants + Gráfico ── */}
+                    <div className="grid lg:grid-cols-2 gap-4">
+
+                      {/* Top tenants 7 dias */}
+                      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-slate-100">
+                          <p className="font-bold text-slate-700 text-sm">🏆 Top atividade — últimos 7 dias</p>
+                        </div>
+                        {top_tenants.length === 0 ? (
+                          <div className="px-5 py-8 text-center text-slate-400 text-sm">Nenhum pedido nos últimos 7 dias.</div>
+                        ) : (
+                          <div className="divide-y divide-slate-100">
+                            {top_tenants.map((t, i) => (
+                              <div key={t.id} className="px-5 py-3 flex items-center gap-3">
+                                <span className={`w-6 text-center text-xs font-black ${
+                                  i === 0 ? 'text-amber-500' : i === 1 ? 'text-slate-400' : i === 2 ? 'text-amber-700' : 'text-slate-300'
+                                }`}>
+                                  #{i + 1}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-slate-800 truncate">{t.nome_restaurante}</p>
+                                  <p className="text-xs text-slate-400">{t.sessoes_7d} sessões · R$ {t.volume_7d.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}</p>
+                                </div>
+                                <div className="shrink-0 text-right">
+                                  <p className="text-sm font-black text-slate-800">{t.pedidos_7d}</p>
+                                  <p className="text-xs text-slate-400">pedidos</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Gráfico de crescimento */}
+                      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                        <p className="font-bold text-slate-700 text-sm mb-4">📈 Crescimento — últimas 8 semanas</p>
+                        <div className="space-y-3">
+                          {/* Barras de pedidos */}
+                          <div>
+                            <p className="text-xs text-slate-400 mb-2 font-semibold">Pedidos por semana</p>
+                            <div className="flex items-end gap-1 h-16">
+                              {crescimento.map((s, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                  <div className="w-full rounded-t"
+                                    style={{
+                                      height: `${Math.max(4, Math.round((s.pedidos / maxPedidos) * 56))}px`,
+                                      background: i === crescimento.length - 1 ? '#1A9B8A' : '#e2e8f0',
+                                    }} />
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex gap-1 mt-1">
+                              {crescimento.map((s, i) => (
+                                <div key={i} className="flex-1 text-center">
+                                  <p className="text-[9px] text-slate-300 leading-none truncate">{s.label}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          {/* Barras de tenants */}
+                          <div>
+                            <p className="text-xs text-slate-400 mb-2 font-semibold">Novos tenants por semana</p>
+                            <div className="flex items-end gap-1 h-10">
+                              {crescimento.map((s, i) => (
+                                <div key={i} className="flex-1">
+                                  <div className="w-full rounded-t"
+                                    style={{
+                                      height: `${Math.max(4, Math.round((s.tenants / maxTenants) * 36))}px`,
+                                      background: i === crescimento.length - 1 ? '#d97706' : '#fef3c7',
+                                    }} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-300">* Barra mais escura = semana atual</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Atividade por tenant ── */}
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                      <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                        <p className="font-bold text-slate-700 text-sm">Atividade por tenant</p>
+                        <span className="text-xs text-slate-400 ml-1">(apenas planos ativos, ordenado por último uso)</span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-slate-100 bg-slate-50">
+                              <th className="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase tracking-wide">Restaurante</th>
+                              <th className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wide">Plano</th>
+                              <th className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wide">Último pedido</th>
+                              <th className="text-center px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wide">Pedidos 7d</th>
+                              <th className="text-center px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wide">Mesas abertas</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {atividade_tenants.map(t => {
+                              const diasSemAtividade = t.ultimo_pedido
+                                ? Math.floor((Date.now() - new Date(t.ultimo_pedido).getTime()) / 86400000)
+                                : null
+                              const cor = !t.ultimo_pedido ? '#ef4444'
+                                : diasSemAtividade! > 14 ? '#ef4444'
+                                : diasSemAtividade! > 7  ? '#f59e0b'
+                                : '#16a34a'
+                              return (
+                                <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                                  <td className="px-5 py-3 font-semibold text-slate-800">{t.nome_restaurante}</td>
+                                  <td className="px-4 py-3">
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold capitalize">{t.plano}</span>
+                                  </td>
+                                  <td className="px-4 py-3 text-xs" style={{ color: cor }}>
+                                    <span className="font-semibold">
+                                      {t.ultimo_pedido
+                                        ? diasSemAtividade === 0 ? '✅ Hoje'
+                                          : diasSemAtividade === 1 ? '✅ Ontem'
+                                          : `⚠️ Há ${diasSemAtividade} dias`
+                                        : '❌ Nunca'}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <span className={`font-black text-sm ${t.pedidos_7d > 0 ? 'text-teal-600' : 'text-slate-300'}`}>
+                                      {t.pedidos_7d}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    {t.sessoes_abertas > 0
+                                      ? <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">{t.sessoes_abertas} abertas</span>
+                                      : <span className="text-slate-300 text-xs">—</span>}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                            {atividade_tenants.length === 0 && (
+                              <tr>
+                                <td colSpan={5} className="px-5 py-10 text-center text-slate-400 text-sm">
+                                  Nenhum tenant com plano ativo ainda.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* ── Ferramentas externas recomendadas ── */}
+                    <div className="bg-slate-800 rounded-2xl p-5">
+                      <p className="text-white font-bold text-sm mb-1">🔧 Monitoramento de infraestrutura</p>
+                      <p className="text-slate-400 text-xs mb-4">Para erros de API, latência e uptime, use ferramentas dedicadas:</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {[
+                          { nome: 'Vercel Analytics', desc: 'Latência e Core Web Vitals — já incluso no Vercel', url: 'https://vercel.com/analytics', cor: '#000' },
+                          { nome: 'Sentry',            desc: 'Erros de API e frontend — plano gratuito disponível', url: 'https://sentry.io',              cor: '#362d59' },
+                          { nome: 'Supabase Dashboard',desc: 'Queries lentas, uso de banco e logs',                url: 'https://supabase.com/dashboard',  cor: '#3ecf8e' },
+                        ].map(f => (
+                          <a key={f.nome} href={f.url} target="_blank" rel="noopener noreferrer"
+                            className="flex items-start gap-3 bg-slate-700 hover:bg-slate-600 rounded-xl px-4 py-3 transition-colors group">
+                            <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: f.cor === '#000' ? '#fff' : f.cor }} />
+                            <div>
+                              <p className="text-white font-semibold text-sm group-hover:underline">{f.nome}</p>
+                              <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{f.desc}</p>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )
+              })()}
             </>
           )}
 
@@ -831,6 +1162,33 @@ export default function SuperAdminPage() {
                                   ? <Check className="w-3.5 h-3.5 text-green-500" />
                                   : <Copy className="w-3.5 h-3.5" />}
                               </button>
+                            </div>
+                          )}
+
+                          {/* Chave PIX — destaque para pagamento */}
+                          {p.status === 'aprovado' && (
+                            <div className={`mt-2 flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs border ${
+                              p.chave_pix
+                                ? 'bg-teal-50 border-teal-100'
+                                : 'bg-amber-50 border-amber-200'
+                            }`}>
+                              {p.chave_pix ? (
+                                <>
+                                  <span className="text-teal-600 font-semibold shrink-0">PIX:</span>
+                                  <span className="font-mono text-slate-700 truncate">
+                                    {p.chave_pix}
+                                  </span>
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(p.chave_pix!)}
+                                    title="Copiar chave PIX"
+                                    className="ml-auto shrink-0 text-teal-500 hover:text-teal-700 transition-colors"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-amber-700 font-semibold">⚠️ PIX não cadastrado — cobrar do parceiro</span>
+                              )}
                             </div>
                           )}
 

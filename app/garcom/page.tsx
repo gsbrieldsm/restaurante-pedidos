@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getTenantIdClient } from '@/lib/tenant-client'
-import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone, Search, ChevronDown } from 'lucide-react'
+import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone, Search, ChevronDown, Volume2, VolumeX } from 'lucide-react'
+import { criarBeep, desbloquearAudio } from '@/lib/audio'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
@@ -132,26 +133,41 @@ export default function GarcomPage() {
   const [formaSelecionada, setFormaSelecionada] = useState<FormaPagamento | null>(null)
   const [fechando, setFechando] = useState(false)
 
-  const audioCtx = useRef<AudioContext | null>(null)
-  const prevItemIds = useRef<Set<string>>(new Set())
-  const prevChamadaIds = useRef<Set<string>>(new Set())
+  // HTMLAudioElement — compatível com Safari (iOS e Mac)
+  const audioItemRef    = useRef<HTMLAudioElement | null>(null)
+  const audioChamadaRef = useRef<HTMLAudioElement | null>(null)
+  const prevItemIds     = useRef<Set<string>>(new Set())
+  const prevChamadaIds  = useRef<Set<string>>(new Set())
+  const [somAtivo, setSomAtivo] = useState(false)
 
-  function tocarBip(freq: number, duracao: number, vezes = 1) {
+  function tocarItemPronto() {
+    const a = audioItemRef.current
+    if (!a) return
+    a.currentTime = 0
+    a.play().catch(() => {})
+  }
+
+  function tocarChamadaGarcom() {
+    const a = audioChamadaRef.current
+    if (!a) return
+    a.currentTime = 0
+    a.play().catch(() => {})
+  }
+
+  async function ativarSom() {
     try {
-      const ctx = audioCtx.current ?? new AudioContext()
-      audioCtx.current = ctx
-      for (let i = 0; i < vezes; i++) {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.frequency.value = freq
-        const t = ctx.currentTime + i * (duracao + 0.05)
-        gain.gain.setValueAtTime(0.3, t)
-        gain.gain.exponentialRampToValueAtTime(0.001, t + duracao)
-        osc.start(t)
-        osc.stop(t + duracao)
-      }
+      // Gera os áudios (dentro do gesto do usuário — obrigatório no Safari)
+      audioItemRef.current    = criarBeep([880, 1100], 0.25, 100)   // 2 bips: item pronto
+      audioChamadaRef.current = criarBeep([660, 660, 660], 0.15, 80) // 3 bips rápidos: chamada
+
+      // Desbloqueia ambos silenciosamente (Safari exige play() dentro do gesto)
+      await desbloquearAudio(audioItemRef.current)
+      await desbloquearAudio(audioChamadaRef.current)
+
+      setSomAtivo(true)
+
+      // Bip de confirmação audível
+      criarBeep(660, 0.2).play().catch(() => {})
     } catch {}
   }
 
@@ -232,7 +248,7 @@ export default function GarcomPage() {
 
     const novosIds = new Set(itens.map((i) => i.id))
     if (itens.some((i) => !prevItemIds.current.has(i.id)) && prevItemIds.current.size > 0) {
-      tocarBip(880, 0.3, 1)
+      tocarItemPronto()
     }
     prevItemIds.current = novosIds
 
@@ -253,7 +269,7 @@ export default function GarcomPage() {
 
     const novasIds = new Set(data.map((c) => c.id))
     if (data.some((c) => !prevChamadaIds.current.has(c.id)) && prevChamadaIds.current.size > 0) {
-      tocarBip(660, 0.2, 3) // 3 bips rápidos para chamadas
+      tocarChamadaGarcom()
     }
     prevChamadaIds.current = novasIds
     setChamadas(data)
@@ -345,6 +361,22 @@ export default function GarcomPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#F0FAFA' }}>
+
+      {/* Banner de som — ativo: verde / inativo: âmbar */}
+      <button
+        onClick={somAtivo ? undefined : ativarSom}
+        className={`w-full text-white text-sm font-bold py-2.5 px-4 flex items-center justify-center gap-2 transition-colors ${
+          somAtivo
+            ? 'bg-green-600 cursor-default'
+            : 'bg-amber-500 hover:bg-amber-400 animate-pulse'
+        }`}
+      >
+        {somAtivo ? (
+          <><Volume2 className="w-4 h-4" /> Som de notificações ativo</>
+        ) : (
+          <><VolumeX className="w-4 h-4" /> Toque aqui para ativar o som de notificações</>
+        )}
+      </button>
 
       {/* Header */}
       <div className="sticky top-0 z-10 shadow-sm" style={{ background: '#1A9B8A' }}>

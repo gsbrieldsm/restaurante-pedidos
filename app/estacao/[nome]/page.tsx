@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getTenantIdClient } from '@/lib/tenant-client'
 import { CardPedidoItem } from '@/components/estacao/CardPedidoItem'
-import { Loader2, WifiOff } from 'lucide-react'
+import { Loader2, WifiOff, Volume2, VolumeX } from 'lucide-react'
+import { criarBeep, desbloquearAudio } from '@/lib/audio'
 import type { EstacaoTipo, ViewFilaEstacao } from '@/lib/supabase/types'
 
 const ESTACAO_CONFIG: Record<EstacaoTipo, { label: string; emoji: string; cor: string }> = {
@@ -13,22 +14,6 @@ const ESTACAO_CONFIG: Record<EstacaoTipo, { label: string; emoji: string; cor: s
   bar:      { label: 'Bar',       emoji: '🍺', cor: 'bg-teal-700'  },
   drinks:   { label: 'Drinks',    emoji: '🍹', cor: 'bg-purple-600' },
   chopeira: { label: 'Chopeira',  emoji: '🍻', cor: 'bg-yellow-600' },
-}
-
-// Som de alerta para novos pedidos
-function tocarAlerta() {
-  try {
-    const ctx = new AudioContext()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.frequency.value = 880
-    gain.gain.setValueAtTime(0.3, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
-    osc.start()
-    osc.stop(ctx.currentTime + 0.5)
-  } catch {}
 }
 
 export default function EstacaoPage() {
@@ -40,6 +25,31 @@ export default function EstacaoPage() {
   const [loading, setLoading] = useState(true)
   const [conectado, setConectado] = useState(true)
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date>(new Date())
+  const [somAtivo, setSomAtivo] = useState(false)
+  const audioAlertaRef = useRef<HTMLAudioElement | null>(null)
+
+  // Som de alerta — 2 bips (880 Hz → 1100 Hz)
+  function tocarAlerta() {
+    const a = audioAlertaRef.current
+    if (!a) return
+    a.currentTime = 0
+    a.play().catch(() => {})
+  }
+
+  // Ativa o som dentro do gesto do usuário (obrigatório no Safari)
+  async function ativarSom() {
+    try {
+      audioAlertaRef.current = criarBeep([880, 1100], 0.3, 120)
+
+      // Desbloqueia silenciosamente (Safari exige play() dentro do gesto)
+      await desbloquearAudio(audioAlertaRef.current)
+
+      setSomAtivo(true)
+
+      // Bip de confirmação audível
+      criarBeep(660, 0.2).play().catch(() => {})
+    } catch {}
+  }
 
   // Título da aba do browser
   useEffect(() => {
@@ -101,6 +111,23 @@ export default function EstacaoPage() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
+
+      {/* Banner de som — ativo: verde / inativo: âmbar pulsando */}
+      <button
+        onClick={somAtivo ? undefined : ativarSom}
+        className={`w-full text-white text-sm font-bold py-2.5 px-4 flex items-center justify-center gap-2 transition-colors ${
+          somAtivo
+            ? 'bg-green-600 cursor-default'
+            : 'bg-amber-500 hover:bg-amber-400 animate-pulse'
+        }`}
+      >
+        {somAtivo ? (
+          <><Volume2 className="w-4 h-4" /> Som de novos pedidos ativo</>
+        ) : (
+          <><VolumeX className="w-4 h-4" /> Toque aqui para ativar o som de novos pedidos</>
+        )}
+      </button>
+
       {/* Header */}
       <div className={`${config.cor} px-4 py-4`}>
         <div className="flex items-center justify-between">

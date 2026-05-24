@@ -22,6 +22,33 @@ function getTier(n: number) {
   return TIERS.find((t) => n >= t.min && n <= t.max) ?? TIERS[TIERS.length - 1]
 }
 
+// PATCH /api/parceiros/painel — atualiza chave PIX do parceiro
+export async function PATCH(req: Request) {
+  const cookieStore = await cookies()
+  const parceiroId  = cookieStore.get('parceiro_auth')?.value
+
+  if (!parceiroId) {
+    return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
+  }
+
+  const { chave_pix } = await req.json() as { chave_pix: string }
+
+  if (!chave_pix?.trim()) {
+    return NextResponse.json({ error: 'Chave PIX inválida.' }, { status: 400 })
+  }
+
+  const supabase = createServiceClient()
+
+  const { error } = await supabase
+    .from('parceiros_leads')
+    .update({ chave_pix: chave_pix.trim() })
+    .eq('id', parceiroId)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}
+
 // GET /api/parceiros/painel
 export async function GET() {
   const cookieStore = await cookies()
@@ -36,7 +63,7 @@ export async function GET() {
   // Busca dados do parceiro
   const { data: parceiro, error } = await supabase
     .from('parceiros_leads')
-    .select('id, nome, email, whatsapp, codigo_indicacao, status, criado_em')
+    .select('id, nome, email, whatsapp, codigo_indicacao, status, criado_em, chave_pix')
     .eq('id', parceiroId)
     .single()
 
@@ -76,6 +103,7 @@ export async function GET() {
       email:            parceiro.email,
       codigo_indicacao: parceiro.codigo_indicacao,
       criado_em:        parceiro.criado_em,
+      chave_pix:        parceiro.chave_pix ?? null,
     },
     stats: {
       total_indicados:  todos.length,

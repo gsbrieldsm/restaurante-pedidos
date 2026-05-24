@@ -6,7 +6,7 @@ import {
   Copy, Check, LogOut, TrendingUp, Users, DollarSign,
   Clock, CheckCircle2, ExternalLink, Plus, X,
   Phone, StickyNote, Trash2, LayoutGrid, BarChart3,
-  Link2, Sparkles, ArrowUpRight,
+  Link2, Sparkles, ArrowUpRight, QrCode, Pencil, Save,
 } from 'lucide-react'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ interface Restaurante {
   ativo: boolean; plano_aceito_em: string | null; criado_em: string; status: string
 }
 interface PainelData {
-  parceiro: { nome: string; email: string; codigo_indicacao: string; criado_em: string }
+  parceiro: { nome: string; email: string; codigo_indicacao: string; criado_em: string; chave_pix: string | null }
   stats: {
     total_indicados: number; total_ativos: number
     tier: { label: string; recorrente: number } | null
@@ -376,6 +376,26 @@ function DashboardParceiro({ data }: { data: PainelData }) {
   const { parceiro, stats, restaurantes } = data
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://menue.com.br'
   const [copied, setCopied] = useState(false)
+
+  // — Chave PIX —
+  const [pixEditando, setPixEditando] = useState(false)
+  const [pixValor,    setPixValor]    = useState(parceiro.chave_pix ?? '')
+  const [pixSalvando, setPixSalvando] = useState(false)
+  const [pixSucesso,  setPixSucesso]  = useState(false)
+
+  async function salvarPix() {
+    if (!pixValor.trim()) return
+    setPixSalvando(true)
+    await fetch('/api/parceiros/painel', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chave_pix: pixValor.trim() }),
+    })
+    setPixSalvando(false)
+    setPixEditando(false)
+    setPixSucesso(true)
+    setTimeout(() => setPixSucesso(false), 3000)
+  }
   const linkRef = `${APP_URL}/registro?ref=${parceiro.codigo_indicacao}`
   const tierPct = stats.tier ? (stats.tier.recorrente * 100).toFixed(0) + '%' : '—'
 
@@ -474,6 +494,78 @@ function DashboardParceiro({ data }: { data: PainelData }) {
             💡 As comissões serão calculadas assim que seus primeiros indicados ativarem um plano pago.
           </div>
         )}
+      </div>
+
+      {/* Chave PIX para recebimento */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-6 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <QrCode className="w-4 h-4 text-teal-600" />
+            <p className="text-slate-700 font-bold text-sm">Chave PIX para recebimento</p>
+          </div>
+          {!pixEditando && (
+            <button onClick={() => setPixEditando(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-teal-600 hover:text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-50 transition-colors">
+              <Pencil className="w-3.5 h-3.5" />
+              {parceiro.chave_pix ? 'Editar' : 'Cadastrar'}
+            </button>
+          )}
+        </div>
+
+        <div className="px-6 py-5">
+          {pixEditando ? (
+            <div className="space-y-3">
+              <p className="text-slate-500 text-xs">
+                Informe sua chave PIX para recebermos as comissões diretamente para você. Pode ser CPF, CNPJ, e-mail, telefone ou chave aleatória.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  value={pixValor}
+                  onChange={(e) => setPixValor(e.target.value)}
+                  placeholder="CPF, CNPJ, e-mail ou telefone"
+                  className="flex-1 h-11 px-4 rounded-xl text-sm border border-slate-200 outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                />
+                <button
+                  onClick={salvarPix}
+                  disabled={pixSalvando || !pixValor.trim()}
+                  className="flex items-center gap-1.5 px-4 h-11 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 transition-colors shrink-0"
+                >
+                  {pixSalvando
+                    ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    : <Save className="w-4 h-4" />}
+                  Salvar
+                </button>
+                <button onClick={() => { setPixEditando(false); setPixValor(parceiro.chave_pix ?? '') }}
+                  className="h-11 px-3 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : parceiro.chave_pix ? (
+            <div className="flex items-center gap-3">
+              <div className="flex-1 px-4 py-3 rounded-xl bg-teal-50 border border-teal-100">
+                <p className="text-xs text-teal-600 font-semibold mb-0.5">Chave cadastrada</p>
+                <p className="text-slate-800 font-mono text-sm font-bold">{parceiro.chave_pix}</p>
+              </div>
+              {pixSucesso && (
+                <div className="flex items-center gap-1.5 text-green-600 text-sm font-semibold">
+                  <CheckCircle2 className="w-4 h-4" /> Salvo!
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 flex items-start gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <p className="text-amber-800 font-semibold text-sm">Chave PIX não cadastrada</p>
+                <p className="text-amber-700 text-xs mt-0.5">
+                  Sem a chave PIX não conseguimos pagar suas comissões. Cadastre agora!
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Restaurantes indicados */}

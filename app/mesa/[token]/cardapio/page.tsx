@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import {
   ShoppingCart, Plus, Minus, Trash2, ChevronRight,
-  Clock, Loader2, Search, Receipt, ConciergeBell, CheckCircle2, X
+  Clock, Loader2, Search, Receipt, ConciergeBell, CheckCircle2, X,
+  PartyPopper, RotateCcw
 } from 'lucide-react'
 import type { CardapioItem, GrupoOpcao, OpcaoSelecionada, ItemCarrinho } from '@/lib/supabase/types'
 import { darkenHex, hexToRgbParts } from '@/lib/cor'
@@ -40,6 +41,7 @@ export default function CardapioPage() {
 
   const [chamandoGarcom, setChamandoGarcom] = useState(false)
   const [garcomChamado, setGarcomChamado] = useState(false)
+  const [contaFechada, setContaFechada] = useState(false)
   const [banner, setBanner] = useState<{
     banner_ativo:             boolean
     banner_titulo:            string
@@ -79,6 +81,22 @@ export default function CardapioPage() {
       if (bannerData.banner) setBanner(bannerData.banner)
       if (bannerData.branding) setBranding(bannerData.branding)
     }).finally(() => setLoading(false))
+
+    // Polling: verifica a cada 10s se a sessão ainda está ativa
+    // Quando o garçom fecha a comanda, exibe a tela de "conta fechada"
+    const verificarSessao = async () => {
+      try {
+        const res  = await fetch(`/api/sessao?id=${sessaoId}`)
+        const data = await res.json()
+        if (data.ativa === false) {
+          setContaFechada(true)
+          clearInterval(pollTimer)
+        }
+      } catch { /* ignora erros de rede */ }
+    }
+
+    const pollTimer = setInterval(verificarSessao, 10_000)
+    return () => clearInterval(pollTimer)
   }, [token, router, searchParams])
 
   const categorias = useMemo(
@@ -274,6 +292,12 @@ export default function CardapioPage() {
     roxo:   { gradient: 'linear-gradient(135deg, #12091a 0%, #3d1a5e 50%, #8b5cf6 100%)', subColor: '#c4b5fd' },
   }
 
+  function abrirNovaComanda() {
+    sessionStorage.removeItem('sessao_id')
+    sessionStorage.removeItem('ultimo_pedido_id')
+    router.push(`/mesa/${token}`)
+  }
+
   async function chamarGarcom() {
     const sessaoId = sessionStorage.getItem('sessao_id')
     if (!sessaoId || chamandoGarcom || garcomChamado) return
@@ -293,6 +317,58 @@ export default function CardapioPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Loader2 className="w-8 h-8 animate-spin" style={{ color: cor }} />
+      </div>
+    )
+  }
+
+  if (contaFechada) {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
+        style={{ background: headerGradient }}
+      >
+        {/* Logo do restaurante */}
+        {branding.restaurante_logo_url && (
+          <img
+            src={branding.restaurante_logo_url}
+            alt="Logo"
+            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/20 shadow-xl mb-6"
+          />
+        )}
+
+        {/* Ícone festivo */}
+        <div className="w-24 h-24 rounded-full bg-white/15 flex items-center justify-center mb-6 shadow-inner">
+          <PartyPopper className="w-12 h-12 text-white" />
+        </div>
+
+        {/* Texto principal */}
+        <h1 className="text-3xl font-black text-white leading-tight mb-3">
+          Conta fechada!
+        </h1>
+        <p className="text-white/80 text-lg mb-2">
+          Seu pagamento foi confirmado.
+        </p>
+        <p className="text-white/60 text-sm mb-10">
+          Obrigado pela visita
+          {branding.restaurante_nome ? ` ao ${branding.restaurante_nome}` : ''}! 🙏
+        </p>
+
+        {/* Divider */}
+        <div className="w-16 h-px bg-white/20 mb-8" />
+
+        {/* CTA: nova comanda */}
+        <p className="text-white/60 text-sm mb-4">Vai pedir mais alguma coisa?</p>
+        <button
+          onClick={abrirNovaComanda}
+          className="flex items-center gap-2.5 bg-white font-black text-base px-8 py-4 rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all"
+          style={{ color: cor }}
+        >
+          <RotateCcw className="w-5 h-5" />
+          Abrir nova comanda
+        </button>
+        <p className="text-white/40 text-xs mt-4">
+          Você informará seu nome e poderá pedir normalmente
+        </p>
       </div>
     )
   }

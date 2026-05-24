@@ -8,6 +8,7 @@ import {
   UserPlus, Pencil, Shield, UserCog
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import ImageCropper from '@/components/admin/ImageCropper'
 
 // ─────────────────────────────────────────────
 // Tipos e componentes de Usuários
@@ -392,6 +393,12 @@ export default function ConfiguracoesPage() {
   const fileInputRef       = useRef<HTMLInputElement>(null)
   const fileInputMobileRef = useRef<HTMLInputElement>(null)
 
+  // Cropper de imagem de capa
+  const [cropperConfig, setCropperConfig] = useState<{
+    file:   File
+    target: 'desktop' | 'mobile'
+  } | null>(null)
+
   useEffect(() => {
     fetch('/api/admin/configuracoes')
       .then((r) => r.json())
@@ -417,30 +424,35 @@ export default function ConfiguracoesPage() {
       .finally(() => setBannerCarregando(false))
   }, [])
 
-  async function uploadImagem(e: React.ChangeEvent<HTMLInputElement>) {
+  // Abre o cropper ao selecionar — o upload só acontece após o usuário ajustar
+  function uploadImagem(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    setUploading(true)
-    const fd = new FormData()
-    fd.append('file', file)
-    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
-    const data = await res.json()
-    if (data.url) setBanner((b) => ({ ...b, banner_imagem_url: data.url }))
-    setUploading(false)
+    setCropperConfig({ file, target: 'desktop' })
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  async function uploadImagemMobile(e: React.ChangeEvent<HTMLInputElement>) {
+  function uploadImagemMobile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    setUploadingMobile(true)
-    const fd = new FormData()
-    fd.append('file', file)
-    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
-    const data = await res.json()
-    if (data.url) setBanner((b) => ({ ...b, banner_imagem_url_mobile: data.url }))
-    setUploadingMobile(false)
+    setCropperConfig({ file, target: 'mobile' })
     if (fileInputMobileRef.current) fileInputMobileRef.current.value = ''
+  }
+
+  // Recebe o blob já recortado e faz o upload final
+  async function handleCropConfirm(blob: Blob) {
+    const isDesktop = cropperConfig?.target === 'desktop'
+    setCropperConfig(null)
+    if (isDesktop) setUploading(true); else setUploadingMobile(true)
+    const fd = new FormData()
+    fd.append('file', new File([blob], 'banner.jpg', { type: 'image/jpeg' }))
+    const res  = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+    const data = await res.json()
+    if (data.url) {
+      if (isDesktop) setBanner((b) => ({ ...b, banner_imagem_url: data.url }))
+      else            setBanner((b) => ({ ...b, banner_imagem_url_mobile: data.url }))
+    }
+    if (isDesktop) setUploading(false); else setUploadingMobile(false)
   }
 
   async function salvarBanner() {
@@ -633,6 +645,9 @@ export default function ConfiguracoesPage() {
             </h1>
             <p className="text-slate-500 text-sm mt-1">
               Nome, logo e cor de destaque que aparecem para os clientes no cardápio.
+            </p>
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
+              💡 Essas configurações alteram apenas o <strong>cardápio do cliente</strong> — o painel de gestão Menuê+ mantém sua identidade própria.
             </p>
           </div>
         </div>
@@ -1203,6 +1218,21 @@ export default function ConfiguracoesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Cropper de imagem de capa ── */}
+      {cropperConfig && (
+        <ImageCropper
+          file={cropperConfig.file}
+          aspectRatio={cropperConfig.target === 'desktop' ? 1200 / 480 : 600 / 400}
+          outputWidth={cropperConfig.target === 'desktop' ? 1200 : 600}
+          outputHeight={cropperConfig.target === 'desktop' ? 480  : 400}
+          label={cropperConfig.target === 'desktop'
+            ? 'Desktop · 1200×480px'
+            : 'Mobile · 600×400px'}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropperConfig(null)}
+        />
       )}
     </div>
   )
