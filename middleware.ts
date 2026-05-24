@@ -93,22 +93,31 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── 3. Subdomínio de tenant detectado ────────────────────────────────────────
-  const subdomain = extrairSubdominio(host)
+  // ── 3. Subdomínio de tenant detectado ─────────────────────────────────────
+  // Detecta tanto via hostname (acesso direto) quanto via header injetado
+  // pelo Cloudflare Worker (acesso via *.menue.com.br sem Vercel Pro)
+  const subdomain =
+    extrairSubdominio(host) ??
+    (request.headers.get('x-tenant-slug') || null)
+
   if (subdomain) {
     // Rotas /api/pub/** já funcionam diretamente — deixa passar
     if (pathname.startsWith('/api/pub/')) return NextResponse.next()
 
-    // Rewrite: qualquer caminho no subdomínio → /s/[slug]/...
-    // Ex: coffee.menue.com.br/         → /s/coffee
-    //     coffee.menue.com.br/cardapio → /s/coffee  (ainda na identificação)
-    const url = request.nextUrl.clone()
-    if (!pathname.startsWith('/s/') && !pathname.startsWith('/mesa/') && !pathname.startsWith('/api/')) {
+    // /mesa/ e /api/ já têm tratamento próprio — só garante o header
+    if (pathname.startsWith('/mesa/') || pathname.startsWith('/api/')) {
+      const response = NextResponse.next()
+      response.headers.set('x-tenant-slug', subdomain)
+      return response
+    }
+
+    // Qualquer outro path no subdomínio → identificação pública /s/[slug]
+    if (!pathname.startsWith('/s/')) {
+      const url = request.nextUrl.clone()
       url.pathname = `/s/${subdomain}`
       return NextResponse.rewrite(url)
     }
 
-    // Passa x-tenant-slug para requests que já estão nas rotas certas
     const response = NextResponse.next()
     response.headers.set('x-tenant-slug', subdomain)
     return response
