@@ -211,5 +211,11 @@ export const config = {
     '/api/superadmin/:path*',
     '/s/:path*',
     '/api/pub/:path*',
+    // Raiz e paths sem prefixo — necessário para subdomínio via Cloudflare Worker
+    '/',
+    '/mesa/:path*',
+    '/api/mesas/:path*',
+    '/api/cardapio/:path*',
+    '/api/configuracoes/:path*',
   ],
 }
