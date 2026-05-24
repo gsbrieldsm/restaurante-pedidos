@@ -35,6 +35,16 @@ function medalha(i: number) {
 const CORES_BARRA = ['#F05A4F', '#1A9B8A', '#f97316', '#8b5cf6', '#0ea5e9']
 
 /* ─── componente ──────────────────────────────────────── */
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'menue.com.br'
+const APP_URL     = process.env.NEXT_PUBLIC_APP_URL     ?? 'https://www.menue.com.br'
+
+function getQrBase(): string {
+  if (typeof document === 'undefined') return APP_URL
+  const m = document.cookie.match(/(?:^|;\s*)tenant_slug=([^;]+)/)
+  const slug = m ? decodeURIComponent(m[1]) : null
+  return slug ? `https://${slug}.${ROOT_DOMAIN}` : APP_URL
+}
+
 export default function MesasQRPage() {
   const [mesas, setMesas] = useState<Mesa[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,7 +75,7 @@ export default function MesasQRPage() {
 
   async function abrirQR(mesa: Mesa) {
     setQrSelecionada(mesa)
-    const url = `${process.env.NEXT_PUBLIC_APP_URL}/mesa/${mesa.qr_token}`
+    const url = `${getQrBase()}/mesa/${mesa.qr_token}`
     const dataUrl = await QRCode.toDataURL(url, {
       width: 400, margin: 2,
       color: { dark: '#1e293b', light: '#ffffff' },
@@ -111,7 +121,7 @@ export default function MesasQRPage() {
     // Gera todos os QR codes em paralelo
     const qrs = await Promise.all(
       mesas.map(async (mesa) => {
-        const url = `${process.env.NEXT_PUBLIC_APP_URL}/mesa/${mesa.qr_token}`
+        const url = `${getQrBase()}/mesa/${mesa.qr_token}`
         const dataUrl = await QRCode.toDataURL(url, {
           width: 300, margin: 2,
           color: { dark: '#1e293b', light: '#ffffff' },
