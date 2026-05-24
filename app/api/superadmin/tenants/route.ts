@@ -19,7 +19,7 @@ export async function GET() {
   // Busca todos os tenants com contagens
   const { data: tenants, error } = await supabase
     .from('tenants')
-    .select('id, slug, nome, nome_restaurante, email, status, plano, plano_aceito_em, criado_em')
+    .select('id, slug, nome, nome_restaurante, email, status, plano, plano_aceito_em, trial_expira_em, criado_em')
     .order('criado_em', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -69,9 +69,19 @@ export async function PATCH(req: Request) {
   const { id, status, acao } = await req.json() as {
     id: string
     status?: 'ativo' | 'suspenso'
-    acao?: 'setup'
+    acao?: 'setup' | 'ativar_plano'
   }
   const supabase = createServiceClient()
+
+  // ── Ação: ativar plano após pagamento (zera trial) ──
+  if (acao === 'ativar_plano') {
+    const { error } = await supabase
+      .from('tenants')
+      .update({ status: 'ativo', trial_expira_em: null })
+      .eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
 
   // ── Ação: forçar setup (cria mesas + config para tenants antigos) ──
   if (acao === 'setup') {

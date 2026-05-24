@@ -8,7 +8,7 @@ import {
   RefreshCw, Handshake, ChevronDown, CreditCard,
   Gauge, HeadphonesIcon, Menu, X, Copy, Check, Link2,
   Banknote, History, CheckCircle2, CircleDashed, Trash2, ChevronRight,
-  AlertTriangle,
+  AlertTriangle, BadgeCheck, Clock,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -54,6 +54,7 @@ type Tenant = {
   status: 'ativo' | 'suspenso'
   plano: string
   plano_aceito_em: string | null
+  trial_expira_em: string | null
   criado_em: string
   total_mesas: number
   total_pedidos: number
@@ -126,8 +127,9 @@ export default function SuperAdminPage() {
   const [copiado,      setCopiado]      = useState<string | null>(null)
   const [expandido,    setExpandido]    = useState<string | null>(null)
   const [pagamentos,   setPagamentos]   = useState<Record<string, Pagamento[]>>({})
-  const [confirmDelete, setConfirmDelete] = useState<Tenant | null>(null)
-  const [deletando,    setDeletando]    = useState(false)
+  const [confirmDelete,  setConfirmDelete]  = useState<Tenant | null>(null)
+  const [deletando,      setDeletando]      = useState(false)
+  const [ativando,       setAtivando]       = useState<string | null>(null)
   const [pagandoId,    setPagandoId]    = useState<string | null>(null)
   const [mesRef,       setMesRef]       = useState(() => {
     const d = new Date(); return `${d.toLocaleString('pt-BR', { month: 'long' })} ${d.getFullYear()}`
@@ -193,6 +195,19 @@ export default function SuperAdminPage() {
     }
     setDeletando(false)
     setConfirmDelete(null)
+  }
+
+  async function ativarPlano(tenant: Tenant) {
+    setAtivando(tenant.id)
+    await fetch('/api/superadmin/tenants', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ id: tenant.id, acao: 'ativar_plano' }),
+    })
+    setTenants((prev) => prev.map((t) =>
+      t.id === tenant.id ? { ...t, trial_expira_em: null, status: 'ativo' } : t
+    ))
+    setAtivando(null)
   }
 
   async function atualizarStatusParceiro(id: string, status: string) {
@@ -456,7 +471,7 @@ export default function SuperAdminPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-100">
-                        {['Restaurante', 'Email', 'Slug', '⊞', 'Ped.', 'Faturado', 'Plano', 'Status', 'Cadastro', ''].map((h, i) => (
+                        {['Restaurante', 'Email', 'Slug', '⊞', 'Ped.', 'Faturado', 'Plano / Trial', 'Status', 'Cadastro', ''].map((h, i) => (
                           <th key={i} className="px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-400 text-left whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
@@ -482,9 +497,44 @@ export default function SuperAdminPage() {
                             R$ {t.faturamento_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
-                            {t.plano_aceito_em
-                              ? <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-green-50 text-green-700 border border-green-100">{t.plano}</span>
-                              : <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-700 border border-amber-100">pendente</span>}
+                            {(() => {
+                              const agora = new Date()
+                              const trialAtivo = t.trial_expira_em && new Date(t.trial_expira_em) > agora
+                              const trialExpirou = t.trial_expira_em && new Date(t.trial_expira_em) <= agora
+                              const planoPago = t.plano_aceito_em && !t.trial_expira_em
+
+                              if (planoPago) return (
+                                <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold bg-green-50 text-green-700 border border-green-100">
+                                  <BadgeCheck className="w-3 h-3" />{t.plano}
+                                </span>
+                              )
+                              if (trialAtivo) {
+                                const dias = Math.ceil((new Date(t.trial_expira_em!).getTime() - agora.getTime()) / 86400000)
+                                return (
+                                  <div className="space-y-1">
+                                    <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                                      <Clock className="w-3 h-3" /> Trial · {dias}d
+                                    </span>
+                                    <button onClick={() => ativarPlano(t)} disabled={ativando === t.id}
+                                      className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors disabled:opacity-40">
+                                      {ativando === t.id ? <CircleDashed className="w-3 h-3 animate-spin" /> : <BadgeCheck className="w-3 h-3" />}
+                                      Ativar plano
+                                    </button>
+                                  </div>
+                                )
+                              }
+                              if (trialExpirou) return (
+                                <div className="space-y-1">
+                                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-red-50 text-red-600 border border-red-100 block">Expirado</span>
+                                  <button onClick={() => ativarPlano(t)} disabled={ativando === t.id}
+                                    className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors disabled:opacity-40">
+                                    {ativando === t.id ? <CircleDashed className="w-3 h-3 animate-spin" /> : <BadgeCheck className="w-3 h-3" />}
+                                    Ativar plano
+                                  </button>
+                                </div>
+                              )
+                              return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-700 border border-amber-100">pendente</span>
+                            })()}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${

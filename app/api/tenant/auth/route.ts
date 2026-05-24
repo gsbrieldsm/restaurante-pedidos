@@ -134,7 +134,7 @@ export async function POST(req: Request) {
 
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('id, slug, nome, nome_restaurante, email, status, senha_hash, plano_aceito_em, email_verificado')
+      .select('id, slug, nome, nome_restaurante, email, status, senha_hash, plano_aceito_em, email_verificado, trial_expira_em')
       .eq('email', email.toLowerCase().trim())
       .single()
 
@@ -150,15 +150,34 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Conta suspensa. Entre em contato com o suporte.' }, { status: 403 })
     }
 
+    const TRIAL_OPTS = {
+      httpOnly: false,
+      secure:   process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge:   60 * 60 * 24 * 8,
+      path:     '/',
+    }
+
     const resp = NextResponse.json({
       ok: true,
       tenant: { id: tenant.id, slug: tenant.slug, nome: tenant.nome, status: tenant.status, plano_aceito_em: tenant.plano_aceito_em },
     })
     resp.cookies.set('tenant_id',   tenant.id,   COOKIE_OPTS)
     resp.cookies.set('tenant_slug', tenant.slug, { ...COOKIE_OPTS, httpOnly: false })
-    // Garante acesso ao painel /admin
-    resp.cookies.set('admin_auth', `mmu:${tenant.id}`, COOKIE_OPTS)
-    resp.cookies.set('mmu_cargo',  'admin', { ...COOKIE_OPTS, httpOnly: false })
+    resp.cookies.set('admin_auth',  `mmu:${tenant.id}`, COOKIE_OPTS)
+    resp.cookies.set('mmu_cargo',   'admin', { ...COOKIE_OPTS, httpOnly: false })
+
+    // ── Cookies de trial / plano ativo ──────────────────────────────────────
+    if (tenant.trial_expira_em === null) {
+      // Plano confirmado (superadmin ativou após pagamento)
+      resp.cookies.set('plano_ativo', 'sim', { ...TRIAL_OPTS, maxAge: 60 * 60 * 24 * 365 })
+      resp.cookies.delete('trial_expira_em')
+    } else {
+      // Trial ativo ou expirado — seta cookie para middleware verificar
+      resp.cookies.set('trial_expira_em', tenant.trial_expira_em, TRIAL_OPTS)
+      resp.cookies.delete('plano_ativo')
+    }
+
     return resp
   }
 
@@ -169,6 +188,8 @@ export async function POST(req: Request) {
     resp.cookies.delete('tenant_slug')
     resp.cookies.delete('admin_auth')
     resp.cookies.delete('mmu_cargo')
+    resp.cookies.delete('trial_expira_em')
+    resp.cookies.delete('plano_ativo')
     return resp
   }
 
