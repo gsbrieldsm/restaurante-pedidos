@@ -440,7 +440,7 @@ export default function MesasQRPage() {
             <p className="text-sm text-slate-500 mb-4">Escaneie para fazer o pedido</p>
             {qrUrl && <img src={qrUrl} alt="QR Code" className="w-48 h-48 mx-auto rounded-xl" />}
             <p className="text-xs text-slate-400 mt-3 mb-5 font-mono break-all">
-              {process.env.NEXT_PUBLIC_APP_URL}/mesa/{qrSelecionada.qr_token}
+              {getQrBase()}/mesa/{qrSelecionada.qr_token}
             </p>
             <div className="flex gap-2">
               <Button onClick={baixarQR} variant="outline" className="flex-1 gap-2 text-sm">
