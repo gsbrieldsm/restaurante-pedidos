@@ -1,8 +1,6 @@
 /**
- * POST /api/tenant/checkout
- *
- * Cria uma assinatura recorrente no Mercado Pago (Preapproval).
- * Retorna { url, configurado: true } com o link de pagamento MP.
+ * GET  /api/tenant/checkout → { configurado: bool }  (sem auth — só checa env)
+ * POST /api/tenant/checkout → cria assinatura MP e retorna { url, configurado: true }
  *
  * Variáveis de ambiente necessárias (Vercel + .env.local):
  *   MP_ACCESS_TOKEN=APP_USR-...
@@ -13,6 +11,11 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
+
+// ── GET — verifica se o gateway está configurado (sem auth) ───────────────────
+export async function GET() {
+  return NextResponse.json({ configurado: !!process.env.MP_ACCESS_TOKEN })
+}
 
 const PLANOS_PRECO: Record<string, number> = {
   starter:    397,

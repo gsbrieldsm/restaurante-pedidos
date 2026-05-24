@@ -40,8 +40,8 @@ export default function TrialExpiradoPage() {
       .catch(() => {})
       .finally(() => setCarregando(false))
 
-    // Verifica se o gateway de pagamento está configurado
-    fetch('/api/tenant/checkout', { method: 'POST' })
+    // Verifica se o gateway de pagamento está configurado (GET, sem auth)
+    fetch('/api/tenant/checkout')
       .then((r) => r.json())
       .then((d) => { if (d.configurado) setCheckoutDisponivel(true) })
       .catch(() => {})
