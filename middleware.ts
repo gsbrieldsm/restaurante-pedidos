@@ -96,7 +96,19 @@ export function middleware(request: NextRequest) {
   // ── 3. Subdomínio de tenant detectado ────────────────────────────────────────
   const subdomain = extrairSubdominio(host)
   if (subdomain) {
-    // Passa o slug do tenant para o request via header
+    // Rotas /api/pub/** já funcionam diretamente — deixa passar
+    if (pathname.startsWith('/api/pub/')) return NextResponse.next()
+
+    // Rewrite: qualquer caminho no subdomínio → /s/[slug]/...
+    // Ex: coffee.menue.com.br/         → /s/coffee
+    //     coffee.menue.com.br/cardapio → /s/coffee  (ainda na identificação)
+    const url = request.nextUrl.clone()
+    if (!pathname.startsWith('/s/') && !pathname.startsWith('/mesa/') && !pathname.startsWith('/api/')) {
+      url.pathname = `/s/${subdomain}`
+      return NextResponse.rewrite(url)
+    }
+
+    // Passa x-tenant-slug para requests que já estão nas rotas certas
     const response = NextResponse.next()
     response.headers.set('x-tenant-slug', subdomain)
     return response
@@ -188,5 +200,7 @@ export const config = {
     '/superadmin',
     '/superadmin/:path*',
     '/api/superadmin/:path*',
+    '/s/:path*',
+    '/api/pub/:path*',
   ],
 }

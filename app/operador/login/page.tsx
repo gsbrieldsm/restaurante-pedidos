@@ -222,34 +222,54 @@ function LoginForm() {
 // ─── Página ──────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden flex items-center justify-center px-6">
-
-      {/* Glow teal */}
+    <div
+      className="relative min-h-screen overflow-hidden flex items-center justify-center px-6"
+      style={{ background: 'linear-gradient(160deg, #0a2420 0%, #0f3d35 45%, #155f50 100%)' }}
+    >
+      {/* Glow sutil */}
       <div
         className="pointer-events-none absolute"
         style={{
-          top: '40%', left: '50%',
+          top: '30%', left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '600px', height: '600px',
+          width: '700px', height: '500px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(26,155,138,0.3) 0%, rgba(26,155,138,0.06) 50%, transparent 70%)',
-          filter: 'blur(40px)',
+          background: 'radial-gradient(ellipse, rgba(26,155,138,0.18) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+        }}
+      />
+
+      {/* Detalhe geométrico decorativo */}
+      <div
+        className="pointer-events-none absolute bottom-0 right-0"
+        style={{
+          width: '400px', height: '400px',
+          background: 'radial-gradient(circle at bottom right, rgba(26,155,138,0.10) 0%, transparent 60%)',
         }}
       />
 
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-8">
 
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
+        {/* Logo + saudação */}
+        <div className="flex flex-col items-center gap-4 text-center">
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #0f3d35, #1A9B8A)' }}
+            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl"
+            style={{ background: 'linear-gradient(135deg, #1A9B8A, #0f6b5e)' }}
           >
             <span className="text-2xl font-black text-white">M+</span>
           </div>
-          <div className="text-center">
-            <h1 className="text-white font-black text-2xl">Menuê+</h1>
-            <p className="text-white/30 text-xs tracking-widest uppercase mt-0.5">Acesso da equipe</p>
+
+          <div>
+            <h1 className="text-white font-black text-2xl tracking-tight">Menuê+</h1>
+            <p
+              className="mt-3 text-lg font-semibold leading-snug"
+              style={{ color: 'rgba(94,234,212,0.9)' }}
+            >
+              Que hoje seja um grande dia,
+            </p>
+            <p className="text-white/80 text-base font-medium">
+              vamos começar? 🚀
+            </p>
           </div>
         </div>
 
