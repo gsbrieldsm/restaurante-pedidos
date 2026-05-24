@@ -67,6 +67,13 @@ type Aba = 'assinaturas' | 'performance' | 'suporte' | 'parceiros'
 // ── Constantes ──────────────────────────────────────────────────────────────
 const MENSALIDADE   = 550
 const IMPLEMENTACAO = 2000
+
+const PLANOS_DISPONIVEIS = [
+  { id: 'starter',    nome: 'Starter',    preco: 350 },
+  { id: 'pro',        nome: 'Pro',        preco: 450 },
+  { id: 'business',   nome: 'Business',   preco: 650 },
+  { id: 'enterprise', nome: 'Enterprise', preco: 900 },
+]
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://menue.com.br'
 
 const TIERS_COMISSAO = [
@@ -130,6 +137,8 @@ export default function SuperAdminPage() {
   const [confirmDelete,  setConfirmDelete]  = useState<Tenant | null>(null)
   const [deletando,      setDeletando]      = useState(false)
   const [ativando,       setAtivando]       = useState<string | null>(null)
+  const [editandoPlano, setEditandoPlano] = useState<string | null>(null)
+  const [trocandoPlano, setTrocandoPlano] = useState<string | null>(null)
   const [pagandoId,    setPagandoId]    = useState<string | null>(null)
   const [mesRef,       setMesRef]       = useState(() => {
     const d = new Date(); return `${d.toLocaleString('pt-BR', { month: 'long' })} ${d.getFullYear()}`
@@ -195,6 +204,21 @@ export default function SuperAdminPage() {
     }
     setDeletando(false)
     setConfirmDelete(null)
+  }
+
+  async function trocarPlano(tenant: Tenant, novoPlano: string) {
+    if (novoPlano === tenant.plano) { setEditandoPlano(null); return }
+    setTrocandoPlano(tenant.id)
+    await fetch('/api/superadmin/tenants', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ id: tenant.id, acao: 'trocar_plano', plano: novoPlano }),
+    })
+    setTenants((prev) => prev.map((t) =>
+      t.id === tenant.id ? { ...t, plano: novoPlano } : t
+    ))
+    setTrocandoPlano(null)
+    setEditandoPlano(null)
   }
 
   async function ativarPlano(tenant: Tenant) {
@@ -503,11 +527,45 @@ export default function SuperAdminPage() {
                               const trialExpirou = t.trial_expira_em && new Date(t.trial_expira_em) <= agora
                               const planoPago = t.plano_aceito_em && !t.trial_expira_em
 
-                              if (planoPago) return (
-                                <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold bg-green-50 text-green-700 border border-green-100">
-                                  <BadgeCheck className="w-3 h-3" />{t.plano}
-                                </span>
+                              // ── Seletor de plano inline ──
+                              const planoSelect = (
+                                <div className="space-y-1">
+                                  {editandoPlano === t.id ? (
+                                    <select
+                                      autoFocus
+                                      defaultValue={t.plano}
+                                      disabled={trocandoPlano === t.id}
+                                      onChange={(e) => trocarPlano(t, e.target.value)}
+                                      onBlur={() => setEditandoPlano(null)}
+                                      className="text-xs rounded-lg border border-teal-300 bg-white px-2 py-1 font-semibold text-slate-700 focus:outline-none cursor-pointer disabled:opacity-50"
+                                    >
+                                      {PLANOS_DISPONIVEIS.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                          {p.nome} — R$ {p.preco}/mês
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <button
+                                      onClick={() => setEditandoPlano(t.id)}
+                                      title="Clique para trocar o plano"
+                                      className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold border transition-colors hover:opacity-80 ${
+                                        planoPago
+                                          ? 'bg-green-50 text-green-700 border-green-100'
+                                          : 'bg-slate-50 text-slate-500 border-slate-200'
+                                      }`}
+                                    >
+                                      {trocandoPlano === t.id
+                                        ? <CircleDashed className="w-3 h-3 animate-spin" />
+                                        : <BadgeCheck className="w-3 h-3" />
+                                      }
+                                      {t.plano || 'definir'} ✎
+                                    </button>
+                                  )}
+                                </div>
                               )
+
+                              if (planoPago) return planoSelect
                               if (trialAtivo) {
                                 const dias = Math.ceil((new Date(t.trial_expira_em!).getTime() - agora.getTime()) / 86400000)
                                 return (
@@ -515,6 +573,7 @@ export default function SuperAdminPage() {
                                     <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-100">
                                       <Clock className="w-3 h-3" /> Trial · {dias}d
                                     </span>
+                                    {planoSelect}
                                     <button onClick={() => ativarPlano(t)} disabled={ativando === t.id}
                                       className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors disabled:opacity-40">
                                       {ativando === t.id ? <CircleDashed className="w-3 h-3 animate-spin" /> : <BadgeCheck className="w-3 h-3" />}
@@ -526,6 +585,7 @@ export default function SuperAdminPage() {
                               if (trialExpirou) return (
                                 <div className="space-y-1">
                                   <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-red-50 text-red-600 border border-red-100 block">Expirado</span>
+                                  {planoSelect}
                                   <button onClick={() => ativarPlano(t)} disabled={ativando === t.id}
                                     className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors disabled:opacity-40">
                                     {ativando === t.id ? <CircleDashed className="w-3 h-3 animate-spin" /> : <BadgeCheck className="w-3 h-3" />}
@@ -533,7 +593,12 @@ export default function SuperAdminPage() {
                                   </button>
                                 </div>
                               )
-                              return <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-700 border border-amber-100">pendente</span>
+                              return (
+                                <div className="space-y-1">
+                                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-700 border border-amber-100 block">pendente</span>
+                                  {planoSelect}
+                                </div>
+                              )
                             })()}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">

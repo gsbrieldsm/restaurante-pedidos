@@ -66,10 +66,11 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
-  const { id, status, acao } = await req.json() as {
+  const { id, status, acao, plano } = await req.json() as {
     id: string
     status?: 'ativo' | 'suspenso'
-    acao?: 'setup' | 'ativar_plano'
+    acao?: 'setup' | 'ativar_plano' | 'trocar_plano'
+    plano?: string
   }
   const supabase = createServiceClient()
 
@@ -78,6 +79,20 @@ export async function PATCH(req: Request) {
     const { error } = await supabase
       .from('tenants')
       .update({ status: 'ativo', trial_expira_em: null })
+      .eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  // ── Ação: trocar plano ──
+  if (acao === 'trocar_plano') {
+    const planosValidos = ['starter', 'pro', 'business', 'enterprise']
+    if (!plano || !planosValidos.includes(plano)) {
+      return NextResponse.json({ error: 'Plano inválido.' }, { status: 400 })
+    }
+    const { error } = await supabase
+      .from('tenants')
+      .update({ plano })
       .eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
