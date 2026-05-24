@@ -86,7 +86,7 @@ export async function PATCH(req: Request) {
 
   // ── Ação: trocar plano ──
   if (acao === 'trocar_plano') {
-    const planosValidos = ['starter', 'pro', 'business', 'enterprise']
+    const planosValidos = ['free', 'starter', 'pro', 'business', 'enterprise']
     if (!plano || !planosValidos.includes(plano)) {
       return NextResponse.json({ error: 'Plano inválido.' }, { status: 400 })
     }

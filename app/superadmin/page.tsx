@@ -69,6 +69,7 @@ const MENSALIDADE   = 550
 const IMPLEMENTACAO = 2000
 
 const PLANOS_DISPONIVEIS = [
+  { id: 'free',       nome: '🎁 Free',    preco: 0   },   // só visível no superadmin
   { id: 'starter',    nome: 'Starter',    preco: 350 },
   { id: 'pro',        nome: 'Pro',        preco: 450 },
   { id: 'business',   nome: 'Business',   preco: 650 },
@@ -310,9 +311,10 @@ export default function SuperAdminPage() {
     router.push('/superadmin/login')
   }
 
-  const PLANOS_PRECO_MAP: Record<string, number> = { starter: 350, pro: 450, business: 650, enterprise: 900 }
+  const PLANOS_PRECO_MAP: Record<string, number> = { free: 0, starter: 350, pro: 450, business: 650, enterprise: 900 }
 
   const ativos       = tenants.filter((t) => t.status === 'ativo' && t.plano_aceito_em)
+  // plano free = R$ 0, não entra no MRR
   const mrr          = ativos.reduce((s, t) => s + (PLANOS_PRECO_MAP[t.plano] ?? MENSALIDADE), 0)
   const receitaTotal = ativos.length * IMPLEMENTACAO + mrr
 
@@ -565,14 +567,16 @@ export default function SuperAdminPage() {
                                       onClick={() => setEditandoPlano(t.id)}
                                       title="Clique para trocar o plano"
                                       className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold border transition-colors hover:opacity-80 ${
-                                        planoPago
-                                          ? 'bg-green-50 text-green-700 border-green-100'
-                                          : 'bg-slate-50 text-slate-500 border-slate-200'
+                                        t.plano === 'free'
+                                          ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                          : planoPago
+                                            ? 'bg-green-50 text-green-700 border-green-100'
+                                            : 'bg-slate-50 text-slate-500 border-slate-200'
                                       }`}
                                     >
                                       {trocandoPlano === t.id
                                         ? <CircleDashed className="w-3 h-3 animate-spin" />
-                                        : <BadgeCheck className="w-3 h-3" />
+                                        : t.plano === 'free' ? '🎁' : <BadgeCheck className="w-3 h-3" />
                                       }
                                       {t.plano || 'definir'} ✎
                                     </button>
