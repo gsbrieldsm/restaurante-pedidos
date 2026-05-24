@@ -339,6 +339,7 @@ export default function ConfiguracoesPage() {
     restaurante_nome:     '',
     restaurante_logo_url: null as string | null,
     cor_primaria:         '#1A9B8A',
+    pix_chave:            '',
   })
   const [brandingSalvando, setBrandingSalvando] = useState(false)
   const [brandingSucesso,  setBrandingSucesso]  = useState(false)
@@ -409,6 +410,7 @@ export default function ConfiguracoesPage() {
             restaurante_nome:     config.restaurante_nome     ?? '',
             restaurante_logo_url: config.restaurante_logo_url ?? null,
             cor_primaria:         config.cor_primaria         ?? '#1A9B8A',
+            pix_chave:            config.pix_chave            ?? '',
           })
         }
       })
@@ -715,6 +717,23 @@ export default function ConfiguracoesPage() {
                 Preview
               </div>
             </div>
+          </div>
+
+          {/* Chave PIX */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              Chave PIX para pagamento na mesa
+            </label>
+            <input
+              type="text"
+              placeholder="Ex: 54.691.723/0001-03 ou email@restaurante.com"
+              value={branding.pix_chave}
+              onChange={(e) => setBranding((b) => ({ ...b, pix_chave: e.target.value }))}
+              className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-teal-400"
+            />
+            <p className="text-xs text-slate-400 mt-1.5">
+              Aparece no botão "Pagar via PIX" na conta do cliente. Se deixar em branco, a opção de PIX <strong>não aparece</strong>.
+            </p>
           </div>
 
           {/* Botão salvar */}

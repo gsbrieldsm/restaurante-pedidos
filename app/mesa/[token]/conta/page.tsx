@@ -28,7 +28,6 @@ function tocarSom() {
   }
 }
 
-const PIX_KEY = process.env.NEXT_PUBLIC_PIX_KEY ?? '(não configurada)'
 const RESTAURANT_NAME = process.env.NEXT_PUBLIC_RESTAURANT_NAME ?? 'Menuê+'
 
 const STATUS_CONFIG: Record<string, { label: string; cor: string; icon: React.ElementType }> = {
@@ -60,9 +59,18 @@ export default function ContaPage() {
   const [chamandoGarcom, setChamandoGarcom] = useState(false)
   const [garcomChamado, setGarcomChamado] = useState(false)
   const [garcomPix, setGarcomPix] = useState(false)
+  const [pixChave, setPixChave] = useState<string | null>(null)
 
   // IDs de itens que já sabemos que estão "pronto" — para detectar novos
   const prontosSabidos = useRef<Set<string>>(new Set())
+
+  // Carrega chave PIX do restaurante via configurações públicas
+  useEffect(() => {
+    fetch(`/api/configuracoes/banner?mesa_token=${token}`)
+      .then((r) => r.json())
+      .then((d) => { setPixChave(d.branding?.pix_chave ?? null) })
+      .catch(() => {})
+  }, [token])
 
   const buscarConta = useCallback(async () => {
     const sessaoId = sessionStorage.getItem('sessao_id')
@@ -137,7 +145,7 @@ export default function ContaPage() {
   }
 
   async function copiarPix() {
-    await navigator.clipboard.writeText(PIX_KEY)
+    await navigator.clipboard.writeText(pixChave ?? '')
     setCopiado(true)
     setTimeout(() => setCopiado(false), 2500)
   }
@@ -339,15 +347,17 @@ export default function ContaPage() {
       {pedidos.length > 0 && !garcomChamado && !garcomPix && (
         <div className="fixed bottom-0 left-0 right-0 p-4 space-y-2 bg-white/80 backdrop-blur border-t border-slate-100">
           <div className="max-w-lg mx-auto space-y-2">
-            {/* Pagar via PIX */}
-            <Button
-              onClick={() => setModalPix(true)}
-              className="w-full h-12 text-black font-bold text-base"
-              style={{ background: '#1A9B8A' }}
-            >
-              <QrCode className="w-5 h-5 mr-2" />
-              Pagar via Pix — {formatarReal(totalGeral)}
-            </Button>
+            {/* Pagar via PIX — só aparece se o restaurante configurou a chave */}
+            {pixChave && (
+              <Button
+                onClick={() => setModalPix(true)}
+                className="w-full h-12 text-black font-bold text-base"
+                style={{ background: '#1A9B8A' }}
+              >
+                <QrCode className="w-5 h-5 mr-2" />
+                Pagar via Pix — {formatarReal(totalGeral)}
+              </Button>
+            )}
 
             {/* Chamar garçom */}
             <Button
@@ -397,7 +407,7 @@ export default function ContaPage() {
             <div className="space-y-2">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Chave Pix</p>
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-                <span className="flex-1 font-mono text-sm text-slate-700 truncate">{PIX_KEY}</span>
+                <span className="flex-1 font-mono text-sm text-slate-700 truncate">{pixChave}</span>
                 <button
                   onClick={copiarPix}
                   className={`shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${

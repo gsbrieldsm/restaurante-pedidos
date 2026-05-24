@@ -72,6 +72,7 @@ export async function POST(req: Request) {
     restaurante_nome:     body.restaurante_nome      ?? 'Meu Restaurante',
     restaurante_logo_url: body.restaurante_logo_url  ?? null,
     cor_primaria:         body.cor_primaria          ?? '#1A9B8A',
+    pix_chave:            body.pix_chave?.trim()     || null,
     atualizado_em:        new Date().toISOString(),
   }
 
