@@ -86,13 +86,73 @@ export default function MesasQRPage() {
     const win = window.open('', '_blank')!
     win.document.write(`
       <html><head><title>Mesa ${qrSelecionada.numero}</title>
-      <style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:white}
-      .card{text-align:center;padding:32px;border:2px solid #e2e8f0;border-radius:16px;max-width:300px}
-      h1{font-size:28px;font-weight:900;margin:0 0 4px;color:#1e293b}p{color:#64748b;font-size:14px;margin:0 0 20px}
-      img{width:240px;height:240px}small{display:block;margin-top:16px;color:#94a3b8;font-size:12px}</style></head>
-      <body><div class="card"><h1>Mesa ${qrSelecionada.numero}</h1><p>Escaneie para fazer seu pedido</p>
-      <img src="${qrUrl}" /><small>Aponte a câmera do celular para o código</small></div>
+      <style>
+        @page { size: A4; margin: 0 }
+        body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:white}
+        .card{text-align:center;padding:32px;border:2px solid #e2e8f0;border-radius:16px;max-width:300px}
+        h1{font-size:28px;font-weight:900;margin:0 0 4px;color:#1e293b}
+        p{color:#64748b;font-size:14px;margin:0 0 20px}
+        img{width:240px;height:240px}
+        small{display:block;margin-top:16px;color:#94a3b8;font-size:12px}
+      </style></head>
+      <body><div class="card">
+        <h1>Mesa ${qrSelecionada.numero}</h1>
+        <p>Escaneie para fazer seu pedido</p>
+        <img src="${qrUrl}" />
+        <small>Aponte a câmera do celular para o código</small>
+      </div>
       <script>window.onload=()=>{window.print();window.close()}</script></body></html>
+    `)
+  }
+
+  async function imprimirTodos() {
+    if (mesas.length === 0) return
+
+    // Gera todos os QR codes em paralelo
+    const qrs = await Promise.all(
+      mesas.map(async (mesa) => {
+        const url = `${process.env.NEXT_PUBLIC_APP_URL}/mesa/${mesa.qr_token}`
+        const dataUrl = await QRCode.toDataURL(url, {
+          width: 300, margin: 2,
+          color: { dark: '#1e293b', light: '#ffffff' },
+        })
+        return { numero: mesa.numero, dataUrl }
+      })
+    )
+
+    const cardsHtml = qrs.map(({ numero, dataUrl }) => `
+      <div class="card">
+        <h2>${numero}</h2>
+        <p>Escaneie para pedir</p>
+        <img src="${dataUrl}" />
+        <small>Aponte a câmera do celular</small>
+      </div>
+    `).join('')
+
+    const win = window.open('', '_blank')!
+    win.document.write(`
+      <html><head><title>QR Codes — Todas as mesas</title>
+      <style>
+        @page { size: A4; margin: 12mm }
+        * { box-sizing: border-box }
+        body { font-family: sans-serif; background: white; margin: 0; padding: 0 }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10mm }
+        .card {
+          text-align: center; padding: 6mm;
+          border: 1.5px solid #e2e8f0; border-radius: 8px;
+          break-inside: avoid; page-break-inside: avoid;
+        }
+        h2 { font-size: 22px; font-weight: 900; margin: 0 0 2px; color: #1e293b }
+        p  { color: #64748b; font-size: 11px; margin: 0 0 6px }
+        img { width: 100%; max-width: 120px; height: auto }
+        small { display: block; margin-top: 4px; color: #94a3b8; font-size: 9px }
+        .hint { text-align: center; font-size: 10px; color: #94a3b8; margin-bottom: 8mm }
+      </style></head>
+      <body>
+        <p class="hint">Menuê+ · Recorte cada cartão e plastifique para colocar nas mesas</p>
+        <div class="grid">${cardsHtml}</div>
+        <script>window.onload=()=>{ window.print() }</script>
+      </body></html>
     `)
   }
 
@@ -116,11 +176,20 @@ export default function MesasQRPage() {
     <div className="p-6 space-y-5">
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Mesas & QR Codes</h1>
           <p className="text-slate-500 text-sm">{mesas.length} mesas cadastradas</p>
         </div>
+        {aba === 'qrcodes' && mesas.length > 0 && (
+          <Button
+            onClick={imprimirTodos}
+            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white shrink-0"
+          >
+            <Printer className="w-4 h-4" />
+            Imprimir todos os QR codes
+          </Button>
+        )}
       </div>
 
       {/* Abas */}
