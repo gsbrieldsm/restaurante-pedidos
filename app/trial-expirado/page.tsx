@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ChefHat, Clock, MessageCircle, CheckCircle2, Copy, Check } from 'lucide-react'
+import { ChefHat, Clock, MessageCircle, CheckCircle2, Copy, Check, CreditCard, Loader2 } from 'lucide-react'
 
 const PLANOS_PRECO: Record<string, number> = {
   starter:    350,
@@ -27,6 +27,8 @@ export default function TrialExpiradoPage() {
   const [nomeRestaurante, setNomeRestaurante] = useState('')
   const [copiado, setCopiado]             = useState(false)
   const [carregando, setCarregando]       = useState(true)
+  const [checkoutDisponivel, setCheckoutDisponivel] = useState(false)
+  const [iniciandoCheckout, setIniciandoCheckout]   = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/perfil')
@@ -37,6 +39,12 @@ export default function TrialExpiradoPage() {
       })
       .catch(() => {})
       .finally(() => setCarregando(false))
+
+    // Verifica se o gateway de pagamento está configurado
+    fetch('/api/tenant/checkout', { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => { if (d.configurado) setCheckoutDisponivel(true) })
+      .catch(() => {})
   }, [])
 
   const nomePlano = PLANOS_NOME[plano] ?? (plano ? plano.charAt(0).toUpperCase() + plano.slice(1) : null)
@@ -50,6 +58,21 @@ export default function TrialExpiradoPage() {
   ].filter(Boolean).join(' ')
 
   const wppUrl = `https://wa.me/${WPP_NUMERO}?text=${encodeURIComponent(textoWpp)}`
+
+  async function iniciarCheckout() {
+    setIniciandoCheckout(true)
+    try {
+      const res  = await fetch('/api/tenant/checkout', { method: 'POST' })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch {
+      // silencia — botão só aparece se configurado
+    } finally {
+      setIniciandoCheckout(false)
+    }
+  }
 
   function copiarPix() {
     navigator.clipboard.writeText(PIX_CHAVE).then(() => {
@@ -157,15 +180,37 @@ export default function TrialExpiradoPage() {
             )}
           </div>
 
-          {/* ── CTA WhatsApp ── */}
-          <div className="px-8 py-6">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
-              Já fez o PIX? Avise nossa equipe
-            </p>
-            <p className="text-sm text-slate-600 leading-relaxed mb-5">
-              Mande o comprovante pelo WhatsApp e ativamos seu plano na hora.
+          {/* ── CTA ── */}
+          <div className="px-8 py-6 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">
+              Ativar agora
             </p>
 
+            {/* Botão cartão — só aparece quando gateway configurado */}
+            {checkoutDisponivel && (
+              <button
+                onClick={iniciarCheckout}
+                disabled={iniciandoCheckout}
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-base font-black text-white transition-all hover:opacity-90 disabled:opacity-60"
+                style={{ background: '#0f3d35' }}
+              >
+                {iniciandoCheckout
+                  ? <Loader2 className="w-5 h-5 animate-spin" />
+                  : <CreditCard className="w-5 h-5" />
+                }
+                {iniciandoCheckout ? 'Aguarde...' : 'Pagar com cartão de crédito'}
+              </button>
+            )}
+
+            {/* Placeholder "em breve" — só aparece quando gateway NÃO configurado */}
+            {!checkoutDisponivel && (
+              <div className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-sm font-semibold text-slate-400 border-2 border-dashed border-slate-200 cursor-default">
+                <CreditCard className="w-4 h-4" />
+                Cartão de crédito — em breve
+              </div>
+            )}
+
+            {/* WhatsApp — sempre disponível */}
             <a
               href={wppUrl}
               target="_blank"
@@ -174,8 +219,14 @@ export default function TrialExpiradoPage() {
               style={{ background: '#1A9B8A' }}
             >
               <MessageCircle className="w-5 h-5" />
-              Enviar comprovante no WhatsApp
+              {checkoutDisponivel ? 'Pagar via PIX + WhatsApp' : 'Enviar comprovante no WhatsApp'}
             </a>
+
+            {!checkoutDisponivel && (
+              <p className="text-center text-xs text-slate-400 pt-1">
+                Faça o PIX e mande o comprovante — ativamos em minutos.
+              </p>
+            )}
           </div>
         </div>
 
