@@ -75,7 +75,8 @@ const PLANOS_DISPONIVEIS = [
   { id: 'business',   nome: 'Business',   preco: 799 },
   { id: 'enterprise', nome: 'Enterprise', preco: 0   },   // negociado individualmente
 ]
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://menue.com.br'
+const APP_URL    = process.env.NEXT_PUBLIC_APP_URL   ?? 'https://menue.com.br'
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'menue.com.br'
 
 const TIERS_COMISSAO = [
   { min: 1,  max: 4,  pct: 0.10, label: '10%' },
@@ -528,9 +529,16 @@ export default function SuperAdminPage() {
                             <span className="text-slate-500 text-xs truncate block">{t.email}</span>
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
-                            <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-100 whitespace-nowrap">
+                            <a
+                              href={`https://${t.slug}.${ROOT_DOMAIN}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 font-mono text-xs px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-100 hover:bg-teal-100 hover:border-teal-300 transition-colors whitespace-nowrap group"
+                              title={`Abrir cardápio de ${t.nome_restaurante}`}
+                            >
                               {t.slug}
-                            </span>
+                              <ExternalLink className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </a>
                           </td>
                           <td className="px-3 py-3 text-center font-semibold text-slate-700 whitespace-nowrap">{t.total_mesas}</td>
                           <td className="px-3 py-3 text-center font-semibold text-slate-700 whitespace-nowrap">{t.total_pedidos}</td>

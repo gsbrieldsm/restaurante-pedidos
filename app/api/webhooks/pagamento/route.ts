@@ -1,92 +1,130 @@
 /**
  * POST /api/webhooks/pagamento
  *
- * Recebe eventos do gateway de pagamento e ativa o plano do tenant.
+ * Recebe notificações do Mercado Pago e ativa o plano do tenant.
  *
- * ── Configuração no gateway ─────────────────────────────────────────────────
- * Aponte o webhook para:  https://menue.com.br/api/webhooks/pagamento
- *
- * ── Stripe ──────────────────────────────────────────────────────────────────
- * Eventos relevantes:
- *   checkout.session.completed  → pagamento único confirmado
- *   invoice.paid                → recorrência mensal confirmada
- *
- * ── Asaas ───────────────────────────────────────────────────────────────────
- * Eventos relevantes:
- *   PAYMENT_CONFIRMED           → pagamento confirmado
- *   PAYMENT_RECEIVED            → pagamento recebido (PIX/boleto)
+ * ── Configuração no MP ──────────────────────────────────────────────────────
+ * developers.mercadopago.com → sua app → Webhooks → Adicionar URL:
+ *   https://www.menue.com.br/api/webhooks/pagamento
+ * Eventos: preapproval, payment
  */
 
 export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
+import { createHmac }   from 'crypto'
 import { createServiceClient } from '@/lib/supabase/server'
 
-async function ativarPlanoTenant(tenantId: string) {
+// ─── Valida assinatura HMAC-SHA256 do Mercado Pago ───────────────────────────
+// Header x-signature: "ts=...,v1=..."
+// Payload assinado:   "id:{data.id};request-id:{x-request-id};ts:{ts};"
+function validarAssinaturaMp(req: Request, body: string, dataId?: string): boolean {
+  const secret    = process.env.MP_WEBHOOK_SECRET
+  if (!secret) return true // sem secret configurado → aceita (não recomendado em prod)
+
+  const xSig     = req.headers.get('x-signature') ?? ''
+  const xReqId   = req.headers.get('x-request-id') ?? ''
+
+  const tsMatch  = xSig.match(/ts=([^,]+)/)
+  const v1Match  = xSig.match(/v1=([^,]+)/)
+  if (!tsMatch || !v1Match) return false
+
+  const ts       = tsMatch[1]
+  const v1       = v1Match[1]
+
+  const template = `id:${dataId ?? ''};request-id:${xReqId};ts:${ts};`
+  const expected = createHmac('sha256', secret).update(template).digest('hex')
+
+  return expected === v1
+}
+
+// ─── Ativa plano no banco ────────────────────────────────────────────────────
+async function ativarPlanoTenant(tenantId: string, plano?: string) {
   const supabase = createServiceClient()
+
+  const update: Record<string, unknown> = {
+    status:          'ativo',
+    trial_expira_em: null,
+    plano_aceito_em: new Date().toISOString(),
+  }
+  if (plano) update.plano = plano
+
   const { error } = await supabase
     .from('tenants')
-    .update({ status: 'ativo', trial_expira_em: null })
+    .update(update)
     .eq('id', tenantId)
 
   if (error) {
     console.error('[webhook] erro ao ativar plano:', error.message)
     return false
   }
-  console.log(`[webhook] plano ativado para tenant ${tenantId}`)
+  console.log(`[webhook] plano "${plano}" ativado para tenant ${tenantId}`)
   return true
 }
 
+// ─── Extrai tenant_id e plano do external_reference ─────────────────────────
+function parsarRef(ref: string | null | undefined): { tenantId: string; plano: string } | null {
+  if (!ref) return null
+  const [tenantId, plano] = ref.split('|')
+  if (!tenantId) return null
+  return { tenantId, plano: plano ?? 'starter' }
+}
+
 export async function POST(req: Request) {
-  const body      = await req.text()
-  const signature = req.headers.get('stripe-signature') ?? req.headers.get('asaas-access-token') ?? ''
+  const body = await req.text()
 
-  // ── Stripe ─────────────────────────────────────────────────────────────────
-  if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET) {
+  // ── Mercado Pago ────────────────────────────────────────────────────────────
+  if (process.env.MP_ACCESS_TOKEN) {
     try {
-      // Descomente quando instalar: npm install stripe
-      // const Stripe = (await import('stripe')).default
-      // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-      // const event  = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET)
-      //
-      // if (event.type === 'checkout.session.completed' || event.type === 'invoice.paid') {
-      //   const obj       = event.data.object as { metadata?: Record<string, string>; subscription?: string }
-      //   const tenantId  = obj.metadata?.tenant_id
-      //   if (tenantId) await ativarPlanoTenant(tenantId)
-      // }
-      //
-      // return NextResponse.json({ received: true })
-    } catch (err) {
-      console.error('[webhook/stripe] erro:', err)
-      return NextResponse.json({ error: 'Webhook inválido' }, { status: 400 })
-    }
-  }
+      const payload = JSON.parse(body)
+      const token   = process.env.MP_ACCESS_TOKEN
 
-  // ── Asaas ──────────────────────────────────────────────────────────────────
-  if (process.env.ASAAS_API_KEY) {
-    // Validação simples por token (Asaas não usa assinatura criptografada)
-    if (signature !== process.env.ASAAS_API_KEY) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
-    }
+      // ── Valida assinatura ────────────────────────────────────────────────────
+      if (!validarAssinaturaMp(req, body, payload.data?.id)) {
+        console.warn('[webhook/mp] assinatura inválida')
+        return NextResponse.json({ error: 'Assinatura inválida' }, { status: 401 })
+      }
 
-    try {
-      // const payload   = JSON.parse(body)
-      // const evento    = payload.event
-      // const pagamento = payload.payment
-      //
-      // if (['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'].includes(evento)) {
-      //   const ref = JSON.parse(pagamento.externalReference ?? '{}')
-      //   if (ref.tenant_id) await ativarPlanoTenant(ref.tenant_id)
-      // }
-      //
-      // return NextResponse.json({ received: true })
+      // ── Evento de assinatura (preapproval) ──────────────────────────────────
+      if (payload.type === 'preapproval' && payload.data?.id) {
+        const res          = await fetch(`https://api.mercadopago.com/preapproval/${payload.data.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const preapproval  = await res.json()
+
+        if (preapproval.status === 'authorized') {
+          const parsed = parsarRef(preapproval.external_reference)
+          if (parsed) await ativarPlanoTenant(parsed.tenantId, parsed.plano)
+        }
+
+        return NextResponse.json({ received: true })
+      }
+
+      // ── Evento de pagamento individual (cobrança mensal da assinatura) ───────
+      if (payload.type === 'payment' && payload.data?.id) {
+        const res     = await fetch(`https://api.mercadopago.com/v1/payments/${payload.data.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const payment = await res.json()
+
+        if (payment.status === 'approved') {
+          const parsed = parsarRef(payment.external_reference)
+          if (parsed) await ativarPlanoTenant(parsed.tenantId, parsed.plano)
+        }
+
+        return NextResponse.json({ received: true })
+      }
+
+      // Outros eventos (ignorar silenciosamente)
+      return NextResponse.json({ received: true, ignored: true })
+
     } catch (err) {
-      console.error('[webhook/asaas] erro:', err)
+      console.error('[webhook/mp] erro:', err)
       return NextResponse.json({ error: 'Payload inválido' }, { status: 400 })
     }
   }
 
-  // Nenhum gateway configurado — confirma recebimento sem processar
-  console.warn('[webhook] nenhum gateway configurado, evento ignorado.')
+  // Nenhum gateway configurado
+  console.warn('[webhook] MP_ACCESS_TOKEN não definido, evento ignorado.')
   return NextResponse.json({ received: true, configurado: false })
 }

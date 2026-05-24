@@ -63,11 +63,25 @@ export async function POST(req: Request) {
     }
   }
 
+  // Busca slug do tenant para cookie não-httpOnly (usado em CardSubdominio)
+  let tenantSlug: string | null = null
+  if (usuario.tenant_id) {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('slug')
+      .eq('id', usuario.tenant_id)
+      .single()
+    tenantSlug = tenant?.slug ?? null
+  }
+
   const resp = NextResponse.json({ ok: true, cargo: usuario.cargo, nome: usuario.nome })
   resp.cookies.set('admin_auth', `mmu:${usuario.id}`, COOKIE_OPTS)
   resp.cookies.set('mmu_cargo',  usuario.cargo, CARGO_OPTS)
   if (usuario.tenant_id) {
     resp.cookies.set('tenant_id', usuario.tenant_id, COOKIE_OPTS)
+  }
+  if (tenantSlug) {
+    resp.cookies.set('tenant_slug', tenantSlug, { ...CARGO_OPTS }) // não-httpOnly para JS
   }
   return resp
 }

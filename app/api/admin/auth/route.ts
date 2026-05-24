@@ -20,12 +20,15 @@ const CARGO_OPTS = {
 
 function setLoginCookies(
   resp: NextResponse,
-  usuario: { id: string; cargo: string; tenant_id: string | null }
+  usuario: { id: string; cargo: string; tenant_id: string | null; tenant_slug?: string | null }
 ) {
   resp.cookies.set('admin_auth', `mmu:${usuario.id}`, COOKIE_OPTS)
   resp.cookies.set('mmu_cargo', usuario.cargo, CARGO_OPTS)
   if (usuario.tenant_id) {
     resp.cookies.set('tenant_id', usuario.tenant_id, COOKIE_OPTS)
+  }
+  if (usuario.tenant_slug) {
+    resp.cookies.set('tenant_slug', usuario.tenant_slug, { ...CARGO_OPTS }) // não-httpOnly para JS
   }
 }
 
@@ -44,7 +47,7 @@ export async function POST(req: Request) {
     // Busca TODOS os registros com esse e-mail (pode estar em vários tenants)
     const { data: candidatos } = await supabase
       .from('usuarios')
-      .select('id, nome, cargo, senha_hash, ativo, tenant_id, convite_aceito')
+      .select('id, nome, cargo, senha_hash, ativo, tenant_id, convite_aceito, email')
       .eq('email', email.toLowerCase().trim())
 
     if (!candidatos || candidatos.length === 0) {
@@ -60,24 +63,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email ou senha incorretos' }, { status: 401 })
     }
 
-    // ── Apenas 1 restaurante → login direto ─────────────────────────────
-    if (validos.length === 1) {
-      const u = validos[0]
-      const resp = NextResponse.json({ ok: true, nome: u.nome, cargo: u.cargo })
-      setLoginCookies(resp, u)
-      return resp
-    }
-
-    // ── Múltiplos restaurantes → retorna lista para escolha ─────────────
+    // ── Busca slug de todos os tenants envolvidos ──────────────────────
     const tenantIds = validos.map((u) => u.tenant_id).filter(Boolean) as string[]
 
     const { data: tenants } = await supabase
       .from('tenants')
-      .select('id, nome_restaurante')
+      .select('id, nome_restaurante, slug')
       .in('id', tenantIds)
 
-    const tenantMap = Object.fromEntries(tenants?.map((t) => [t.id, t.nome_restaurante]) ?? [])
+    const tenantMap     = Object.fromEntries(tenants?.map((t) => [t.id, t.nome_restaurante]) ?? [])
+    const tenantSlugMap = Object.fromEntries(tenants?.map((t) => [t.id, t.slug]) ?? [])
 
+    // ── Apenas 1 restaurante → login direto ─────────────────────────────
+    if (validos.length === 1) {
+      const u = validos[0]
+      const resp = NextResponse.json({ ok: true, nome: u.nome, cargo: u.cargo })
+      setLoginCookies(resp, { ...u, tenant_slug: u.tenant_id ? tenantSlugMap[u.tenant_id] : null })
+      return resp
+    }
+
+    // ── Múltiplos restaurantes → retorna lista para escolha ─────────────
     const opcoes = validos.map((u) => ({
       usuario_id:      u.id,
       nome:            u.nome,
