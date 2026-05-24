@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getTenantId } from '@/lib/tenant'
 import type { StatusItem } from '@/lib/supabase/types'
 
 // PATCH /api/pedidos/[id] — atualizar status de um item
@@ -9,6 +10,9 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const tenantId = await getTenantId()
+  if (!tenantId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
   const { id } = await params
   const body = await req.json()
   const { item_id, status } = body as { item_id: string; status: StatusItem }
@@ -31,6 +35,7 @@ export async function PATCH(
     .update(updates)
     .eq('id', item_id)
     .eq('pedido_id', id)
+    .eq('tenant_id', tenantId)
     .select()
     .single()
 
@@ -46,6 +51,9 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const tenantId = await getTenantId()
+  if (!tenantId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
   const { id } = await params
   const supabase = createServiceClient()
 
@@ -53,6 +61,7 @@ export async function GET(
     .from('pedidos')
     .select('*, pedido_itens(*)')
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (error || !pedido) {

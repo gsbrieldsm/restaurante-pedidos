@@ -57,6 +57,7 @@ export async function PATCH(
     .from('usuarios')
     .update(updates)
     .eq('id', id)
+    .eq('tenant_id', tenantId ?? '')
     .select('id, nome, email, cargo, ativo, convite_aceito, criado_em')
     .single()
 
@@ -84,6 +85,7 @@ export async function POST(
     .from('usuarios')
     .select('id, nome, email, cargo, convite_aceito, tenant_id')
     .eq('id', id)
+    .eq('tenant_id', tenantId ?? '')
     .single()
 
   if (!usuario) {
@@ -168,7 +170,7 @@ export async function DELETE(
     }
   }
 
-  const { error } = await supabase.from('usuarios').delete().eq('id', id)
+  const { error } = await supabase.from('usuarios').delete().eq('id', id).eq('tenant_id', tenantId ?? '')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ ok: true })

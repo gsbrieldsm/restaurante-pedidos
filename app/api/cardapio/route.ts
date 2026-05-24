@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getTenantId } from '@/lib/tenant'
 
 export async function GET(req: Request) {
   const supabase = createServiceClient()
@@ -19,7 +20,9 @@ export async function GET(req: Request) {
     tenantId = mesa?.tenant_id ?? null
   }
 
-  let q = supabase
+  if (!tenantId) return NextResponse.json({ itens: [] })
+
+  const { data, error } = await supabase
     .from('cardapio_itens')
     .select(`
       *,
@@ -28,13 +31,11 @@ export async function GET(req: Request) {
         opcoes:cardapio_opcoes ( id, nome, preco_adicional, ordem )
       )
     `)
+    .eq('tenant_id', tenantId)
     .eq('disponivel', true)
     .order('categoria')
     .order('ordem')
 
-  if (tenantId) q = (q as any).eq('tenant_id', tenantId)
-
-  const { data, error } = await q
   if (error) return NextResponse.json({ error: 'Erro ao buscar cardápio' }, { status: 500 })
 
   const itens = (data ?? []).map((item) => ({
@@ -51,12 +52,15 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const tenantId = await getTenantId()
+  if (!tenantId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
   const body = await req.json()
   const supabase = createServiceClient()
 
   const { data, error } = await supabase
     .from('cardapio_itens')
-    .insert(body)
+    .insert({ ...body, tenant_id: tenantId })
     .select()
     .single()
 

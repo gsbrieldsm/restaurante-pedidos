@@ -1,9 +1,13 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getTenantId } from '@/lib/tenant'
 
 const BUCKET = 'cardapio'
 
 export async function POST(req: Request) {
+  const tenantId = await getTenantId()
+  if (!tenantId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
   const supabase = createServiceClient()
 
   // Garante que o bucket existe

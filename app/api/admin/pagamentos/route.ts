@@ -77,6 +77,10 @@ export async function POST(req: Request) {
 
 // GET — totais por forma de pagamento (com filtro de período)
 export async function GET(req: Request) {
+  const { getTenantId } = await import('@/lib/tenant')
+  const tenantId = await getTenantId()
+  if (!tenantId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
   const supabase = createServiceClient()
   const { searchParams } = new URL(req.url)
   const periodo = searchParams.get('periodo') ?? 'hoje'
@@ -96,6 +100,7 @@ export async function GET(req: Request) {
   const { data, error } = await supabase
     .from('pagamentos')
     .select('forma, valor, criado_em, mesa_numero, cliente_nome')
+    .eq('tenant_id', tenantId)
     .gte('criado_em', inicio.toISOString())
     .order('criado_em', { ascending: false })
 
