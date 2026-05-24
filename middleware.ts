@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getPlanoConfig } from '@/lib/planos'
 
 // ─── Constantes de auth de staff (admin interno do restaurante) ───────────────
 const SESSION_TOKEN = 'mmu-admin-v1'
@@ -136,11 +137,23 @@ export function middleware(request: NextRequest) {
   // ── Trial expirado? Bloqueia acesso ao painel ─────────────────────────────
   if (pathname.startsWith('/admin') && !pathname.startsWith('/api/')) {
     const trialExpira = request.cookies.get('trial_expira_em')?.value
+    const planoAtivo  = request.cookies.get('plano_ativo')?.value === 'sim'
+
     if (trialExpira) {
       const expirou = new Date(trialExpira) < new Date()
-      const planoAtivo = request.cookies.get('plano_ativo')?.value === 'sim'
       if (expirou && !planoAtivo) {
         return NextResponse.redirect(new URL('/trial-expirado', request.url))
+      }
+    }
+
+    // ── Restrição por plano (só aplica após plano confirmado — não no trial) ──
+    if (planoAtivo && pathname !== '/admin/bloqueado') {
+      const plano  = request.cookies.get('tenant_plano')?.value
+      const config = getPlanoConfig(plano)
+      if (config.bloqueado.some((rota) => pathname.startsWith(rota))) {
+        const url = new URL('/admin/bloqueado', request.url)
+        url.searchParams.set('recurso', pathname)
+        return NextResponse.redirect(url)
       }
     }
   }

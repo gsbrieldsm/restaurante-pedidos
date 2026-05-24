@@ -134,7 +134,7 @@ export async function POST(req: Request) {
 
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('id, slug, nome, nome_restaurante, email, status, senha_hash, plano_aceito_em, email_verificado, trial_expira_em')
+      .select('id, slug, nome, nome_restaurante, email, status, senha_hash, plano_aceito_em, email_verificado, trial_expira_em, plano')
       .eq('email', email.toLowerCase().trim())
       .single()
 
@@ -165,7 +165,8 @@ export async function POST(req: Request) {
     resp.cookies.set('tenant_id',   tenant.id,   COOKIE_OPTS)
     resp.cookies.set('tenant_slug', tenant.slug, { ...COOKIE_OPTS, httpOnly: false })
     resp.cookies.set('admin_auth',  `mmu:${tenant.id}`, COOKIE_OPTS)
-    resp.cookies.set('mmu_cargo',   'admin', { ...COOKIE_OPTS, httpOnly: false })
+    resp.cookies.set('mmu_cargo',    'admin',              { ...COOKIE_OPTS, httpOnly: false })
+    resp.cookies.set('tenant_plano', tenant.plano ?? 'starter', { ...COOKIE_OPTS, httpOnly: false })
 
     // ── Cookies de trial / plano ativo ──────────────────────────────────────
     if (tenant.trial_expira_em === null) {
@@ -188,6 +189,7 @@ export async function POST(req: Request) {
     resp.cookies.delete('tenant_slug')
     resp.cookies.delete('admin_auth')
     resp.cookies.delete('mmu_cargo')
+    resp.cookies.delete('tenant_plano')
     resp.cookies.delete('trial_expira_em')
     resp.cookies.delete('plano_ativo')
     return resp

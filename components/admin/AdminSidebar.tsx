@@ -6,8 +6,9 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Clock, DollarSign,
   BookOpen, QrCode, ConciergeBell, Users, ChevronDown, ChevronRight,
-  Settings, LogOut, Menu, X, UserCog, Building2, Check, Loader2
+  Settings, LogOut, Menu, X, UserCog, Building2, Check, Loader2, Lock
 } from 'lucide-react'
+import { getPlanoConfig } from '@/lib/planos'
 
 const NAV = [
   { href: '/admin',                label: 'Visão ao Vivo', icon: LayoutDashboard, apenasAdmin: false },
@@ -144,7 +145,15 @@ function RestauranteSwitcher({ onClose }: { onClose: () => void }) {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
-export function AdminSidebar({ cargo, nomeRestaurante }: { cargo: 'admin' | 'operador'; nomeRestaurante?: string }) {
+export function AdminSidebar({
+  cargo,
+  nomeRestaurante,
+  plano,
+}: {
+  cargo: 'admin' | 'operador'
+  nomeRestaurante?: string
+  plano?: string
+}) {
   const pathname = usePathname()
   const router   = useRouter()
   const [operacoesAberto, setOperacoesAberto] = useState(false)
@@ -152,6 +161,9 @@ export function AdminSidebar({ cargo, nomeRestaurante }: { cargo: 'admin' | 'ope
   const [switcherAberto,  setSwitcherAberto]  = useState(false)
 
   const navFiltrado = NAV.filter((n) => !n.apenasAdmin || cargo === 'admin')
+
+  // Rotas bloqueadas pelo plano atual (só aplica quando plano_ativo=sim — verificado no middleware)
+  const bloqueado = getPlanoConfig(plano).bloqueado
 
   async function sair() {
     await fetch('/api/admin/auth', { method: 'DELETE' })
@@ -162,7 +174,8 @@ export function AdminSidebar({ cargo, nomeRestaurante }: { cargo: 'admin' | 'ope
   const navContent = (onLinkClick?: () => void) => (
     <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
       {navFiltrado.map(({ href, label, icon: Icon }) => {
-        const ativo = pathname === href
+        const ativo    = pathname === href
+        const restrito = bloqueado.some((r) => href.startsWith(r))
         return (
           <Link
             key={href}
@@ -171,11 +184,21 @@ export function AdminSidebar({ cargo, nomeRestaurante }: { cargo: 'admin' | 'ope
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
               ativo
                 ? 'bg-teal-600 text-white font-medium'
-                : 'text-slate-400 hover:bg-teal-800 hover:text-white'
+                : restrito
+                  ? 'text-slate-500 hover:bg-teal-800 hover:text-slate-300'
+                  : 'text-slate-400 hover:bg-teal-800 hover:text-white'
             }`}
           >
             <Icon className="w-4 h-4" />
-            {label}
+            <span className="flex-1">{label}</span>
+            {restrito && (
+              <span className="flex items-center gap-1">
+                <Lock className="w-3 h-3 text-slate-500" />
+                <span className="text-[9px] font-bold uppercase tracking-wide bg-amber-500/20 text-amber-400 px-1 py-0.5 rounded">
+                  Pro
+                </span>
+              </span>
+            )}
           </Link>
         )
       })}
