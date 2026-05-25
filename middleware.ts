@@ -78,12 +78,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── 1. Raiz e landing — sempre públicas ─────────────────────────────────────
-  if (pathname === '/' || pathname.startsWith('/landing')) {
-    return NextResponse.next()
-  }
-
-  // ── 1b. Rotas públicas de tenant e páginas públicas — sempre passam ──────────
+  // ── 1. Rotas públicas de tenant e páginas públicas — sempre passam ───────────
   if (TENANT_PUBLIC.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
   }
@@ -134,7 +129,12 @@ export function middleware(request: NextRequest) {
     return response
   }
 
-  // ── 4. Trial expirado — página pública ───────────────────────────────────────
+  // ── 4. Raiz e landing — públicas (apenas no domínio principal, sem subdomínio) ─
+  if (pathname === '/' || pathname.startsWith('/landing')) {
+    return NextResponse.next()
+  }
+
+  // ── 4b. Trial expirado — página pública ──────────────────────────────────────
   if (pathname === '/trial-expirado') {
     return NextResponse.next()
   }
