@@ -9,7 +9,7 @@ import {
   Gauge, HeadphonesIcon, Menu, X, Copy, Check, Link2,
   Banknote, History, CheckCircle2, CircleDashed, Trash2, ChevronRight,
   AlertTriangle, BadgeCheck, Clock, Lightbulb, Bug, HelpCircle, MessageCircle,
-  InboxIcon,
+  InboxIcon, PlayCircle, PlusCircle, Pencil, Eye, EyeOff,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ type Chamado = {
   tenants:         { nome_restaurante: string } | null
 }
 
-type Aba = 'assinaturas' | 'performance' | 'suporte' | 'parceiros'
+type Aba = 'assinaturas' | 'performance' | 'suporte' | 'parceiros' | 'tutoriais'
 
 // ── Types de Performance ───────────────────────────────────────────────────
 type PerfData = {
@@ -151,6 +151,7 @@ const NAV: { id: Aba; label: string; icon: React.ElementType; badge?: string }[]
   { id: 'performance', label: 'Performance do sistema', icon: Gauge },
   { id: 'suporte',     label: 'Chamados & Suporte',     icon: HeadphonesIcon },
   { id: 'parceiros',   label: 'Parceiros',              icon: Handshake },
+  { id: 'tutoriais',  label: 'Tutoriais de Suporte',   icon: PlayCircle },
 ]
 
 // ── Componente principal ───────────────────────────────────────────────────
@@ -185,6 +186,17 @@ export default function SuperAdminPage() {
   const [chamadosLoading, setChamadosLoading] = useState(false)
   const [atualizandoChamado, setAtualizandoChamado] = useState<string | null>(null)
 
+  // ── Tutoriais ──────────────────────────────────────────────────────────────
+  interface VideoTutorial { id: string; titulo: string; descricao: string | null; youtube_id: string; categoria: string; ordem: number; ativo: boolean }
+  const [videos,           setVideos]           = useState<VideoTutorial[]>([])
+  const [videosLoading,    setVideosLoading]     = useState(false)
+  const [videoForm,        setVideoForm]         = useState({ titulo: '', descricao: '', youtube_id: '', categoria: 'geral', ordem: 0 })
+  const [videoEditando,    setVideoEditando]     = useState<VideoTutorial | null>(null)
+  const [videoSalvando,    setVideoSalvando]     = useState(false)
+  const [videoDeletando,   setVideoDeletando]    = useState<string | null>(null)
+
+  const CATEGORIAS_VIDEO = ['geral','cardapio','mesas','pedidos','garcom','estacoes','financeiro','equipe','configuracoes']
+
   useEffect(() => {
     document.title = 'Master — Menuê+'
     carregar()
@@ -201,6 +213,64 @@ export default function SuperAdminPage() {
       carregarChamados()
     }
   }, [aba, chamados.length, chamadosLoading])
+
+  useEffect(() => {
+    if (aba === 'tutoriais' && videos.length === 0 && !videosLoading) {
+      carregarVideos()
+    }
+  }, [aba, videos.length, videosLoading])
+
+  async function carregarVideos() {
+    setVideosLoading(true)
+    try {
+      const res  = await fetch('/api/superadmin/suporte')
+      const data = await res.json()
+      if (res.ok) setVideos(data.videos ?? [])
+    } catch {}
+    setVideosLoading(false)
+  }
+
+  async function salvarVideo() {
+    setVideoSalvando(true)
+    try {
+      const url    = videoEditando ? '/api/superadmin/suporte' : '/api/superadmin/suporte'
+      const method = videoEditando ? 'PATCH' : 'POST'
+      const body   = videoEditando
+        ? { id: videoEditando.id, ...videoForm }
+        : videoForm
+      const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const data = await res.json()
+      if (res.ok) {
+        setVideoEditando(null)
+        setVideoForm({ titulo: '', descricao: '', youtube_id: '', categoria: 'geral', ordem: 0 })
+        await carregarVideos()
+      } else {
+        alert(data.error ?? 'Erro ao salvar.')
+      }
+    } catch {}
+    setVideoSalvando(false)
+  }
+
+  async function toggleAtivoVideo(v: VideoTutorial) {
+    await fetch('/api/superadmin/suporte', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: v.id, ativo: !v.ativo }),
+    })
+    await carregarVideos()
+  }
+
+  async function deletarVideo(id: string) {
+    setVideoDeletando(id)
+    await fetch(`/api/superadmin/suporte?id=${id}`, { method: 'DELETE' })
+    setVideos(v => v.filter(x => x.id !== id))
+    setVideoDeletando(null)
+  }
+
+  function iniciarEdicao(v: VideoTutorial) {
+    setVideoEditando(v)
+    setVideoForm({ titulo: v.titulo, descricao: v.descricao ?? '', youtube_id: v.youtube_id, categoria: v.categoria, ordem: v.ordem })
+  }
 
   async function carregarChamados() {
     setChamadosLoading(true)
@@ -1608,6 +1678,160 @@ export default function SuperAdminPage() {
                 })}
               </div>
             </>
+          )}
+
+          {/* ── ABA: TUTORIAIS ── */}
+          {aba === 'tutoriais' && (
+            <div className="space-y-6">
+
+              {/* Formulário adicionar/editar */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                <p className="text-sm font-black text-slate-700 mb-4">
+                  {videoEditando ? '✏️ Editar vídeo' : '➕ Adicionar vídeo'}
+                </p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Título *</label>
+                    <input
+                      value={videoForm.titulo}
+                      onChange={e => setVideoForm(f => ({ ...f, titulo: e.target.value }))}
+                      placeholder="Ex: Como cadastrar itens no cardápio"
+                      className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-400"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">YouTube URL ou ID *</label>
+                    <input
+                      value={videoForm.youtube_id}
+                      onChange={e => setVideoForm(f => ({ ...f, youtube_id: e.target.value }))}
+                      placeholder="https://youtube.com/watch?v=... ou dQw4w9WgXcQ"
+                      className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-400 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Categoria</label>
+                    <select
+                      value={videoForm.categoria}
+                      onChange={e => setVideoForm(f => ({ ...f, categoria: e.target.value }))}
+                      className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-400"
+                    >
+                      {CATEGORIAS_VIDEO.map(c => (
+                        <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Ordem</label>
+                    <input
+                      type="number"
+                      value={videoForm.ordem}
+                      onChange={e => setVideoForm(f => ({ ...f, ordem: Number(e.target.value) }))}
+                      className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-400"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Descrição (opcional)</label>
+                    <textarea
+                      value={videoForm.descricao}
+                      onChange={e => setVideoForm(f => ({ ...f, descricao: e.target.value }))}
+                      placeholder="Breve descrição do que é ensinado no vídeo"
+                      rows={2}
+                      className="w-full text-sm px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-400 resize-none"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 mt-4">
+                  <button
+                    onClick={salvarVideo}
+                    disabled={!videoForm.titulo.trim() || !videoForm.youtube_id.trim() || videoSalvando}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 transition-colors"
+                    style={{ background: '#1A9B8A' }}
+                  >
+                    {videoSalvando
+                      ? <><CircleDashed className="w-4 h-4 animate-spin" /> Salvando...</>
+                      : <><CheckCircle2 className="w-4 h-4" /> {videoEditando ? 'Salvar alterações' : 'Adicionar vídeo'}</>
+                    }
+                  </button>
+                  {videoEditando && (
+                    <button
+                      onClick={() => { setVideoEditando(null); setVideoForm({ titulo: '', descricao: '', youtube_id: '', categoria: 'geral', ordem: 0 }) }}
+                      className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-100 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                  <a
+                    href="/suporte"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-auto flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-teal-600 hover:bg-teal-50 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Ver página pública
+                  </a>
+                </div>
+              </div>
+
+              {/* Lista de vídeos */}
+              {videosLoading ? (
+                <div className="flex justify-center py-10">
+                  <CircleDashed className="w-6 h-6 animate-spin text-teal-500" />
+                </div>
+              ) : videos.length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  <PlayCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p className="font-semibold">Nenhum vídeo cadastrado ainda.</p>
+                  <p className="text-sm mt-1">Adicione o primeiro tutorial acima.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {videos.map(v => (
+                    <div key={v.id} className={`bg-white rounded-2xl border p-4 flex items-center gap-4 transition-opacity ${!v.ativo ? 'opacity-50' : ''} border-slate-200`}>
+                      {/* Thumb */}
+                      <img
+                        src={`https://img.youtube.com/vi/${v.youtube_id}/default.jpg`}
+                        alt={v.titulo}
+                        className="w-20 h-14 object-cover rounded-xl shrink-0"
+                      />
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-800 text-sm truncate">{v.titulo}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold">{v.categoria}</span>
+                          <span className="text-xs text-slate-400">ordem: {v.ordem}</span>
+                          {!v.ativo && <span className="text-xs text-amber-500 font-semibold">oculto</span>}
+                        </div>
+                        {v.descricao && <p className="text-xs text-slate-400 mt-1 truncate">{v.descricao}</p>}
+                      </div>
+                      {/* Ações */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => toggleAtivoVideo(v)}
+                          className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors"
+                          title={v.ativo ? 'Ocultar' : 'Mostrar'}
+                        >
+                          {v.ativo ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => iniciarEdicao(v)}
+                          className="p-2 rounded-lg text-slate-400 hover:bg-teal-50 hover:text-teal-600 transition-colors"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deletarVideo(v.id)}
+                          disabled={videoDeletando === v.id}
+                          className="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                        >
+                          {videoDeletando === v.id
+                            ? <CircleDashed className="w-4 h-4 animate-spin" />
+                            : <Trash2 className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
         </main>

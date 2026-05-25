@@ -129,8 +129,8 @@ export function middleware(request: NextRequest) {
     return response
   }
 
-  // ── 4. Raiz e landing — públicas (apenas no domínio principal, sem subdomínio) ─
-  if (pathname === '/' || pathname.startsWith('/landing')) {
+  // ── 4. Raiz, landing e suporte — públicas (apenas no domínio principal, sem subdomínio) ─
+  if (pathname === '/' || pathname.startsWith('/landing') || pathname.startsWith('/suporte')) {
     return NextResponse.next()
   }
 
@@ -222,10 +222,12 @@ export const config = {
     '/api/superadmin/:path*',
     '/s/:path*',
     '/api/pub/:path*',
-    // Raiz e landing — públicas
+    // Raiz, landing e suporte — públicas
     '/',
     '/landing',
     '/landing/:path*',
+    '/suporte',
+    '/suporte/:path*',
     '/mesa/:path*',
     '/api/mesas/:path*',
     '/api/cardapio/:path*',
