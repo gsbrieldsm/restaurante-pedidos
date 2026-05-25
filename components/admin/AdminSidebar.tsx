@@ -238,31 +238,24 @@ export function AdminSidebar({
 
   // Header da sidebar com switcher de restaurante
   const header = (
-    <div className="px-5 py-5 border-b border-white/10">
-      <div className="flex items-center justify-between gap-2">
-        {/* Logo + nome */}
+    <div className="px-5 py-6 border-b border-white/10">
+      <div className="flex items-center gap-3">
+        {/* Ícone M+ */}
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 border border-white/20 shrink-0">
+          <span className="text-base font-black text-white">M+</span>
+        </div>
+        {/* Nome */}
         <div className="relative flex-1 min-w-0">
           <button
             onClick={() => setSwitcherAberto((v) => !v)}
-            className="flex items-center gap-3 group w-full text-left"
+            className="group w-full text-left"
             title="Trocar restaurante"
           >
-            {/* Ícone M+ */}
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 border border-white/20 shrink-0">
-              <span className="text-base font-black text-white">M+</span>
-            </div>
-            <div className="min-w-0">
-              <p className="font-black tracking-widest text-xs uppercase text-teal-300 leading-none">Menuê+</p>
-              {nomeRestaurante && (
-                <p className="text-white font-semibold text-sm leading-tight mt-0.5 truncate group-hover:text-teal-300 transition-colors">
-                  {nomeRestaurante}
-                  <ChevronDown className="inline w-3 h-3 ml-0.5 opacity-50" />
-                </p>
-              )}
-              {!nomeRestaurante && (
-                <p className="text-teal-400 text-xs mt-0.5">cardápio digital</p>
-              )}
-            </div>
+            <p className="font-black tracking-widest text-xs uppercase text-teal-300 leading-none">Menuê+</p>
+            <p className="text-white font-bold text-sm leading-tight mt-0.5 truncate group-hover:text-teal-300 transition-colors">
+              {nomeRestaurante ?? 'Meu Restaurante'}
+              <ChevronDown className="inline w-3 h-3 ml-0.5 opacity-40" />
+            </p>
           </button>
 
           {switcherAberto && (
