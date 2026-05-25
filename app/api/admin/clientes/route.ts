@@ -62,8 +62,38 @@ export async function GET() {
     }
   }
 
+  // Enriquecer clientes de pedidos com contagem de visitas das sessões
+  const visitasPorChave = new Map<string, number>()
+  for (const s of sessoes ?? []) {
+    const chave = s.cliente_whatsapp?.replace(/\D/g, '') || s.cliente_nome?.toLowerCase().trim()
+    if (chave) visitasPorChave.set(chave, (visitasPorChave.get(chave) ?? 0) + 1)
+  }
+
   const clientes = Array.from(mapa.values())
     .sort((a, b) => b.total_consumido - a.total_consumido)
+    .map(c => ({ ...c, total_visitas: visitasPorChave.get(c.chave) ?? 1 }))
 
-  return NextResponse.json({ sessoes: sessoes ?? [], clientes })
+  // Clientes únicos = union de chaves de pedidos + sessões (mesmo sem pedido)
+  const chavesUnicas = new Set([
+    ...Array.from(mapa.keys()),
+    ...Array.from(visitasPorChave.keys()),
+  ])
+
+  // Sessões enriquecidas com número de visita do cliente
+  const contadorVisitas = new Map<string, number>()
+  const sessoesEnriquecidas = [...(sessoes ?? [])]
+    .reverse() // da mais antiga para mais nova para contar ordem
+    .map(s => {
+      const chave = s.cliente_whatsapp?.replace(/\D/g, '') || s.cliente_nome?.toLowerCase().trim() || ''
+      const visita = (contadorVisitas.get(chave) ?? 0) + 1
+      contadorVisitas.set(chave, visita)
+      return { ...s, numero_visita: visita, total_visitas: visitasPorChave.get(chave) ?? visita }
+    })
+    .reverse() // volta à ordem original (mais recente primeiro)
+
+  return NextResponse.json({
+    sessoes: sessoesEnriquecidas,
+    clientes,
+    clientes_unicos: chavesUnicas.size,
+  })
 }

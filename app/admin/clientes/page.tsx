@@ -14,6 +14,8 @@ interface Sessao {
   fechada_em: string | null
   ativa: boolean
   mesas: { numero: number } | null
+  numero_visita: number
+  total_visitas: number
 }
 
 interface ClienteAgregado {
@@ -83,6 +85,7 @@ const COR_POSICAO: Record<number, string> = {
 export default function ClientesPage() {
   const [sessoes, setSessoes] = useState<Sessao[]>([])
   const [clientes, setClientes] = useState<ClienteAgregado[]>([])
+  const [clientesUnicos, setClientesUnicos] = useState(0)
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState<'todos' | 'ativos' | 'com_celular'>('todos')
@@ -96,9 +99,10 @@ export default function ClientesPage() {
   useEffect(() => {
     fetch('/api/admin/clientes')
       .then((r) => r.json())
-      .then(({ sessoes, clientes }) => {
+      .then(({ sessoes, clientes, clientes_unicos }) => {
         setSessoes(sessoes ?? [])
         setClientes(clientes ?? [])
+        setClientesUnicos(clientes_unicos ?? clientes?.length ?? 0)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -143,7 +147,7 @@ export default function ClientesPage() {
     total: sessoes.length,
     ativos: sessoes.filter((s) => s.ativa).length,
     comCelular: sessoes.filter((s) => !!s.cliente_whatsapp).length,
-    unicos: clientes.length,
+    unicos: clientesUnicos,
     receitaTotal: clientes.reduce((acc, c) => acc + c.total_consumido, 0),
   }
 
@@ -337,7 +341,14 @@ export default function ClientesPage() {
                         {s.cliente_nome.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <span className="font-medium text-slate-800 text-sm truncate">{s.cliente_nome}</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-medium text-slate-800 text-sm truncate">{s.cliente_nome}</span>
+                      {s.total_visitas > 1 && (
+                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-100 text-teal-700">
+                          {s.numero_visita}ª/{s.total_visitas}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="col-span-3">
                     {s.cliente_whatsapp ? (
