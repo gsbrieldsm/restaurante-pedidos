@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
+import { Resend } from 'resend'
+import { emailParceiroAprovado } from '@/lib/email/parceiro-aprovado'
 
 export const dynamic = 'force-dynamic'
 
@@ -101,7 +103,7 @@ export async function PATCH(req: NextRequest) {
   // Busca dados atuais do parceiro
   const { data: parceiro } = await supabase
     .from('parceiros_leads')
-    .select('nome, codigo_indicacao, status')
+    .select('nome, email, codigo_indicacao, status')
     .eq('id', id)
     .single()
 
@@ -130,5 +132,23 @@ export async function PATCH(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Envia email ao parceiro quando aprovado pela primeira vez
+  const foiAprovadoAgora = status === 'aprovado' && parceiro?.status !== 'aprovado'
+  if (foiAprovadoAgora && parceiro?.email && process.env.RESEND_API_KEY) {
+    const codigoFinal = atualizado.codigo_indicacao ?? updates.codigo_indicacao ?? ''
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    resend.emails.send({
+      from:    process.env.RESEND_FROM ?? 'Menuê+ <noreply@menue.com.br>',
+      to:      parceiro.email,
+      subject: '🎉 Sua parceria com o Menuê+ foi aprovada!',
+      html:    emailParceiroAprovado({
+        nome:             parceiro.nome,
+        email:            parceiro.email,
+        codigo_indicacao: codigoFinal,
+      }),
+    }).catch((err: unknown) => console.error('[parceiros] erro ao enviar email:', err))
+  }
+
   return NextResponse.json({ ok: true, parceiro: atualizado })
 }
