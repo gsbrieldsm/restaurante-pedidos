@@ -180,7 +180,7 @@ export default function LandingPage() {
 
             <div className="flex items-center gap-6 pt-2">
               {[
-                { n: 'R$ 350', label: 'mínimo/mês' },
+                { n: 'R$ 397', label: 'mínimo/mês' },
                 { n: '1 dia', label: 'de implantação' },
                 { n: '0 apps', label: 'para instalar' },
               ].map(({ n, label }) => (
@@ -399,9 +399,9 @@ export default function LandingPage() {
           {/* Planos mensais */}
           <div className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto mb-6">
             {[
-              { nome: 'Starter', usuarios: 'Até 5 usuários', preco: 350, destaque: false, ex: '1 admin + 2 garçons + cozinha + bar' },
-              { nome: 'Pro',     usuarios: '6 a 10 usuários', preco: 450, destaque: true,  ex: 'Equipe maior com múltiplas estações' },
-              { nome: 'Business',usuarios: '11 a 20 usuários', preco: 650, destaque: false, ex: 'Operação completa de grande porte' },
+              { nome: 'Starter', usuarios: 'Até 5 usuários', preco: 397,  destaque: false, ex: '1 admin + 2 garçons + cozinha + bar' },
+              { nome: 'Pro',     usuarios: '6 a 10 usuários', preco: 697,  destaque: true,  ex: 'Equipe maior com múltiplas estações' },
+              { nome: 'Business',usuarios: '11 a 20 usuários', preco: 1197, destaque: false, ex: 'Operação completa de grande porte' },
             ].map((p) => (
               <div
                 key={p.nome}
