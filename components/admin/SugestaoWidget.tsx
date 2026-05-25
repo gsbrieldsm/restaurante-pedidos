@@ -53,13 +53,17 @@ export function SugestaoWidget() {
 
   return (
     <>
-      {/* Botão flutuante */}
+      {/* Botão flutuante — pequeno por padrão, expande no hover */}
       <button
         onClick={() => setAberto(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-lg shadow-teal-900/20 transition-all hover:scale-105 active:scale-95"
+        title="Sugestões & Melhorias"
+        className="fixed bottom-5 right-5 z-40 group flex items-center gap-0 overflow-hidden bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-full shadow-lg shadow-teal-900/20 transition-all duration-200 hover:rounded-2xl active:scale-95"
+        style={{ padding: '10px' }}
       >
-        <MessageSquarePlus className="w-4 h-4" />
-        <span className="hidden sm:inline">Sugestão</span>
+        <MessageSquarePlus className="w-4 h-4 shrink-0" />
+        <span className="max-w-0 group-hover:max-w-[80px] overflow-hidden whitespace-nowrap text-sm transition-all duration-200 group-hover:ml-2">
+          Sugestão
+        </span>
       </button>
 
       {/* Overlay + modal */}
