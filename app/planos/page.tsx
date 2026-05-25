@@ -10,6 +10,7 @@ import {
   X, Utensils, MessageCircle, UtensilsCrossed,
   ShoppingBag, Hash, Tv2, Zap,
 } from 'lucide-react'
+import { PLANOS as PLANOS_CONFIG } from '@/lib/planos'
 
 const COR = '#1A9B8A'
 
@@ -146,10 +147,11 @@ export default function PlanosPage() {
     })
     const data = await resp.json()
     if (!resp.ok) { alert(data.error || 'Erro ao ativar conta.'); setAceitando(false); return }
+    const qtdMesas = PLANOS_CONFIG[planoSelecionado as keyof typeof PLANOS_CONFIG]?.mesas || 15
     await fetch('/api/tenant/setup', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ qtd_mesas: 10 }),
+      body:    JSON.stringify({ qtd_mesas: qtdMesas }),
     })
     setAceito(true)
     setTimeout(() => router.push('/admin'), 1200)

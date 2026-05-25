@@ -53,12 +53,19 @@ export default function MesasQRPage() {
   const [aba, setAba] = useState<'logistica' | 'qrcodes'>('logistica')
   const [stats, setStats] = useState<EstatisticaMesa[]>([])
   const [loadingStats, setLoadingStats] = useState(true)
+  const [limiteMesas, setLimiteMesas] = useState<number>(0)
+  const [plano, setPlano] = useState<string>('')
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     fetch('/api/admin/mesas')
       .then(r => r.json())
-      .then(({ mesas: data }) => { setMesas(data || []); setLoading(false) })
+      .then(({ mesas: data, limite_mesas, plano: p }) => {
+        setMesas(data || [])
+        setLimiteMesas(limite_mesas ?? 0)
+        setPlano(p ?? '')
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [])
 
@@ -189,7 +196,25 @@ export default function MesasQRPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Mesas & QR Codes</h1>
-          <p className="text-slate-500 text-sm">{mesas.length} mesas cadastradas</p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-slate-500 text-sm">{mesas.length} mesas cadastradas</p>
+            {limiteMesas > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-24 bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(100, (mesas.length / limiteMesas) * 100)}%`,
+                      background: mesas.length >= limiteMesas ? '#ef4444' : '#1A9B8A',
+                    }}
+                  />
+                </div>
+                <span className="text-xs text-slate-400 font-medium">
+                  {mesas.length}/{limiteMesas} do plano {plano.charAt(0).toUpperCase() + plano.slice(1)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         {aba === 'qrcodes' && mesas.length > 0 && (
           <Button

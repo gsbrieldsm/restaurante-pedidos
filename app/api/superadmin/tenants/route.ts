@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+import { getPlanoConfig } from '@/lib/planos'
 
 async function checkAuth() {
   const cookieStore = await cookies()
@@ -95,7 +96,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ ok: true })
   }
 
-  // ── Ação: trocar plano ──
+  // ── Ação: trocar plano — atualiza plano e sincroniza mesas ──
   if (acao === 'trocar_plano') {
     const planosValidos = ['free', 'starter', 'pro', 'business', 'enterprise']
     if (!plano || !planosValidos.includes(plano)) {
@@ -106,11 +107,40 @@ export async function PATCH(req: Request) {
       .update({ plano })
       .eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Sincroniza mesas: adiciona as que faltam para o novo plano
+    const novoLimite = getPlanoConfig(plano).mesas
+    if (novoLimite > 0) {
+      const { randomBytes } = await import('crypto')
+      const { data: mesasAtuais } = await supabase
+        .from('mesas')
+        .select('numero')
+        .eq('tenant_id', id)
+        .order('numero', { ascending: false })
+
+      const totalAtual = mesasAtuais?.length ?? 0
+      if (novoLimite > totalAtual) {
+        const novas = Array.from({ length: novoLimite - totalAtual }, (_, i) => ({
+          numero:     totalAtual + i + 1,
+          capacidade: 4,
+          status:     'livre',
+          qr_token:   randomBytes(16).toString('hex'),
+          tenant_id:  id,
+        }))
+        await supabase.from('mesas').insert(novas)
+      }
+    }
+
     return NextResponse.json({ ok: true })
   }
 
   // ── Ação: forçar setup (cria mesas + config para tenants antigos) ──
   if (acao === 'setup') {
+    // Busca plano do tenant para criar o número correto de mesas
+    const { data: tenantData } = await supabase
+      .from('tenants').select('plano').eq('id', id).single()
+    const limiteSetup = getPlanoConfig(tenantData?.plano).mesas || 15
+
     const { count } = await supabase
       .from('mesas')
       .select('id', { count: 'exact', head: true })
@@ -121,7 +151,7 @@ export async function PATCH(req: Request) {
     }
 
     const { randomBytes } = await import('crypto')
-    const mesas = Array.from({ length: 10 }, (_, i) => ({
+    const mesas = Array.from({ length: limiteSetup }, (_, i) => ({
       numero:    i + 1,
       capacidade: 4,
       status:    'livre',
@@ -139,7 +169,7 @@ export async function PATCH(req: Request) {
       cor_primaria:     '#1A9B8A',
     })
 
-    return NextResponse.json({ ok: true, mesas_criadas: 10 })
+    return NextResponse.json({ ok: true, mesas_criadas: limiteSetup })
   }
 
   // ── Atualiza status ──

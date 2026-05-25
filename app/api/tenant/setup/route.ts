@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getTenantId } from '@/lib/tenant'
 import { randomBytes } from 'crypto'
+import { getPlanoConfig } from '@/lib/planos'
 
 // POST /api/tenant/setup — cria estrutura inicial para um novo tenant
 // (mesas, configuração padrão)
@@ -9,9 +10,20 @@ export async function POST(req: Request) {
   const tenantId = await getTenantId()
   if (!tenantId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { qtd_mesas = 10 } = await req.json().catch(() => ({}))
-
+  const body = await req.json().catch(() => ({}))
   const supabase = createServiceClient()
+
+  // Descobre o plano atual do tenant para saber quantas mesas criar
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('plano')
+    .eq('id', tenantId)
+    .single()
+
+  const planoConfig = getPlanoConfig(tenant?.plano)
+  // Se o plano tem mesas: 0 (ilimitado/free), usa o valor do body ou 15 como padrão
+  const limitePlano = planoConfig.mesas > 0 ? planoConfig.mesas : 15
+  const qtd_mesas: number = body.qtd_mesas ?? limitePlano
 
   // Verifica se já tem mesas (evita setup duplo)
   const { count } = await supabase
@@ -23,7 +35,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, ja_configurado: true })
   }
 
-  // Cria mesas
+  // Cria mesas conforme plano
   const mesas = Array.from({ length: qtd_mesas }, (_, i) => ({
     numero:      i + 1,
     capacidade:  4,
