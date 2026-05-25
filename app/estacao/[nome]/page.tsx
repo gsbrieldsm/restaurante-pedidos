@@ -27,6 +27,7 @@ export default function EstacaoPage() {
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date>(new Date())
   const [somAtivo, setSomAtivo] = useState(false)
   const audioAlertaRef = useRef<HTMLAudioElement | null>(null)
+  const inicializadoRef = useRef(false) // true após o primeiro fetch completar
 
   // Som de alerta — 2 bips (880 Hz → 1100 Hz)
   function tocarAlerta() {
@@ -62,12 +63,13 @@ export default function EstacaoPage() {
       const data = await resp.json()
       setItens((prev) => {
         const novos = data.itens as ViewFilaEstacao[]
-        // Tocar som se chegou novo item
-        if (novos.length > prev.length && prev.length > 0) {
+        // Tocar som se chegou novo item (após o primeiro fetch de inicialização)
+        if (inicializadoRef.current && novos.length > prev.length) {
           tocarAlerta()
         }
         return novos
       })
+      inicializadoRef.current = true
       setConectado(true)
       setUltimaAtualizacao(new Date())
     } catch {
