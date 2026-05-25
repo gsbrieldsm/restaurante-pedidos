@@ -157,6 +157,8 @@ export default function SuperAdminPage() {
   const [pagamentos,   setPagamentos]   = useState<Record<string, Pagamento[]>>({})
   const [confirmDelete,  setConfirmDelete]  = useState<Tenant | null>(null)
   const [deletando,      setDeletando]      = useState(false)
+  const [confirmDeleteParceiro, setConfirmDeleteParceiro] = useState<Parceiro | null>(null)
+  const [deletandoParceiro,     setDeletandoParceiro]     = useState(false)
   const [ativando,       setAtivando]       = useState<string | null>(null)
   const [editandoPlano, setEditandoPlano] = useState<string | null>(null)
   const [trocandoPlano, setTrocandoPlano] = useState<string | null>(null)
@@ -244,6 +246,16 @@ export default function SuperAdminPage() {
     }
     setDeletando(false)
     setConfirmDelete(null)
+  }
+
+  async function excluirParceiro(parceiro: Parceiro) {
+    setDeletandoParceiro(true)
+    const res = await fetch(`/api/superadmin/parceiros?id=${parceiro.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setParceiros((prev) => prev.filter((p) => p.id !== parceiro.id))
+    }
+    setDeletandoParceiro(false)
+    setConfirmDeleteParceiro(null)
   }
 
   async function trocarPlano(tenant: Tenant, novoPlano: string) {
@@ -512,6 +524,52 @@ export default function SuperAdminPage() {
                 {deletando
                   ? <><CircleDashed className="w-4 h-4 animate-spin" /> Excluindo...</>
                   : <><Trash2 className="w-4 h-4" /> Sim, excluir tudo</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: confirmar exclusão de parceiro ── */}
+      {confirmDeleteParceiro && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <p className="font-black text-slate-800">Excluir parceiro</p>
+                <p className="text-xs text-slate-400 mt-0.5">Esta ação não pode ser desfeita</p>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                Você está prestes a remover o parceiro <strong className="text-slate-800">{confirmDeleteParceiro.nome}</strong> do sistema.
+              </p>
+              {confirmDeleteParceiro.restaurantes_indicados.length > 0 && (
+                <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs text-amber-700 font-semibold">
+                  ⚠️ Este parceiro tem {confirmDeleteParceiro.restaurantes_indicados.length} restaurante(s) indicado(s). O vínculo de indicação será desfeito, mas os restaurantes não serão excluídos.
+                </div>
+              )}
+            </div>
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteParceiro(null)}
+                disabled={deletandoParceiro}
+                className="flex-1 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => excluirParceiro(confirmDeleteParceiro)}
+                disabled={deletandoParceiro}
+                className="flex-1 py-3 rounded-xl bg-red-600 text-sm font-bold text-white hover:bg-red-700 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {deletandoParceiro
+                  ? <><CircleDashed className="w-4 h-4 animate-spin" /> Excluindo...</>
+                  : <><Trash2 className="w-4 h-4" /> Sim, excluir parceiro</>
                 }
               </button>
             </div>
@@ -1272,6 +1330,15 @@ export default function SuperAdminPage() {
                               <ChevronDown className={`w-3 h-3 transition-transform ${aberto ? 'rotate-180' : ''}`} />
                             </button>
                           )}
+
+                          {/* Excluir parceiro */}
+                          <button
+                            onClick={() => setConfirmDeleteParceiro(p)}
+                            title="Excluir parceiro"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 

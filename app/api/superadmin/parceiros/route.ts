@@ -66,6 +66,27 @@ export async function GET() {
   return NextResponse.json({ parceiros: resultado })
 }
 
+// DELETE /api/superadmin/parceiros?id=xxx — remove parceiro permanentemente
+export async function DELETE(req: NextRequest) {
+  if (!await autenticar()) {
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+  }
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'ID obrigatório.' }, { status: 422 })
+
+  const supabase = createServiceClient()
+
+  const { error } = await supabase
+    .from('parceiros_leads')
+    .delete()
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}
+
 // PATCH /api/superadmin/parceiros — atualiza status/notas; gera código ao aprovar
 export async function PATCH(req: NextRequest) {
   if (!await autenticar()) {
