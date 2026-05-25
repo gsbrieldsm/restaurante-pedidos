@@ -19,7 +19,7 @@ export async function GET() {
   // Busca todos os tenants com contagens
   const { data: tenants, error } = await supabase
     .from('tenants')
-    .select('id, slug, nome, nome_restaurante, email, status, plano, plano_aceito_em, trial_expira_em, criado_em')
+    .select('id, slug, nome, nome_restaurante, email, status, plano, plano_aceito_em, trial_expira_em, criado_em, impl_cobrada')
     .order('criado_em', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -66,13 +66,24 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
-  const { id, status, acao, plano } = await req.json() as {
+  const { id, status, acao, plano, impl_cobrada } = await req.json() as {
     id: string
     status?: 'ativo' | 'suspenso'
-    acao?: 'setup' | 'ativar_plano' | 'trocar_plano'
+    acao?: 'setup' | 'ativar_plano' | 'trocar_plano' | 'toggle_impl'
     plano?: string
+    impl_cobrada?: boolean
   }
   const supabase = createServiceClient()
+
+  // ── Ação: toggle impl_cobrada ──
+  if (acao === 'toggle_impl') {
+    const { error } = await supabase
+      .from('tenants')
+      .update({ impl_cobrada })
+      .eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
 
   // ── Ação: ativar plano após pagamento (zera trial) ──
   if (acao === 'ativar_plano') {

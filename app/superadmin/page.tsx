@@ -61,6 +61,7 @@ type Tenant = {
   total_pedidos: number
   faturamento_total: number
   total_sessoes: number
+  impl_cobrada: boolean
 }
 
 type Aba = 'assinaturas' | 'performance' | 'suporte' | 'parceiros'
@@ -159,6 +160,7 @@ export default function SuperAdminPage() {
   const [ativando,       setAtivando]       = useState<string | null>(null)
   const [editandoPlano, setEditandoPlano] = useState<string | null>(null)
   const [trocandoPlano, setTrocandoPlano] = useState<string | null>(null)
+  const [togglingImpl, setTogglingImpl]   = useState<string | null>(null)
   const [pagandoId,    setPagandoId]    = useState<string | null>(null)
   const [mesRef,       setMesRef]       = useState(() => {
     const d = new Date(); return `${d.toLocaleString('pt-BR', { month: 'long' })} ${d.getFullYear()}`
@@ -270,6 +272,20 @@ export default function SuperAdminPage() {
       t.id === tenant.id ? { ...t, trial_expira_em: null, status: 'ativo' } : t
     ))
     setAtivando(null)
+  }
+
+  async function toggleImpl(tenant: Tenant) {
+    setTogglingImpl(tenant.id)
+    const novo = !tenant.impl_cobrada
+    await fetch('/api/superadmin/tenants', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ id: tenant.id, acao: 'toggle_impl', impl_cobrada: novo }),
+    })
+    setTenants((prev) => prev.map((t) =>
+      t.id === tenant.id ? { ...t, impl_cobrada: novo } : t
+    ))
+    setTogglingImpl(null)
   }
 
   async function atualizarStatusParceiro(id: string, status: string) {
@@ -549,7 +565,7 @@ export default function SuperAdminPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-100">
-                        {['Restaurante', 'Email', 'Slug', '⊞', 'Ped.', 'Faturado', 'Plano / Trial', 'Status', 'Cadastro', ''].map((h, i) => (
+                        {['Restaurante', 'Email', 'Slug', '⊞', 'Ped.', 'Faturado', 'Plano / Trial', 'Impl.', 'Status', 'Cadastro', ''].map((h, i) => (
                           <th key={i} className="px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-400 text-left whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
@@ -665,6 +681,25 @@ export default function SuperAdminPage() {
                             })()}
                           </td>
                           <td className="px-3 py-3 whitespace-nowrap">
+                            <button
+                              onClick={() => toggleImpl(t)}
+                              disabled={togglingImpl === t.id}
+                              title={t.impl_cobrada ? 'Impl. cobrada — clique para desmarcar' : 'Impl. não cobrada — clique para marcar'}
+                              className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-full font-semibold border transition-all disabled:opacity-40 ${
+                                t.impl_cobrada
+                                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                                  : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200'
+                              }`}
+                            >
+                              {togglingImpl === t.id
+                                ? <CircleDashed className="w-3 h-3 animate-spin" />
+                                : t.impl_cobrada
+                                  ? <><CheckCircle2 className="w-3 h-3" /> cobrada</>
+                                  : <>⏳ pendente</>
+                              }
+                            </button>
+                          </td>
+                          <td className="px-3 py-3 whitespace-nowrap">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                               t.status === 'ativo'
                                 ? 'bg-teal-50 text-teal-700 border border-teal-100'
@@ -705,7 +740,7 @@ export default function SuperAdminPage() {
                         </tr>
                       ))}
                       {tenants.length === 0 && (
-                        <tr><td colSpan={10} className="px-5 py-16 text-center text-slate-300">Nenhum restaurante cadastrado ainda.</td></tr>
+                        <tr><td colSpan={11} className="px-5 py-16 text-center text-slate-300">Nenhum restaurante cadastrado ainda.</td></tr>
                       )}
                     </tbody>
                   </table>
