@@ -37,7 +37,7 @@ const PLANOS_MESA = [
     id:       'business',
     nome:     'Business',
     mesas:    'Até 60 mesas',
-    preco:    799,
+    preco:    1197,
     destaque: false,
     cor:      '#7c3aed',
     desc:     'Para grandes operações com múltiplas estações e equipes completas.',
