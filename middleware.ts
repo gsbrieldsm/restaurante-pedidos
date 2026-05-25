@@ -78,7 +78,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── 1. Rotas públicas de tenant e páginas públicas — sempre passam ───────────
+  // ── 1. Raiz e landing — sempre públicas ─────────────────────────────────────
+  if (pathname === '/' || pathname.startsWith('/landing')) {
+    return NextResponse.next()
+  }
+
+  // ── 1b. Rotas públicas de tenant e páginas públicas — sempre passam ──────────
   if (TENANT_PUBLIC.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
   }
@@ -217,8 +222,10 @@ export const config = {
     '/api/superadmin/:path*',
     '/s/:path*',
     '/api/pub/:path*',
-    // Raiz e paths sem prefixo — necessário para subdomínio via Cloudflare Worker
+    // Raiz e landing — públicas
     '/',
+    '/landing',
+    '/landing/:path*',
     '/mesa/:path*',
     '/api/mesas/:path*',
     '/api/cardapio/:path*',
