@@ -8,7 +8,8 @@ import {
   RefreshCw, Handshake, ChevronDown, CreditCard,
   Gauge, HeadphonesIcon, Menu, X, Copy, Check, Link2,
   Banknote, History, CheckCircle2, CircleDashed, Trash2, ChevronRight,
-  AlertTriangle, BadgeCheck, Clock,
+  AlertTriangle, BadgeCheck, Clock, Lightbulb, Bug, HelpCircle, MessageCircle,
+  InboxIcon,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -62,6 +63,17 @@ type Tenant = {
   faturamento_total: number
   total_sessoes: number
   impl_cobrada: boolean
+}
+
+type Chamado = {
+  id:              string
+  tipo:            'sugestao' | 'bug' | 'duvida' | 'outro'
+  mensagem:        string
+  anonimo:         boolean
+  nome_autor:      string | null
+  status:          'aberto' | 'em_analise' | 'resolvido' | 'fechado'
+  criado_em:       string
+  tenants:         { nome_restaurante: string } | null
 }
 
 type Aba = 'assinaturas' | 'performance' | 'suporte' | 'parceiros'
@@ -169,6 +181,9 @@ export default function SuperAdminPage() {
   })
   const [perfData,     setPerfData]     = useState<PerfData | null>(null)
   const [perfLoading,  setPerfLoading]  = useState(false)
+  const [chamados,     setChamados]     = useState<Chamado[]>([])
+  const [chamadosLoading, setChamadosLoading] = useState(false)
+  const [atualizandoChamado, setAtualizandoChamado] = useState<string | null>(null)
 
   useEffect(() => {
     document.title = 'Master — Menuê+'
@@ -180,6 +195,33 @@ export default function SuperAdminPage() {
       carregarPerformance()
     }
   }, [aba, perfData, perfLoading])
+
+  useEffect(() => {
+    if (aba === 'suporte' && chamados.length === 0 && !chamadosLoading) {
+      carregarChamados()
+    }
+  }, [aba, chamados.length, chamadosLoading])
+
+  async function carregarChamados() {
+    setChamadosLoading(true)
+    try {
+      const res  = await fetch('/api/superadmin/chamados')
+      const data = await res.json()
+      if (res.ok) setChamados(data.chamados ?? [])
+    } catch {}
+    setChamadosLoading(false)
+  }
+
+  async function atualizarStatusChamado(id: string, status: string) {
+    setAtualizandoChamado(id)
+    await fetch('/api/superadmin/chamados', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ id, status }),
+    })
+    setChamados((prev) => prev.map((c) => c.id === id ? { ...c, status: status as Chamado['status'] } : c))
+    setAtualizandoChamado(null)
+  }
 
   async function carregarPerformance() {
     setPerfLoading(true)
@@ -1174,20 +1216,105 @@ export default function SuperAdminPage() {
           )}
 
           {/* ── ABA: Chamados & Suporte ── */}
-          {aba === 'suporte' && (
-            <>
-              <div>
-                <h2 className="text-xl font-black text-slate-800">Chamados & Suporte</h2>
-                <p className="text-slate-400 text-sm mt-1">Central de atendimento aos clientes.</p>
-              </div>
+          {aba === 'suporte' && (() => {
+            const TIPO_META: Record<string, { label: string; cor: string; bg: string }> = {
+              sugestao: { label: 'Sugestão',  cor: 'text-amber-600',  bg: 'bg-amber-50 border-amber-100' },
+              bug:      { label: 'Bug',        cor: 'text-red-600',    bg: 'bg-red-50 border-red-100'     },
+              duvida:   { label: 'Dúvida',     cor: 'text-blue-600',   bg: 'bg-blue-50 border-blue-100'   },
+              outro:    { label: 'Outro',      cor: 'text-slate-500',  bg: 'bg-slate-50 border-slate-200' },
+            }
+            const STATUS_META: Record<string, { label: string; cor: string }> = {
+              aberto:     { label: 'Aberto',      cor: 'text-teal-600 bg-teal-50 border-teal-100'    },
+              em_analise: { label: 'Em análise',  cor: 'text-amber-600 bg-amber-50 border-amber-100' },
+              resolvido:  { label: 'Resolvido',   cor: 'text-green-600 bg-green-50 border-green-100' },
+              fechado:    { label: 'Fechado',     cor: 'text-slate-500 bg-slate-50 border-slate-200' },
+            }
+            const counts = chamados.reduce((acc, c) => { acc[c.status] = (acc[c.status] ?? 0) + 1; return acc }, {} as Record<string, number>)
+            return (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800">Chamados & Suporte</h2>
+                    <p className="text-slate-400 text-sm mt-1">Sugestões e mensagens enviadas pelos restaurantes.</p>
+                  </div>
+                  <button onClick={carregarChamados} disabled={chamadosLoading}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 text-slate-500 hover:border-teal-200 hover:text-teal-600 hover:bg-teal-50 transition-colors disabled:opacity-40">
+                    <RefreshCw className={`w-3.5 h-3.5 ${chamadosLoading ? 'animate-spin' : ''}`} />
+                    Atualizar
+                  </button>
+                </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-                <HeadphonesIcon className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                <p className="text-slate-400 font-semibold">Sistema de chamados em breve</p>
-                <p className="text-slate-300 text-sm mt-1">Tickets abertos pelos restaurantes, histórico de atendimento e SLA.</p>
-              </div>
-            </>
-          )}
+                {/* Cards de status */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {(['aberto','em_analise','resolvido','fechado'] as const).map((s) => (
+                    <div key={s} className="bg-white rounded-2xl border border-slate-200 px-4 py-4 text-center">
+                      <p className="text-2xl font-black text-slate-800">{counts[s] ?? 0}</p>
+                      <p className={`text-xs font-bold mt-0.5 ${STATUS_META[s].cor.split(' ')[0]}`}>{STATUS_META[s].label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {chamadosLoading && chamados.length === 0 && (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+                    <CircleDashed className="w-6 h-6 text-slate-300 animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-slate-400">Carregando chamados...</p>
+                  </div>
+                )}
+
+                {!chamadosLoading && chamados.length === 0 && (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+                    <InboxIcon className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                    <p className="text-slate-400 font-semibold">Nenhum chamado ainda</p>
+                    <p className="text-slate-300 text-sm mt-1">As sugestões dos restaurantes aparecerão aqui.</p>
+                  </div>
+                )}
+
+                {chamados.length > 0 && (
+                  <div className="space-y-3">
+                    {chamados.map((c) => {
+                      const tm = TIPO_META[c.tipo] ?? TIPO_META.outro
+                      const sm = STATUS_META[c.status] ?? STATUS_META.aberto
+                      const restaurant = c.tenants?.nome_restaurante ?? '—'
+                      const autor = c.anonimo ? 'Anônimo' : (c.nome_autor || 'Não identificado')
+                      const data = new Date(c.criado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+                      return (
+                        <div key={c.id} className="bg-white rounded-2xl border border-slate-200 px-5 py-4 space-y-3">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${tm.bg} ${tm.cor}`}>{tm.label}</span>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${sm.cor}`}>{sm.label}</span>
+                              </div>
+                              <p className="text-sm text-slate-700 leading-relaxed">{c.mensagem}</p>
+                              <p className="text-xs text-slate-400 mt-1.5">
+                                <span className="font-semibold text-slate-500">{restaurant}</span>
+                                {' · '}{autor}{' · '}{data}
+                              </p>
+                            </div>
+                            {/* Seletor de status */}
+                            <div className="relative shrink-0">
+                              <select
+                                value={c.status}
+                                disabled={atualizandoChamado === c.id}
+                                onChange={(e) => atualizarStatusChamado(c.id, e.target.value)}
+                                className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 cursor-pointer hover:border-teal-300 focus:outline-none disabled:opacity-40"
+                              >
+                                <option value="aberto">Aberto</option>
+                                <option value="em_analise">Em análise</option>
+                                <option value="resolvido">Resolvido</option>
+                                <option value="fechado">Fechado</option>
+                              </select>
+                              <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )
+          })()}
 
           {/* ── ABA: Parceiros ── */}
           {aba === 'parceiros' && (

@@ -3,6 +3,7 @@ import { headers, cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 import { TrialBanner } from '@/components/admin/TrialBanner'
+import { SugestaoWidget } from '@/components/admin/SugestaoWidget'
 
 export const metadata: Metadata = {
   title: 'Gestão — Menuê+',
@@ -43,6 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <TrialBanner />
         {children}
       </main>
+      <SugestaoWidget />
     </div>
   )
 }
