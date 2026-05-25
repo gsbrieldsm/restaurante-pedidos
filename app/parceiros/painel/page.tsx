@@ -25,7 +25,7 @@ function fmtCel(s: string | null) {
 }
 
 // ── constantes ────────────────────────────────────────────────────────────────
-const PLANO_PRECO: Record<string, number> = { starter: 397, pro: 597, business: 799, enterprise: 0 }
+const PLANO_PRECO: Record<string, number> = { starter: 397, pro: 697, business: 1197, enterprise: 0 }
 const PLANO_LABEL: Record<string, string> = { starter: 'Starter', pro: 'Pro', business: 'Business', enterprise: 'Enterprise' }
 const PLANO_COR:   Record<string, string> = { starter: '#64748b', pro: '#1A9B8A', business: '#0f7a6b', enterprise: '#8b5cf6' }
 
@@ -475,7 +475,7 @@ function DashboardParceiro({ data }: { data: PainelData }) {
           <div className="p-6">
             <p className="text-teal-600 text-xs font-bold uppercase tracking-wider mb-3">Recorrente / mês</p>
             <p className="font-black text-3xl" style={{ color: '#1A9B8A' }}>{fmt(stats.recorrente_mensal)}</p>
-            <p className="text-slate-400 text-xs mt-2">{stats.total_ativos} × R$597 × {tierPct}</p>
+            <p className="text-slate-400 text-xs mt-2">{stats.total_ativos} × R$697 × {tierPct}</p>
             <p className="text-slate-300 text-xs mt-0.5">Tier: {stats.tier?.label ?? '—'}</p>
           </div>
           {/* Projeção */}
@@ -622,7 +622,7 @@ function DashboardParceiro({ data }: { data: PainelData }) {
           </a>
         </p>
         <p className="text-slate-300 text-xs">
-          * Estimativas com base na mensalidade média de R$597. Valores reais dependem do plano de cada cliente.
+          * Estimativas com base na mensalidade média de R$697. Valores reais dependem do plano de cada cliente.
         </p>
       </div>
     </div>

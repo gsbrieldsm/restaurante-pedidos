@@ -86,13 +86,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Erro ao criar conta. Tente novamente.' }, { status: 500 })
     }
 
-    // Dispara e-mails (não bloqueia a resposta se falhar)
+    // Dispara apenas o e-mail de verificação no cadastro.
+    // O e-mail de boas-vindas é enviado após a confirmação (verificar-email/route.ts)
     if (process.env.RESEND_API_KEY) {
       const resend = new Resend(process.env.RESEND_API_KEY)
       const from = process.env.RESEND_FROM ?? 'Menue+ <noreply@menue.com.br>'
 
       try {
-        // E-mail de confirmação (prioritário) — aguarda para não ser cortado pelo serverless
         await resend.emails.send({
           from,
           to:      tenant.email,
@@ -101,23 +101,6 @@ export async function POST(req: Request) {
         })
       } catch (err) {
         console.error('[resend] erro ao enviar verificação:', err)
-      }
-
-      try {
-        // E-mail de boas-vindas (informativo)
-        await resend.emails.send({
-          from,
-          to:      tenant.email,
-          subject: `Bem-vindo ao Menuê+, ${tenant.nome}! 🎉`,
-          html:    emailBoasVindas({
-            nome:             tenant.nome,
-            nome_restaurante: tenant.nome_restaurante,
-            email:            tenant.email,
-            slug:             tenant.slug,
-          }),
-        })
-      } catch (err) {
-        console.error('[resend] erro ao enviar boas-vindas:', err)
       }
     }
 

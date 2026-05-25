@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { Resend } from 'resend'
+import { emailBoasVindas } from '@/lib/email/boas-vindas'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +44,13 @@ export async function GET(req: Request) {
     return resp
   }
 
+  // Busca dados completos para o email de boas-vindas
+  const { data: tenantCompleto } = await supabase
+    .from('tenants')
+    .select('id, slug, nome, nome_restaurante, email, plano_aceito_em')
+    .eq('id', tenant.id)
+    .single()
+
   // Marca como verificado e limpa o token
   const { error } = await supabase
     .from('tenants')
@@ -50,6 +59,27 @@ export async function GET(req: Request) {
 
   if (error) {
     return NextResponse.json({ error: 'Erro ao verificar e-mail.' }, { status: 500 })
+  }
+
+  // Envia e-mail de boas-vindas agora que o email foi confirmado
+  if (process.env.RESEND_API_KEY && tenantCompleto) {
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const from   = process.env.RESEND_FROM ?? 'Menue+ <noreply@menue.com.br>'
+      await resend.emails.send({
+        from,
+        to:      tenantCompleto.email,
+        subject: `Bem-vindo ao Menuê+, ${tenantCompleto.nome}! 🎉`,
+        html:    emailBoasVindas({
+          nome:             tenantCompleto.nome,
+          nome_restaurante: tenantCompleto.nome_restaurante,
+          email:            tenantCompleto.email,
+          slug:             tenantCompleto.slug,
+        }),
+      })
+    } catch (err) {
+      console.error('[resend] erro ao enviar boas-vindas:', err)
+    }
   }
 
   // Faz login automático após verificação

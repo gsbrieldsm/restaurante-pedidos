@@ -12,7 +12,7 @@ const TIERS = [
   { min: 20, max: Infinity, label: '20+ clientes',   recorrente: 0.30, cor: '#0a5a4f' },
 ]
 
-const MENSALIDADE_BASE = 597   // R$ médio/mês (planos: R$397, R$597, R$799)
+const MENSALIDADE_BASE = 697   // R$ médio/mês (planos: R$397, R$697, R$1.197)
 const VALOR_IMPL       = 2000  // R$ implementação por restaurante
 const COMISSAO_IMPL    = 0.30  // 30% fixo na implementação
 
@@ -235,7 +235,7 @@ export default function ParceirosPage() {
                   </span>
                 </div>
               </div>
-              <p className="text-white/30 text-xs">* considerando mensalidade média de R$ 597/restaurante (planos R$397–R$799)</p>
+              <p className="text-white/30 text-xs">* considerando mensalidade média de R$ 697/restaurante (planos R$397–R$1.197)</p>
             </div>
           </div>
         </div>
@@ -387,7 +387,7 @@ export default function ParceirosPage() {
           </div>
 
           <p className="text-slate-400 text-xs text-center mt-4">
-            * Ganho mensal estimado com base na mensalidade média de R$ 597/restaurante.
+            * Ganho mensal estimado com base na mensalidade média de R$ 697/restaurante.
           </p>
         </div>
       </section>
@@ -499,7 +499,7 @@ export default function ParceirosPage() {
             </div>
 
             <p className="text-slate-400 text-xs text-center mt-6">
-              * Estimativa com base na mensalidade média de R$ 597 (planos: R$397 / R$597 / R$799). Valores reais podem ser maiores.
+              * Estimativa com base na mensalidade média de R$ 697 (planos: R$397 / R$697 / R$1.197). Valores reais podem ser maiores.
             </p>
           </div>
         </div>

@@ -28,7 +28,7 @@ const PLANOS_MESA = [
     id:       'pro',
     nome:     'Pro',
     mesas:    'Até 30 mesas',
-    preco:    597,
+    preco:    697,
     destaque: true,
     cor:      COR,
     desc:     'Para operações em crescimento que precisam de visibilidade e controle.',

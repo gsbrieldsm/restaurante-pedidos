@@ -13,7 +13,7 @@ const TIERS = [
   { min: 20, max: Infinity, label: '20+ clientes',   recorrente: 0.30 },
 ]
 
-const MENSALIDADE_BASE = 597
+const MENSALIDADE_BASE = 697
 const VALOR_IMPL       = 2000
 const COMISSAO_IMPL    = 0.30
 const porImpl          = VALOR_IMPL * COMISSAO_IMPL // R$600

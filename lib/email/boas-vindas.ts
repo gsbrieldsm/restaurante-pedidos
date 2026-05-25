@@ -55,20 +55,14 @@ export function emailBoasVindas({ nome, nome_restaurante, slug }: BoasVindasProp
               </td></tr>
             </table>
 
-            <!-- Resumo do plano -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:28px;">
+            <!-- Trial -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin-bottom:28px;">
               <tr><td style="padding:16px 20px;">
-                <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;">Plano contratado</p>
-                <table width="100%">
-                  <tr>
-                    <td style="font-size:14px;color:#64748b;padding:4px 0;">Implementação</td>
-                    <td align="right" style="font-size:14px;font-weight:700;color:#0f172a;">R$ 2.000,00</td>
-                  </tr>
-                  <tr>
-                    <td style="font-size:14px;color:#64748b;padding:4px 0;border-top:1px solid #e2e8f0;">Mensalidade</td>
-                    <td align="right" style="font-size:14px;font-weight:700;color:#0f172a;border-top:1px solid #e2e8f0;">R$ 550,00 / mês</td>
-                  </tr>
-                </table>
+                <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#d97706;">⏳ Trial gratuito</p>
+                <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;">
+                  Você tem <strong>7 dias gratuitos</strong> para explorar todas as funcionalidades do Menuê+.
+                  Ao final, escolha o plano ideal para o seu restaurante.
+                </p>
               </td></tr>
             </table>
 

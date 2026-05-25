@@ -64,8 +64,8 @@ function BloqueadoContent() {
           </p>
           <div className="space-y-2">
             {[
-              { nome: 'Pro',      preco: 'R$ 597/mês', mesas: 'até 30 mesas' },
-              { nome: 'Business', preco: 'R$ 799/mês', mesas: 'até 60 mesas' },
+              { nome: 'Pro',      preco: 'R$ 697/mês',   mesas: 'até 30 mesas' },
+              { nome: 'Business', preco: 'R$ 1.197/mês', mesas: 'até 60 mesas' },
             ].map((p) => (
               <div key={p.nome} className="flex items-center justify-between text-sm">
                 <span className="font-semibold text-slate-700">{p.nome} — {p.mesas}</span>
