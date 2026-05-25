@@ -193,9 +193,9 @@ export default function LandingPage() {
           </div>
 
           {/* Phone com screenshot real */}
-          <div className="hidden lg:flex justify-center">
+          <div className="flex justify-center">
             <div
-              className="relative w-72 rounded-[2.5rem] p-2 shadow-2xl"
+              className="relative w-56 lg:w-72 rounded-[2.5rem] p-2 shadow-2xl"
               style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}
             >
               {/* Notch */}
