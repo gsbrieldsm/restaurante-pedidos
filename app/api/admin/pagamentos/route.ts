@@ -18,10 +18,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
   }
 
-  // Busca a comanda
+  // Busca a comanda (inclui tenant_id para gravar no pagamento)
   const { data: sessao, error: errSessao } = await supabase
     .from('sessoes_mesa')
-    .select('id, cliente_nome, mesa_id')
+    .select('id, cliente_nome, mesa_id, tenant_id')
     .eq('id', sessao_id)
     .eq('ativa', true)
     .single()
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     .eq('id', sessao.mesa_id)
     .single()
 
-  // Registra pagamento
+  // Registra pagamento (com tenant_id para aparecer no financeiro)
   const { error: errPag } = await supabase
     .from('pagamentos')
     .insert({
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       cliente_nome: sessao.cliente_nome,
       forma,
       valor,
+      tenant_id:    (sessao as any).tenant_id ?? null,
     })
 
   if (errPag) {
