@@ -399,9 +399,9 @@ export default function LandingPage() {
           {/* Planos mensais */}
           <div className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto mb-6">
             {[
-              { nome: 'Starter', usuarios: 'Até 5 usuários', preco: 397,  destaque: false, ex: '1 admin + 2 garçons + cozinha + bar' },
-              { nome: 'Pro',     usuarios: '6 a 10 usuários', preco: 697,  destaque: true,  ex: 'Equipe maior com múltiplas estações' },
-              { nome: 'Business',usuarios: '11 a 20 usuários', preco: 1197, destaque: false, ex: 'Operação completa de grande porte' },
+              { nome: 'Starter',  mesas: 'Até 15 mesas',  preco: 397,  destaque: false, desc: 'Para bares e restaurantes que estão começando a digitalizar a operação.' },
+              { nome: 'Pro',      mesas: 'Até 30 mesas',  preco: 697,  destaque: true,  desc: 'Para operações em crescimento que precisam de visibilidade e controle.' },
+              { nome: 'Business', mesas: 'Até 60 mesas',  preco: 1197, destaque: false, desc: 'Para grandes operações com múltiplas estações e equipes completas.' },
             ].map((p) => (
               <div
                 key={p.nome}
@@ -419,13 +419,13 @@ export default function LandingPage() {
                     mais popular
                   </div>
                 )}
-                <p className="text-white font-black text-base mb-1">{p.nome}</p>
-                <p className="text-teal-300/60 text-xs mb-4">{p.usuarios}</p>
+                <p className="text-white font-black text-base mb-0.5">{p.nome}</p>
+                <p className="text-teal-300/60 text-xs mb-1">{p.mesas} · usuários ilimitados</p>
                 <div className="flex items-baseline gap-1 mb-3">
                   <span className="text-white font-black text-3xl">R$ {p.preco}</span>
                   <span className="text-teal-300/50 text-sm">/mês</span>
                 </div>
-                <p className="text-teal-200/50 text-xs">{p.ex}</p>
+                <p className="text-teal-200/50 text-xs leading-relaxed">{p.desc}</p>
               </div>
             ))}
           </div>
@@ -436,8 +436,8 @@ export default function LandingPage() {
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)' }}
           >
             <div className="text-left">
-              <p className="text-white font-bold text-sm">Mais de 20 usuários?</p>
-              <p className="text-teal-300/50 text-xs mt-0.5">Redes e franquias — montamos um plano sob medida.</p>
+              <p className="text-white font-bold text-sm">Mais de 60 mesas ou precisa de algo sob medida?</p>
+              <p className="text-teal-300/50 text-xs mt-0.5">Redes, franquias e grandes operações — montamos um plano personalizado.</p>
             </div>
             <a
               href={whatsapp}
