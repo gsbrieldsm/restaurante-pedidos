@@ -8,14 +8,6 @@ const geist = Geist({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Menuê+',
   description: 'Cardápio digital com pedidos via QR Code',
-  icons: {
-    icon: [
-      { url: '/favicon.ico',    sizes: 'any' },
-      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
-    ],
-    apple:   [{ url: '/favicon-32.png', sizes: '32x32', type: 'image/png' }],
-    shortcut: '/favicon.ico',
-  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
