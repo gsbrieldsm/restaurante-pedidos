@@ -368,10 +368,12 @@ export default function EquipePage() {
         />
       )}
 
-      <div className="space-y-6">
-        {/* Header com botão */}
-        <div className="flex items-center justify-between">
+      <div className="p-6 space-y-6 max-w-4xl">
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
           <div>
+            <p className="text-xs font-bold tracking-widest uppercase text-teal-600 mb-1">GESTÃO</p>
             <h1 className="text-2xl font-bold text-slate-800">Equipe</h1>
             <p className="text-sm text-slate-400 mt-0.5">
               {membros.length} {membros.length === 1 ? 'membro' : 'membros'} no total
@@ -379,7 +381,7 @@ export default function EquipePage() {
           </div>
           <Button
             onClick={() => setModalAberto(true)}
-            className="font-bold text-white gap-2"
+            className="font-bold text-white gap-2 shrink-0"
             style={{ background: '#1A9B8A' }}
           >
             <UserPlus className="w-4 h-4" />
@@ -396,7 +398,7 @@ export default function EquipePage() {
         )}
 
         {carregando ? (
-          <div className="flex justify-center py-12">
+          <div className="flex justify-center py-16">
             <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
           </div>
         ) : membros.length === 0 ? (
