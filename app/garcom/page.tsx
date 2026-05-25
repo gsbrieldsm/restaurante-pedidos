@@ -136,8 +136,9 @@ export default function GarcomPage() {
   // HTMLAudioElement — compatível com Safari (iOS e Mac)
   const audioItemRef    = useRef<HTMLAudioElement | null>(null)
   const audioChamadaRef = useRef<HTMLAudioElement | null>(null)
-  const prevItemIds     = useRef<Set<string>>(new Set())
-  const prevChamadaIds  = useRef<Set<string>>(new Set())
+  const prevItemIds         = useRef<Set<string>>(new Set())
+  const prevChamadaIds      = useRef<Set<string>>(new Set())
+  const chamadaInicializada = useRef(false) // garante som mesmo quando lista começa vazia
   const [somAtivo, setSomAtivo] = useState(false)
 
   function tocarItemPronto() {
@@ -268,9 +269,10 @@ export default function GarcomPage() {
     if (!data) return
 
     const novasIds = new Set(data.map((c) => c.id))
-    if (data.some((c) => !prevChamadaIds.current.has(c.id)) && prevChamadaIds.current.size > 0) {
+    if (chamadaInicializada.current && data.some((c) => !prevChamadaIds.current.has(c.id))) {
       tocarChamadaGarcom()
     }
+    chamadaInicializada.current = true
     prevChamadaIds.current = novasIds
     setChamadas(data)
   }, [])
