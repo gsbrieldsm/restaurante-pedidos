@@ -206,7 +206,7 @@ export default function LandingPage() {
                   src="/preview-cardapio.png"
                   alt="Cardápio digital Menuê+"
                   width={288}
-                  height={608}
+                  height={624}
                   className="w-full h-auto block"
                   priority
                 />
