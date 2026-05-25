@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, ImagePlus, X, Settings2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, ImagePlus, X, Settings2, Check } from 'lucide-react'
 import type { CardapioItem, EstacaoTipo, GrupoOpcao } from '@/lib/supabase/types'
 
 const ESTACOES: EstacaoTipo[] = ['cozinha', 'bar', 'drinks', 'chopeira']
@@ -45,6 +45,11 @@ export default function CardapioAdminPage() {
   const [novaOpcaoForm, setNovaOpcaoForm] = useState<Record<string, { nome: string; preco: string }>>({})
   const [salvandoOpcao, setSalvandoOpcao] = useState<string | null>(null)
 
+  // renomear categoria
+  const [renomeandoCat, setRenomeandoCat] = useState<string | null>(null)
+  const [novoNomeCat, setNovoNomeCat] = useState('')
+  const [salvandoCat, setSalvandoCat] = useState(false)
+
   // imagem
   const [imagemAtual, setImagemAtual] = useState<string | null>(null) // url já salva
   const [imagemPreview, setImagemPreview] = useState<string | null>(null) // preview local
@@ -57,6 +62,22 @@ export default function CardapioAdminPage() {
     const data = await res.json()
     setItens(data.itens || [])
     setLoading(false)
+  }
+
+  async function renomearCategoria(nomeAntigo: string) {
+    const novo = novoNomeCat.trim()
+    if (!novo || novo === nomeAntigo) { setRenomeandoCat(null); return }
+    setSalvandoCat(true)
+    const res = await fetch('/api/admin/cardapio/categoria', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categoria_antiga: nomeAntigo, categoria_nova: novo }),
+    })
+    if (res.ok) {
+      setItens(prev => prev.map(i => i.categoria === nomeAntigo ? { ...i, categoria: novo } : i))
+    }
+    setSalvandoCat(false)
+    setRenomeandoCat(null)
   }
 
   useEffect(() => { buscarItens() }, [])
@@ -317,7 +338,36 @@ export default function CardapioAdminPage() {
       ) : (
         categorias.map((cat) => (
           <div key={cat}>
-            <h2 className="font-semibold text-slate-600 text-sm uppercase tracking-wider mb-2">{cat}</h2>
+            <div className="flex items-center gap-2 mb-2 group">
+              {renomeandoCat === cat ? (
+                <>
+                  <input
+                    autoFocus
+                    value={novoNomeCat}
+                    onChange={e => setNovoNomeCat(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') renomearCategoria(cat); if (e.key === 'Escape') setRenomeandoCat(null) }}
+                    className="font-semibold text-slate-700 text-sm uppercase tracking-wider border-b-2 border-teal-500 bg-transparent outline-none w-40"
+                  />
+                  <button onClick={() => renomearCategoria(cat)} disabled={salvandoCat}
+                    className="text-teal-600 hover:text-teal-700">
+                    {salvandoCat ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  </button>
+                  <button onClick={() => setRenomeandoCat(null)} className="text-slate-400 hover:text-slate-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h2 className="font-semibold text-slate-600 text-sm uppercase tracking-wider">{cat}</h2>
+                  <button
+                    onClick={() => { setRenomeandoCat(cat); setNovoNomeCat(cat) }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-teal-600"
+                    title="Renomear categoria">
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                </>
+              )}
+            </div>
             <div className="space-y-2">
               {itensFiltrados
                 .filter((i) => i.categoria === cat)
