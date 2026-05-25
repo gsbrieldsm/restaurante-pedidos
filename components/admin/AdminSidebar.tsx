@@ -238,25 +238,29 @@ export function AdminSidebar({
 
   // Header da sidebar com switcher de restaurante
   const header = (
-    <div className="px-4 py-4 border-b border-teal-700">
+    <div className="px-5 py-5 border-b border-white/10">
       <div className="flex items-center justify-between gap-2">
-        {/* Nome do restaurante — clicável se quiser trocar */}
+        {/* Logo + nome */}
         <div className="relative flex-1 min-w-0">
           <button
             onClick={() => setSwitcherAberto((v) => !v)}
-            className="flex items-center gap-1.5 group w-full text-left"
+            className="flex items-center gap-3 group w-full text-left"
             title="Trocar restaurante"
           >
+            {/* Ícone M+ */}
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 border border-white/20 shrink-0">
+              <span className="text-base font-black text-white">M+</span>
+            </div>
             <div className="min-w-0">
-              <p className="font-black tracking-widest text-xs uppercase text-teal-400 leading-none truncate">Menuê+</p>
+              <p className="font-black tracking-widest text-xs uppercase text-teal-300 leading-none">Menuê+</p>
               {nomeRestaurante && (
-                <p className="text-white text-xs font-semibold mt-0.5 truncate group-hover:text-teal-300 transition-colors">
+                <p className="text-white font-semibold text-sm leading-tight mt-0.5 truncate group-hover:text-teal-300 transition-colors">
                   {nomeRestaurante}
                   <ChevronDown className="inline w-3 h-3 ml-0.5 opacity-50" />
                 </p>
               )}
               {!nomeRestaurante && (
-                <p className="text-teal-500 text-xs tracking-widest uppercase">cardápio digital</p>
+                <p className="text-teal-400 text-xs mt-0.5">cardápio digital</p>
               )}
             </div>
           </button>
@@ -283,11 +287,16 @@ export function AdminSidebar({
 
       {/* ── Mobile: top bar ── */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-teal-900 flex items-center justify-between px-4 py-3 shadow-md">
-        <div>
-          <p className="font-black tracking-widest text-xs uppercase text-teal-400 leading-none">Menuê+</p>
-          {nomeRestaurante
-            ? <p className="text-white font-bold text-sm leading-tight truncate max-w-[180px]">{nomeRestaurante}</p>
-            : <p className="text-white font-bold text-base leading-tight">Gestão</p>}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 border border-white/20 shrink-0">
+            <span className="text-sm font-black text-white">M+</span>
+          </div>
+          <div>
+            <p className="font-black tracking-widest text-xs uppercase text-teal-300 leading-none">Menuê+</p>
+            {nomeRestaurante
+              ? <p className="text-white font-semibold text-sm leading-tight truncate max-w-[160px]">{nomeRestaurante}</p>
+              : <p className="text-teal-400 text-xs">cardápio digital</p>}
+          </div>
         </div>
         <button
           onClick={() => setDrawerAberto(true)}
@@ -306,11 +315,16 @@ export function AdminSidebar({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-4 py-4 border-b border-teal-700 flex items-center justify-between">
-              <div className="min-w-0">
-                <p className="font-black tracking-widest text-xs uppercase text-teal-400 truncate">Menuê+</p>
-                {nomeRestaurante && (
-                  <p className="text-white text-xs font-semibold mt-0.5 truncate">{nomeRestaurante}</p>
-                )}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 border border-white/20 shrink-0">
+                  <span className="text-sm font-black text-white">M+</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-black tracking-widest text-xs uppercase text-teal-300 leading-none">Menuê+</p>
+                  {nomeRestaurante && (
+                    <p className="text-white text-xs font-semibold mt-0.5 truncate">{nomeRestaurante}</p>
+                  )}
+                </div>
               </div>
               <button onClick={() => setDrawerAberto(false)} className="text-teal-400 hover:text-white p-1 shrink-0">
                 <X className="w-5 h-5" />
