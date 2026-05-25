@@ -367,21 +367,25 @@ export default function SuperAdminPage() {
   const PLANOS_PRECO_MAP: Record<string, number> = { free: 0, starter: 397, pro: 697, business: 1197, enterprise: 0 }
 
   const ativos       = tenants.filter((t) => t.status === 'ativo' && t.plano_aceito_em)
-  // plano free = R$ 0, não entra no MRR
-  const mrr          = ativos.reduce((s, t) => s + (PLANOS_PRECO_MAP[t.plano] ?? MENSALIDADE), 0)
-  const receitaTotal = ativos.length * IMPLEMENTACAO + mrr
+  // MRR: só planos pagos (não free nem trial ativo)
+  const pagantes     = tenants.filter((t) => t.status === 'ativo' && t.plano !== 'free' && !t.trial_expira_em && (PLANOS_PRECO_MAP[t.plano] ?? 0) > 0)
+  const mrr          = pagantes.reduce((s, t) => s + (PLANOS_PRECO_MAP[t.plano] ?? MENSALIDADE), 0)
+  // Implementações: só conta as efetivamente cobradas
+  const implCobradas = tenants.filter((t) => t.impl_cobrada).length
+  const receitaImpl  = implCobradas * IMPLEMENTACAO
+  const receitaTotal = receitaImpl + mrr
 
-  // Sub-texto do MRR: agrupa por plano e exibe "2 × R$ 450 + 1 × R$ 900"
+  // Sub-texto do MRR: agrupa por plano apenas pagantes reais
   const mrrSubTexto = (() => {
     const contagem: Record<string, number> = {}
-    for (const t of ativos) {
+    for (const t of pagantes) {
       const preco = PLANOS_PRECO_MAP[t.plano] ?? MENSALIDADE
-      contagem[preco] = (contagem[preco] ?? 0) + 1
+      if (preco > 0) contagem[preco] = (contagem[preco] ?? 0) + 1
     }
     const partes = Object.entries(contagem).map(([preco, qtd]) =>
       `${qtd} × R$ ${Number(preco).toLocaleString('pt-BR')}`
     )
-    return partes.length > 0 ? partes.join(' + ') + '/mês' : '—'
+    return partes.length > 0 ? partes.join(' + ') + '/mês' : `${tenants.filter(t => t.plano === 'free' || t.trial_expira_em).length} em free/trial`
   })()
   const totalPedidos  = tenants.reduce((s, t) => s + t.total_pedidos, 0)
   const totalFaturado = tenants.reduce((s, t) => s + t.faturamento_total, 0)
@@ -542,11 +546,11 @@ export default function SuperAdminPage() {
               {/* Métricas */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard icon={<Store className="w-5 h-5" />} label="Restaurantes ativos"
-                  value={ativos.length.toString()} sub={`${tenants.length} total`} accent="#1A9B8A" />
+                  value={ativos.length.toString()} sub={`${tenants.filter(t => t.plano === 'free' || t.trial_expira_em).length} em free/trial`} accent="#1A9B8A" />
                 <MetricCard icon={<DollarSign className="w-5 h-5" />} label="MRR"
                   value={`R$ ${mrr.toLocaleString('pt-BR')}`} sub={mrrSubTexto} accent="#16a34a" />
-                <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="Receita total est."
-                  value={`R$ ${receitaTotal.toLocaleString('pt-BR')}`} sub="impl. + mensalidades" accent="#d97706" />
+                <MetricCard icon={<TrendingUp className="w-5 h-5" />} label="Receita recebida"
+                  value={`R$ ${receitaTotal.toLocaleString('pt-BR')}`} sub={`${implCobradas} impl. cobrada${implCobradas !== 1 ? 's' : ''} + MRR`} accent="#d97706" />
                 <MetricCard icon={<Users className="w-5 h-5" />} label="Pedidos gerados"
                   value={totalPedidos.toLocaleString('pt-BR')} sub={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em vendas`} accent="#7c3aed" />
               </div>
@@ -780,8 +784,8 @@ export default function SuperAdminPage() {
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">Breakdown de receita & uso</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <RevenueItem label="Implementações" value={`R$ ${(ativos.length * IMPLEMENTACAO).toLocaleString('pt-BR')}`}
-                    sub={`${ativos.length} × R$ 2.000`} color="#d97706" />
+                  <RevenueItem label="Implementações cobradas" value={`R$ ${receitaImpl.toLocaleString('pt-BR')}`}
+                    sub={`${implCobradas} cobrada${implCobradas !== 1 ? 's' : ''} · ${tenants.length - implCobradas} pendente${tenants.length - implCobradas !== 1 ? 's' : ''}`} color="#d97706" />
                   <RevenueItem label="Mensalidades (MRR)" value={`R$ ${mrr.toLocaleString('pt-BR')}`}
                     sub={mrrSubTexto} color="#1A9B8A" />
                   <RevenueItem label="Volume dos clientes" value={`R$ ${totalFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
