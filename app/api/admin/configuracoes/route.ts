@@ -73,6 +73,7 @@ export async function POST(req: Request) {
     restaurante_logo_url: body.restaurante_logo_url  ?? null,
     cor_primaria:         body.cor_primaria          ?? '#1A9B8A',
     pix_chave:            body.pix_chave?.trim()     || null,
+    saldo_habilitado:     body.saldo_habilitado       ?? false,
     atualizado_em:        new Date().toISOString(),
   }
 

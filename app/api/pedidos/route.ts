@@ -4,10 +4,11 @@ import type { ItemCarrinho } from '@/lib/supabase/types'
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { sessao_id, itens, observacao_geral } = body as {
+  const { sessao_id, itens, observacao_geral, cliente_saldo_id } = body as {
     sessao_id: string
     itens: ItemCarrinho[]
     observacao_geral?: string
+    cliente_saldo_id?: string   // presente quando tenant usa saldo pré-pago
   }
 
   if (!sessao_id || !itens?.length) {
@@ -80,6 +81,29 @@ export async function POST(req: Request) {
   if (itensError) {
     await supabase.from('pedidos').delete().eq('id', pedido.id)
     return NextResponse.json({ error: 'Erro ao criar itens' }, { status: 500 })
+  }
+
+  // ── Débito atômico no saldo do cliente (se aplicável) ───────────────────
+  if (cliente_saldo_id && tenantId) {
+    const { error: debitError } = await supabase.rpc('debitar_saldo', {
+      p_cliente_id: cliente_saldo_id,
+      p_tenant_id:  tenantId,
+      p_valor:      total,
+      p_pedido_id:  pedido.id,
+      p_descricao:  `Pedido #${pedido.id.slice(0, 8)}`,
+    })
+
+    if (debitError) {
+      // Desfaz o pedido se não puder debitar
+      await supabase.from('pedido_itens').delete().eq('pedido_id', pedido.id)
+      await supabase.from('pedidos').delete().eq('id', pedido.id)
+
+      const msg = debitError.message?.includes('saldo_insuficiente')
+        ? 'Saldo insuficiente para realizar este pedido.'
+        : 'Erro ao debitar saldo. Tente novamente.'
+
+      return NextResponse.json({ error: msg, code: 'saldo_insuficiente' }, { status: 402 })
+    }
   }
 
   return NextResponse.json({ pedido }, { status: 201 })

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getTenantIdClient } from '@/lib/tenant-client'
-import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone, Search, ChevronDown, Volume2, VolumeX } from 'lucide-react'
+import { CheckCircle2, Loader2, UtensilsCrossed, Clock, Bell, QrCode, ConciergeBell, X, Banknote, CreditCard, User, Receipt, TableProperties, ClipboardList, Phone, Search, ChevronDown, Volume2, VolumeX, Wallet, Plus, History } from 'lucide-react'
 import { criarBeep, desbloquearAudio } from '@/lib/audio'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -341,6 +341,73 @@ export default function GarcomPage() {
   }
 
   const totalProntos = grupos.reduce((acc, g) => acc + g.itens.length, 0)
+
+  // ── Saldo pré-pago ─────────────────────────────────────────────────────────
+  const [saldoAberto,          setSaldoAberto]          = useState(false)
+  const [saldoTelefone,        setSaldoTelefone]        = useState('')
+  const [saldoNome,            setSaldoNome]            = useState('')
+  const [saldoValor,           setSaldoValor]           = useState('')
+  const [saldoCarregando,      setSaldoCarregando]      = useState(false)
+  const [saldoCliente,         setSaldoCliente]         = useState<{ id: string; nome: string | null; telefone: string; saldo_disponivel: number } | null>(null)
+  const [saldoSucesso,         setSaldoSucesso]         = useState(false)
+  const [saldoErro,            setSaldoErro]            = useState('')
+  const [saldoBuscando,        setSaldoBuscando]        = useState(false)
+
+  async function buscarClienteSaldo(tel: string) {
+    const telNorm = tel.replace(/\D/g, '')
+    if (telNorm.length < 4) { setSaldoCliente(null); return }
+    setSaldoBuscando(true)
+    const resp = await fetch(`/api/garcom/saldo?q=${telNorm}`)
+    const data = await resp.json()
+    setSaldoBuscando(false)
+    if (data.clientes?.length > 0) {
+      const c = data.clientes[0]
+      setSaldoCliente(c)
+      setSaldoNome(c.nome ?? '')
+    } else {
+      setSaldoCliente(null)
+    }
+  }
+
+  async function carregarSaldo() {
+    setSaldoErro('')
+    const tel  = saldoTelefone.replace(/\D/g, '')
+    const val  = parseFloat(saldoValor.replace(',', '.'))
+    if (tel.length < 10) { setSaldoErro('Telefone inválido — informe com DDD.'); return }
+    if (!val || val <= 0) { setSaldoErro('Informe um valor válido.'); return }
+
+    setSaldoCarregando(true)
+    const resp = await fetch('/api/garcom/saldo', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        telefone:    tel,
+        nome:        saldoNome.trim() || undefined,
+        valor:       val,
+        tipo:        'credito',
+        cliente_id:  saldoCliente?.id,
+      }),
+    })
+    const data = await resp.json()
+    setSaldoCarregando(false)
+
+    if (!resp.ok) { setSaldoErro(data.error ?? 'Erro ao carregar saldo.'); return }
+
+    setSaldoCliente(data.cliente)
+    setSaldoSucesso(true)
+    setSaldoValor('')
+    setTimeout(() => setSaldoSucesso(false), 3000)
+  }
+
+  function fecharModalSaldo() {
+    setSaldoAberto(false)
+    setSaldoTelefone('')
+    setSaldoNome('')
+    setSaldoValor('')
+    setSaldoCliente(null)
+    setSaldoSucesso(false)
+    setSaldoErro('')
+  }
 
   const busca = buscaMesa.trim()
   const comandasFiltradas = busca
@@ -813,6 +880,189 @@ export default function GarcomPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── Botão flutuante: Saldo ────────────────────────────────────────────── */}
+      <button
+        onClick={() => setSaldoAberto(true)}
+        className="fixed bottom-5 left-5 z-40 flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+      >
+        <Wallet className="w-5 h-5" />
+        <span className="text-sm">Carregar Saldo</span>
+      </button>
+
+      {/* ── Modal: Carregar saldo ─────────────────────────────────────────────── */}
+      {saldoAberto && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={fecharModalSaldo} />
+          <div className="relative bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl">
+
+            {/* Alça mobile */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+
+            {/* Header */}
+            <div className="px-5 pt-4 pb-5 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
+                    <Wallet className="w-5 h-5 text-teal-700" />
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-800">Carregar saldo</p>
+                    <p className="text-xs text-slate-500">Vinculado ao celular do cliente</p>
+                  </div>
+                </div>
+                <button onClick={fecharModalSaldo} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+            </div>
+
+            <div className="px-5 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+
+              {/* Campo: Telefone */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  Celular do cliente (com DDD)
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="tel"
+                    value={saldoTelefone}
+                    onChange={(e) => {
+                      setSaldoTelefone(e.target.value)
+                      buscarClienteSaldo(e.target.value)
+                    }}
+                    placeholder="(47) 99999-0000"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 pl-10 text-base font-semibold text-slate-800 outline-none focus:border-teal-400 transition-colors"
+                    autoFocus
+                  />
+                  {saldoBuscando && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-teal-500" />
+                  )}
+                </div>
+              </div>
+
+              {/* Card: cliente encontrado */}
+              {saldoCliente && (
+                <div className="rounded-xl bg-teal-50 border border-teal-200 px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-teal-200 flex items-center justify-center text-sm font-black text-teal-800">
+                      {(saldoCliente.nome ?? saldoCliente.telefone)[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{saldoCliente.nome ?? 'Cliente'}</p>
+                      <p className="text-xs text-slate-500">{saldoCliente.telefone}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500">saldo atual</p>
+                    <p className="text-base font-black text-teal-700">
+                      R$ {Number(saldoCliente.saldo_disponivel).toFixed(2).replace('.', ',')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Campo: Nome (se cliente novo) */}
+              {!saldoCliente && saldoTelefone.replace(/\D/g, '').length >= 10 && (
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                    Nome do cliente (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={saldoNome}
+                    onChange={(e) => setSaldoNome(e.target.value)}
+                    placeholder="Ex: João Silva"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 outline-none focus:border-teal-400 transition-colors"
+                  />
+                </div>
+              )}
+
+              {/* Campo: Valor */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  Valor a carregar (R$)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">R$</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={saldoValor}
+                    onChange={(e) => setSaldoValor(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && carregarSaldo()}
+                    placeholder="0,00"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 pl-10 text-lg font-black text-slate-800 outline-none focus:border-teal-400 transition-colors"
+                  />
+                </div>
+                {/* Atalhos de valor */}
+                <div className="flex gap-2 mt-2">
+                  {[50, 100, 150, 200].map(v => (
+                    <button
+                      key={v}
+                      onClick={() => setSaldoValor(String(v))}
+                      className={`flex-1 py-1.5 rounded-lg text-sm font-bold border-2 transition-colors ${
+                        saldoValor === String(v)
+                          ? 'border-teal-500 bg-teal-50 text-teal-700'
+                          : 'border-slate-200 text-slate-600 hover:border-teal-300'
+                      }`}
+                    >
+                      R${v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Erro */}
+              {saldoErro && (
+                <p className="text-sm text-red-600 font-medium bg-red-50 rounded-xl px-3 py-2">
+                  {saldoErro}
+                </p>
+              )}
+
+              {/* Sucesso */}
+              {saldoSucesso && saldoCliente && (
+                <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-green-700">Saldo carregado!</p>
+                    <p className="text-xs text-green-600">
+                      Novo saldo: R$ {Number(saldoCliente.saldo_disponivel).toFixed(2).replace('.', ',')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Botão confirmar */}
+              <button
+                onClick={carregarSaldo}
+                disabled={
+                  saldoCarregando ||
+                  saldoTelefone.replace(/\D/g, '').length < 10 ||
+                  !saldoValor || parseFloat(saldoValor) <= 0
+                }
+                className="w-full flex items-center justify-center gap-2 font-bold text-base text-white rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed bg-teal-600 hover:bg-teal-700 transition-colors"
+                style={{ height: '52px' }}
+              >
+                {saldoCarregando ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</>
+                ) : (
+                  <><Plus className="w-4 h-4" /> Confirmar carregamento</>
+                )}
+              </button>
+
+              <p className="text-center text-xs text-slate-400 pb-2">
+                O saldo fica vinculado ao celular do cliente e pode ser usado em qualquer QR code do estabelecimento.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

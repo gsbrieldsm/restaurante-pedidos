@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 
   const { data } = await supabase
     .from('configuracoes')
-    .select('banner_ativo, banner_titulo, banner_subtitulo, banner_emoji, banner_estilo, banner_imagem_url, banner_imagem_url_mobile, restaurante_nome, restaurante_logo_url, cor_primaria, pix_chave')
+    .select('banner_ativo, banner_titulo, banner_subtitulo, banner_emoji, banner_estilo, banner_imagem_url, banner_imagem_url_mobile, restaurante_nome, restaurante_logo_url, cor_primaria, pix_chave, saldo_habilitado')
     .eq('tenant_id', tenantId)
     .maybeSingle()
 
@@ -68,6 +68,7 @@ export async function GET(req: Request) {
       restaurante_logo_url: data.restaurante_logo_url ?? null,
       cor_primaria:         data.cor_primaria         ?? DEFAULT_BRANDING.cor_primaria,
       pix_chave:            data.pix_chave            ?? null,
+      saldo_habilitado:     data.saldo_habilitado      ?? false,
     },
   })
 }

@@ -56,7 +56,18 @@ export default function CardapioPage() {
     restaurante_nome:     string
     restaurante_logo_url: string | null
     cor_primaria:         string
-  }>({ restaurante_nome: '', restaurante_logo_url: null, cor_primaria: '#1A9B8A' })
+    saldo_habilitado:     boolean
+  }>({ restaurante_nome: '', restaurante_logo_url: null, cor_primaria: '#1A9B8A', saldo_habilitado: false })
+
+  // ── Saldo pré-pago ───────────────────────────────────────────────────────
+  const [saldoCliente, setSaldoCliente] = useState<{
+    id: string; nome: string | null; telefone: string; saldo_disponivel: number
+  } | null>(null)
+  const [modalSaldo, setModalSaldo]           = useState(false)  // modal de identificação
+  const [saldoTelefone, setSaldoTelefone]     = useState('')
+  const [saldoNome, setSaldoNome]             = useState('')
+  const [saldoIdentificando, setSaldoIdentificando] = useState(false)
+  const [saldoErro, setSaldoErro]             = useState('')
 
   useEffect(() => {
     // Se veio via garçom com ?sessao=, salva no sessionStorage
@@ -79,7 +90,34 @@ export default function CardapioPage() {
       setItens(lista)
       if (lista.length > 0) setCategoriaAtiva(lista[0].categoria)
       if (bannerData.banner) setBanner(bannerData.banner)
-      if (bannerData.branding) setBranding(bannerData.branding)
+      if (bannerData.branding) {
+        setBranding(bannerData.branding)
+
+        // Saldo pré-pago: verifica se o tenant tem a feature ativa
+        if (bannerData.branding.saldo_habilitado) {
+          const salvo = localStorage.getItem(`menue_saldo_${token}`)
+          if (salvo) {
+            try {
+              const parsed = JSON.parse(salvo)
+              // Revalida o saldo atual no servidor
+              fetch(`/api/pub/saldo?cliente_id=${parsed.id}`)
+                .then(r => r.json())
+                .then(d => {
+                  if (d.cliente) setSaldoCliente(d.cliente)
+                  else {
+                    localStorage.removeItem(`menue_saldo_${token}`)
+                    setModalSaldo(true)
+                  }
+                })
+                .catch(() => setSaldoCliente(parsed))
+            } catch {
+              setModalSaldo(true)
+            }
+          } else {
+            setModalSaldo(true)
+          }
+        }
+      }
     }).finally(() => setLoading(false))
 
     // Polling: verifica a cada 10s se a sessão ainda está ativa
@@ -254,9 +292,44 @@ export default function CardapioPage() {
     return carrinho.filter((c) => c.item.id === itemId).reduce((acc, c) => acc + c.quantidade, 0)
   }
 
+  // ── Identificação via saldo pré-pago ──────────────────────────────────────
+  async function identificarSaldo() {
+    const tel = saldoTelefone.replace(/\D/g, '')
+    if (tel.length < 10) { setSaldoErro('Informe um telefone com DDD válido.'); return }
+
+    setSaldoIdentificando(true)
+    setSaldoErro('')
+
+    const resp = await fetch('/api/pub/saldo', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ mesa_token: token, telefone: tel, nome: saldoNome }),
+    })
+    const data = await resp.json()
+    setSaldoIdentificando(false)
+
+    if (!resp.ok) { setSaldoErro(data.error ?? 'Erro ao identificar.'); return }
+
+    setSaldoCliente(data.cliente)
+    localStorage.setItem(`menue_saldo_${token}`, JSON.stringify(data.cliente))
+    setModalSaldo(false)
+    setSaldoTelefone('')
+    setSaldoNome('')
+  }
+
   async function finalizarPedido() {
     const sessaoId = sessionStorage.getItem('sessao_id')
     if (!sessaoId || !carrinho.length) return
+
+    // Verifica saldo antes de abrir o spinner (UX mais rápida)
+    if (branding.saldo_habilitado && saldoCliente) {
+      if (totalCarrinho > saldoCliente.saldo_disponivel) {
+        alert(
+          `Saldo insuficiente!\n\nSeu saldo: R$ ${saldoCliente.saldo_disponivel.toFixed(2)}\nTotal do pedido: R$ ${totalCarrinho.toFixed(2)}\n\nRecarregue seu saldo no caixa para continuar.`
+        )
+        return
+      }
+    }
 
     setEnviando(true)
 
@@ -268,15 +341,32 @@ export default function CardapioPage() {
     const resp = await fetch('/api/pedidos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessao_id: sessaoId, itens: itensComObs }),
+      body: JSON.stringify({
+        sessao_id:        sessaoId,
+        itens:            itensComObs,
+        ...(branding.saldo_habilitado && saldoCliente
+          ? { cliente_saldo_id: saldoCliente.id }
+          : {}),
+      }),
     })
 
     const data = await resp.json()
     setEnviando(false)
 
     if (resp.ok) {
+      // Atualiza saldo local após pedido confirmado
+      if (branding.saldo_habilitado && saldoCliente) {
+        const novoSaldo = {
+          ...saldoCliente,
+          saldo_disponivel: saldoCliente.saldo_disponivel - totalCarrinho,
+        }
+        setSaldoCliente(novoSaldo)
+        localStorage.setItem(`menue_saldo_${token}`, JSON.stringify(novoSaldo))
+      }
       sessionStorage.setItem('ultimo_pedido_id', data.pedido.id)
       router.push(`/mesa/${token}/confirmacao`)
+    } else if (data.code === 'saldo_insuficiente') {
+      alert('Saldo insuficiente. Recarregue no caixa antes de pedir.')
     }
   }
 
@@ -474,6 +564,57 @@ export default function CardapioPage() {
           </div>
         )}
       </div>
+
+      {/* ── Banner de saldo pré-pago ─────────────────────────────────────────── */}
+      {branding.saldo_habilitado && saldoCliente && (
+        <div
+          className="mx-4 mt-3 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-sm"
+          style={{ background: `linear-gradient(135deg, ${darkenHex(cor, 0.25)}, ${cor})` }}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0 text-lg">
+              💳
+            </div>
+            <div className="min-w-0">
+              <p className="text-white/70 text-xs font-semibold leading-none mb-0.5">
+                {saldoCliente.nome ? `Olá, ${saldoCliente.nome.split(' ')[0]}!` : 'Seu saldo'}
+              </p>
+              <p className="text-white font-black text-lg leading-none">
+                R$ {saldoCliente.saldo_disponivel.toFixed(2).replace('.', ',')}
+              </p>
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-white/60 text-[10px] leading-tight">disponível para gastar</p>
+            <button
+              onClick={() => setModalSaldo(true)}
+              className="text-white/70 text-xs underline underline-offset-2 mt-0.5"
+            >
+              trocar conta
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Banner: saldo habilitado mas cliente não identificado */}
+      {branding.saldo_habilitado && !saldoCliente && !modalSaldo && (
+        <div
+          className="mx-4 mt-3 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-sm border-2 border-dashed"
+          style={{ borderColor: cor, background: `${cor}10` }}
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-bold" style={{ color: cor }}>💳 Tem saldo pré-pago?</p>
+            <p className="text-xs text-slate-500 mt-0.5">Identifique-se para usar seu saldo</p>
+          </div>
+          <button
+            onClick={() => setModalSaldo(true)}
+            className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white"
+            style={{ background: cor }}
+          >
+            Entrar
+          </button>
+        </div>
+      )}
 
       {/* Toast: garçom chamado */}
       {garcomChamado && (
@@ -890,6 +1031,33 @@ export default function CardapioPage() {
             {/* Rodapé — sempre visível, nunca scrollável */}
             {carrinho.length > 0 && (
               <div className="shrink-0 px-5 pt-3 pb-2 border-t border-slate-100 space-y-3 bg-white">
+
+                {/* Alerta de saldo insuficiente */}
+                {branding.saldo_habilitado && saldoCliente && totalCarrinho > saldoCliente.saldo_disponivel && (
+                  <div className="rounded-xl px-3 py-2.5 bg-red-50 border border-red-100 flex items-start gap-2">
+                    <span className="text-base shrink-0 mt-0.5">⚠️</span>
+                    <div>
+                      <p className="text-xs font-bold text-red-700">Saldo insuficiente</p>
+                      <p className="text-xs text-red-600 mt-0.5">
+                        Seu saldo é R$ {saldoCliente.saldo_disponivel.toFixed(2).replace('.', ',')} —
+                        faltam R$ {(totalCarrinho - saldoCliente.saldo_disponivel).toFixed(2).replace('.', ',')} para este pedido.
+                        Recarregue no caixa!
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Saldo disponível após pedido */}
+                {branding.saldo_habilitado && saldoCliente && totalCarrinho <= saldoCliente.saldo_disponivel && (
+                  <div className="rounded-xl px-3 py-2 flex items-center justify-between"
+                    style={{ background: `${cor}12` }}>
+                    <span className="text-xs font-semibold text-slate-600">Saldo após pedido</span>
+                    <span className="text-sm font-black" style={{ color: cor }}>
+                      R$ {(saldoCliente.saldo_disponivel - totalCarrinho).toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-lg text-slate-800">Total</span>
                   <span className="font-black text-2xl" style={{ color: cor }}>
@@ -898,18 +1066,109 @@ export default function CardapioPage() {
                 </div>
                 <button
                   onClick={finalizarPedido}
-                  disabled={enviando}
-                  className="w-full flex items-center justify-center gap-2 font-bold text-base text-black rounded-2xl disabled:opacity-50"
+                  disabled={
+                    enviando ||
+                    (branding.saldo_habilitado && !!saldoCliente && totalCarrinho > saldoCliente.saldo_disponivel) ||
+                    (branding.saldo_habilitado && !saldoCliente)
+                  }
+                  className="w-full flex items-center justify-center gap-2 font-bold text-base text-white rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ background: branding.cor_primaria, height: '52px' }}
                 >
                   {enviando ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>
+                  ) : branding.saldo_habilitado && !saldoCliente ? (
+                    <>Identifique-se para pedir</>
                   ) : (
                     <>Confirmar Pedido <ChevronRight className="w-5 h-5" /></>
                   )}
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de identificação por saldo ──────────────────────────────────── */}
+      {modalSaldo && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => saldoCliente && setModalSaldo(false)} />
+          <div className="relative bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl">
+
+            {/* Alça mobile */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-slate-200" />
+            </div>
+
+            {/* Header */}
+            <div className="px-6 pt-4 pb-5 text-center"
+              style={{ background: `linear-gradient(135deg, ${darkenHex(cor, 0.25)}, ${cor})` }}>
+              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-3 text-2xl">
+                💳
+              </div>
+              <h2 className="text-lg font-black text-white">Identificação de saldo</h2>
+              <p className="text-white/70 text-sm mt-1">
+                Informe seu celular para acessar seu saldo pré-pago
+              </p>
+            </div>
+
+            {/* Formulário */}
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  Celular com DDD *
+                </label>
+                <input
+                  type="tel"
+                  value={saldoTelefone}
+                  onChange={(e) => setSaldoTelefone(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && identificarSaldo()}
+                  placeholder="(47) 99999-0000"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base font-semibold text-slate-800 outline-none focus:border-teal-400 transition-colors"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                  Seu nome (opcional)
+                </label>
+                <input
+                  type="text"
+                  value={saldoNome}
+                  onChange={(e) => setSaldoNome(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && identificarSaldo()}
+                  placeholder="Como quer ser chamado?"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 outline-none focus:border-teal-400 transition-colors"
+                />
+              </div>
+
+              {saldoErro && (
+                <p className="text-sm text-red-600 font-medium bg-red-50 rounded-xl px-3 py-2">
+                  {saldoErro}
+                </p>
+              )}
+
+              <button
+                onClick={identificarSaldo}
+                disabled={saldoIdentificando || saldoTelefone.replace(/\D/g, '').length < 10}
+                className="w-full flex items-center justify-center gap-2 font-bold text-base text-white rounded-2xl disabled:opacity-40 transition-opacity"
+                style={{ background: cor, height: '52px' }}
+              >
+                {saldoIdentificando ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Verificando...</>
+                ) : (
+                  <>Ver meu saldo <ChevronRight className="w-5 h-5" /></>
+                )}
+              </button>
+
+              {saldoCliente && (
+                <button
+                  onClick={() => setModalSaldo(false)}
+                  className="w-full text-center text-sm text-slate-400 py-1"
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

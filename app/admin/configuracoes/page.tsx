@@ -128,6 +128,7 @@ export default function ConfiguracoesPage() {
     restaurante_logo_url: null as string | null,
     cor_primaria:         '#1A9B8A',
     pix_chave:            '',
+    saldo_habilitado:     false,
   })
   const [brandingSalvando, setBrandingSalvando] = useState(false)
   const [brandingSucesso,  setBrandingSucesso]  = useState(false)
@@ -205,6 +206,7 @@ export default function ConfiguracoesPage() {
             restaurante_logo_url: config.restaurante_logo_url ?? null,
             cor_primaria:         config.cor_primaria         ?? '#1A9B8A',
             pix_chave:            config.pix_chave            ?? '',
+            saldo_habilitado:     config.saldo_habilitado      ?? false,
           })
         }
       })
@@ -430,6 +432,38 @@ export default function ConfiguracoesPage() {
             <p className="text-xs text-slate-400 mt-1.5">
               Aparece no botão "Pagar via PIX" na conta do cliente. Se deixar em branco, a opção de PIX <strong>não aparece</strong>.
             </p>
+          </div>
+
+          {/* Saldo pré-pago */}
+          <div className="rounded-2xl border-2 p-4 transition-all"
+            style={{
+              borderColor: branding.saldo_habilitado ? '#1A9B8A' : '#e2e8f0',
+              background:  branding.saldo_habilitado ? '#f0fdfa' : '#f8fafc',
+            }}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base">💳</span>
+                  <p className="text-sm font-black text-slate-800">Saldo pré-pago por cliente</p>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">NOVO</span>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Clientes carregam saldo no caixa (via garçom) e só conseguem pedir o que têm disponível.
+                  O saldo fica vinculado ao celular — funciona em qualquer QR code do estabelecimento.
+                  Ideal para bares, eventos e festas.
+                </p>
+              </div>
+              <button
+                onClick={() => setBranding((b) => ({ ...b, saldo_habilitado: !b.saldo_habilitado }))}
+                className={`relative shrink-0 w-12 h-6 rounded-full transition-colors ${
+                  branding.saldo_habilitado ? 'bg-teal-500' : 'bg-slate-300'
+                }`}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  branding.saldo_habilitado ? 'translate-x-6' : 'translate-x-0.5'
+                }`} />
+              </button>
+            </div>
           </div>
 
           {/* Botão salvar */}
