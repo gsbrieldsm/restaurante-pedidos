@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Users, Search, Phone, TableProperties, Clock, Loader2, Trophy, ShoppingBag, X, ChevronRight, Receipt } from 'lucide-react'
+import { Users, Search, Phone, TableProperties, Clock, Loader2, Trophy, ShoppingBag, X, ChevronRight, Receipt, Wallet, Plus, Minus, ArrowUpCircle, ArrowDownCircle, CheckCircle2, AlertCircle } from 'lucide-react'
 import { PainelHero } from '@/components/admin/PainelHero'
 
 interface Sessao {
@@ -25,6 +25,25 @@ interface ClienteAgregado {
   total_consumido: number
   total_pedidos: number
   ultimo_pedido_em: string
+}
+
+interface ClienteSaldo {
+  id: string
+  nome: string | null
+  telefone: string
+  saldo_disponivel: number
+  verificado: boolean
+  atualizado_em: string
+}
+
+interface Transacao {
+  id: string
+  tipo: 'credito' | 'debito' | 'estorno'
+  valor: number
+  saldo_anterior: number
+  saldo_posterior: number
+  descricao: string | null
+  criado_em: string
 }
 
 interface PedidoHistorico {
@@ -89,12 +108,33 @@ export default function ClientesPage() {
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState<'todos' | 'ativos' | 'com_celular'>('todos')
-  const [aba, setAba] = useState<'top' | 'historico'>('top')
+  const [aba, setAba] = useState<'top' | 'historico' | 'saldo'>('top')
 
-  // — Painel histórico —
+  // — Painel histórico de pedidos —
   const [clientePainel, setClientePainel] = useState<ClienteAgregado | null>(null)
   const [pedidosCliente, setPedidosCliente] = useState<PedidoHistorico[]>([])
   const [loadingPainel, setLoadingPainel] = useState(false)
+
+  // — Aba Saldo Pré-pago —
+  const [clientesSaldo, setClientesSaldo] = useState<ClienteSaldo[]>([])
+  const [loadingSaldo, setLoadingSaldo]   = useState(false)
+  const [totalCarteiras, setTotalCarteiras] = useState(0)
+  const [totalVerificados, setTotalVerificados] = useState(0)
+  const [buscaSaldo, setBuscaSaldo]       = useState('')
+
+  // Painel de transações
+  const [saldoPainel, setSaldoPainel]       = useState<ClienteSaldo | null>(null)
+  const [transacoes, setTransacoes]         = useState<Transacao[]>([])
+  const [loadingTransacoes, setLoadingTransacoes] = useState(false)
+
+  // Modal de recarga/estorno
+  const [modalRecarga, setModalRecarga]     = useState(false)
+  const [recargaCliente, setRecargaCliente] = useState<ClienteSaldo | null>(null)
+  const [recargaTipo, setRecargaTipo]       = useState<'credito' | 'estorno'>('credito')
+  const [recargaValor, setRecargaValor]     = useState('')
+  const [recargaDesc, setRecargaDesc]       = useState('')
+  const [recargaCarregando, setRecargaCarregando] = useState(false)
+  const [recargaErro, setRecargaErro]       = useState('')
 
   useEffect(() => {
     fetch('/api/admin/clientes')
@@ -106,6 +146,92 @@ export default function ClientesPage() {
       })
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (aba !== 'saldo' || clientesSaldo.length > 0) return
+    carregarClientesSaldo()
+  }, [aba])
+
+  async function carregarClientesSaldo() {
+    setLoadingSaldo(true)
+    const res  = await fetch('/api/admin/clientes/saldo')
+    const data = await res.json()
+    setClientesSaldo(data.clientes ?? [])
+    setTotalCarteiras(data.total_em_carteiras ?? 0)
+    setTotalVerificados(data.total_verificados ?? 0)
+    setLoadingSaldo(false)
+  }
+
+  async function abrirTransacoes(cliente: ClienteSaldo) {
+    setSaldoPainel(cliente)
+    setLoadingTransacoes(true)
+    setTransacoes([])
+    const res  = await fetch(`/api/admin/clientes/saldo?cliente_id=${cliente.id}`)
+    const data = await res.json()
+    setTransacoes(data.transacoes ?? [])
+    setLoadingTransacoes(false)
+  }
+
+  function abrirModalRecarga(cliente: ClienteSaldo, tipo: 'credito' | 'estorno' = 'credito') {
+    setRecargaCliente(cliente)
+    setRecargaTipo(tipo)
+    setRecargaValor('')
+    setRecargaDesc('')
+    setRecargaErro('')
+    setModalRecarga(true)
+  }
+
+  async function confirmarRecarga() {
+    if (!recargaCliente) return
+    const valor = parseFloat(recargaValor.replace(',', '.'))
+    if (!valor || valor <= 0) { setRecargaErro('Informe um valor válido.'); return }
+    if (recargaTipo === 'estorno' && valor > recargaCliente.saldo_disponivel) {
+      setRecargaErro('Estorno não pode ser maior que o saldo atual.'); return
+    }
+
+    setRecargaCarregando(true)
+    setRecargaErro('')
+
+    const res  = await fetch('/api/admin/clientes/saldo', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        cliente_id: recargaCliente.id,
+        valor,
+        tipo:      recargaTipo,
+        descricao: recargaDesc.trim() || undefined,
+      }),
+    })
+    const data = await res.json()
+    setRecargaCarregando(false)
+
+    if (!res.ok) { setRecargaErro(data.error ?? 'Erro ao salvar.'); return }
+
+    // Atualiza lista local
+    setClientesSaldo((prev) =>
+      prev.map((c) => c.id === recargaCliente.id ? { ...c, saldo_disponivel: data.cliente.saldo_disponivel } : c)
+    )
+    // Atualiza totais
+    const diff = recargaTipo === 'credito' ? valor : -valor
+    setTotalCarteiras((prev) => prev + diff)
+
+    // Atualiza painel de transações se estiver aberto para este cliente
+    if (saldoPainel?.id === recargaCliente.id) {
+      abrirTransacoes({ ...recargaCliente, saldo_disponivel: data.cliente.saldo_disponivel })
+    }
+
+    setModalRecarga(false)
+  }
+
+  const clientesSaldoFiltrados = useMemo(() => {
+    if (!buscaSaldo.trim()) return clientesSaldo
+    const q = buscaSaldo.toLowerCase().replace(/\D/g, '') || buscaSaldo.toLowerCase()
+    return clientesSaldo.filter(
+      (c) =>
+        c.nome?.toLowerCase().includes(buscaSaldo.toLowerCase()) ||
+        c.telefone.includes(q)
+    )
+  }, [clientesSaldo, buscaSaldo])
 
   const sessoesFiltradas = useMemo(() => {
     let lista = sessoes
@@ -176,7 +302,7 @@ export default function ClientesPage() {
       />
 
       {/* Abas */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit flex-wrap">
         <button
           onClick={() => setAba('top')}
           className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
@@ -193,6 +319,14 @@ export default function ClientesPage() {
         >
           <Clock className="w-4 h-4" /> Histórico de Acessos
         </button>
+        <button
+          onClick={() => setAba('saldo')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            aba === 'saldo' ? 'bg-white shadow-sm text-teal-700' : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Wallet className="w-4 h-4" /> Saldo Pré-pago
+        </button>
       </div>
 
       {/* Busca */}
@@ -201,9 +335,13 @@ export default function ClientesPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
             className="pl-9"
-            placeholder={aba === 'top' ? 'Buscar por nome ou celular...' : 'Buscar por nome, celular ou mesa...'}
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+            placeholder={
+              aba === 'top'      ? 'Buscar por nome ou celular...' :
+              aba === 'saldo'    ? 'Buscar por nome ou telefone...' :
+                                   'Buscar por nome, celular ou mesa...'
+            }
+            value={aba === 'saldo' ? buscaSaldo : busca}
+            onChange={(e) => aba === 'saldo' ? setBuscaSaldo(e.target.value) : setBusca(e.target.value)}
           />
         </div>
         {aba === 'historico' && (
@@ -228,6 +366,349 @@ export default function ClientesPage() {
           </div>
         )}
       </div>
+
+      {/* ─── ABA SALDO PRÉ-PAGO ─── */}
+      {aba === 'saldo' && (
+        <div className="space-y-4">
+          {/* KPIs saldo */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <p className="text-xs text-slate-500 font-medium mb-1">Total em carteiras</p>
+              <p className="text-2xl font-black text-teal-700">
+                {formatarReal(totalCarteiras)}
+              </p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <p className="text-xs text-slate-500 font-medium mb-1">Clientes cadastrados</p>
+              <p className="text-2xl font-black text-slate-800">{clientesSaldo.length}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <p className="text-xs text-slate-500 font-medium mb-1">Verificados via WhatsApp</p>
+              <p className="text-2xl font-black text-green-700">{totalVerificados}</p>
+            </div>
+          </div>
+
+          {loadingSaldo ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="w-7 h-7 animate-spin text-teal-600" />
+            </div>
+          ) : clientesSaldoFiltrados.length === 0 ? (
+            <div className="text-center py-16 text-slate-400">
+              <Wallet className="w-12 h-12 mx-auto mb-3 text-teal-200" />
+              <p className="font-medium">Nenhum cliente com saldo pré-pago</p>
+              <p className="text-sm mt-1">Carregue o saldo de um cliente pelo painel do garçom</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              {/* Cabeçalho */}
+              <div className="grid grid-cols-12 gap-3 px-4 py-3 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                <div className="col-span-4">Cliente</div>
+                <div className="col-span-3">Telefone</div>
+                <div className="col-span-2 text-center">Status</div>
+                <div className="col-span-2 text-right">Saldo</div>
+                <div className="col-span-1" />
+              </div>
+
+              <div className="divide-y divide-slate-50">
+                {clientesSaldoFiltrados.map((c) => (
+                  <div
+                    key={c.id}
+                    className="grid grid-cols-12 gap-3 px-4 py-3.5 items-center hover:bg-slate-50 transition-colors"
+                  >
+                    {/* Nome */}
+                    <div className="col-span-4 flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                        <span className="text-teal-700 font-bold text-sm">
+                          {(c.nome ?? c.telefone).charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-800 text-sm truncate">
+                          {c.nome ?? <span className="text-slate-400 italic">Sem nome</span>}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {new Date(c.atualizado_em).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Telefone */}
+                    <div className="col-span-3">
+                      <a
+                        href={`https://wa.me/55${c.telefone}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-sm text-green-600 hover:underline w-fit"
+                      >
+                        <Phone className="w-3.5 h-3.5 shrink-0" />
+                        {formatarCelular(c.telefone)}
+                      </a>
+                    </div>
+
+                    {/* Verificado */}
+                    <div className="col-span-2 flex justify-center">
+                      {c.verificado ? (
+                        <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3" /> Verificado
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                          <AlertCircle className="w-3 h-3" /> Pendente
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Saldo */}
+                    <div className="col-span-2 text-right">
+                      <p className={`text-base font-black ${
+                        c.saldo_disponivel > 0 ? 'text-teal-700' : 'text-slate-400'
+                      }`}>
+                        {formatarReal(c.saldo_disponivel)}
+                      </p>
+                    </div>
+
+                    {/* Ações */}
+                    <div className="col-span-1 flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => abrirModalRecarga(c, 'credito')}
+                        title="Carregar saldo"
+                        className="w-7 h-7 rounded-full bg-teal-50 hover:bg-teal-100 flex items-center justify-center transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-teal-600" />
+                      </button>
+                      <button
+                        onClick={() => abrirTransacoes(c)}
+                        title="Ver histórico"
+                        className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-400">
+                {clientesSaldoFiltrados.length} cliente{clientesSaldoFiltrados.length !== 1 ? 's' : ''} •{' '}
+                total em carteiras: <strong className="text-slate-600">{formatarReal(totalCarteiras)}</strong>
+              </div>
+            </div>
+          )}
+
+          {/* ── Painel lateral: transações ── */}
+          {saldoPainel && (
+            <div className="fixed inset-0 z-50 flex" onClick={() => setSaldoPainel(null)}>
+              <div className="absolute inset-0 bg-black/40" />
+              <div
+                className="relative ml-auto w-full max-w-md bg-white flex flex-col shadow-2xl h-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div
+                  className="shrink-0 px-6 py-5 border-b border-slate-100"
+                  style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 50%, #1A9B8A 100%)' }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <span className="text-white font-black text-xl">
+                        {(saldoPainel.nome ?? saldoPainel.telefone).charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-black text-lg leading-tight">
+                        {saldoPainel.nome ?? <span className="italic text-white/60">Sem nome</span>}
+                      </p>
+                      <p className="text-teal-300 text-sm">{formatarCelular(saldoPainel.telefone)}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-teal-300 text-xs">Saldo atual</p>
+                      <p className="text-white font-black text-xl">{formatarReal(saldoPainel.saldo_disponivel)}</p>
+                    </div>
+                    <button onClick={() => setSaldoPainel(null)} className="text-white/60 hover:text-white p-1 ml-1 shrink-0">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Ações rápidas */}
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => abrirModalRecarga(saldoPainel, 'credito')}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-white/15 hover:bg-white/25 text-white text-sm font-semibold py-2 rounded-xl transition-colors"
+                    >
+                      <ArrowUpCircle className="w-4 h-4" /> Carregar saldo
+                    </button>
+                    {saldoPainel.saldo_disponivel > 0 && (
+                      <button
+                        onClick={() => abrirModalRecarga(saldoPainel, 'estorno')}
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/20 text-white/80 text-sm font-semibold py-2 rounded-xl transition-colors"
+                      >
+                        <ArrowDownCircle className="w-4 h-4" /> Estornar
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Lista de transações */}
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                    Últimas 50 movimentações
+                  </p>
+
+                  {loadingTransacoes ? (
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+                    </div>
+                  ) : transacoes.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400">
+                      <Receipt className="w-10 h-10 mx-auto mb-2 text-slate-200" />
+                      <p className="text-sm">Nenhuma movimentação ainda</p>
+                    </div>
+                  ) : (
+                    transacoes.map((t) => {
+                      const isCredito = t.tipo === 'credito' || t.tipo === 'estorno'
+                      const icon = t.tipo === 'credito'
+                        ? <ArrowUpCircle className="w-4 h-4 text-green-500 shrink-0" />
+                        : t.tipo === 'estorno'
+                          ? <ArrowDownCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                          : <Minus className="w-4 h-4 text-red-500 shrink-0" />
+
+                      return (
+                        <div key={t.id} className="flex items-center gap-3 py-3 border-b border-slate-50 last:border-0">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                            t.tipo === 'credito' ? 'bg-green-50' :
+                            t.tipo === 'estorno' ? 'bg-amber-50' :
+                            'bg-red-50'
+                          }`}>
+                            {icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-700 truncate">
+                              {t.descricao ?? (t.tipo === 'credito' ? 'Recarga' : t.tipo === 'estorno' ? 'Estorno' : 'Débito pedido')}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {new Date(t.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                              {' · '}saldo: {formatarReal(t.saldo_posterior)}
+                            </p>
+                          </div>
+                          <p className={`text-sm font-black shrink-0 ${
+                            t.tipo === 'credito' ? 'text-green-700' :
+                            t.tipo === 'estorno' ? 'text-amber-700' :
+                            'text-red-600'
+                          }`}>
+                            {t.tipo === 'debito' ? '−' : '+'}{formatarReal(t.valor)}
+                          </p>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Modal de recarga / estorno ── */}
+          {modalRecarga && recargaCliente && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-black/50" onClick={() => setModalRecarga(false)} />
+              <div className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden">
+                {/* Header */}
+                <div
+                  className="px-6 pt-5 pb-4 text-center"
+                  style={{ background: 'linear-gradient(135deg, #0a2420, #1A9B8A)' }}
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-2 text-xl">
+                    {recargaTipo === 'credito' ? '💳' : '↩️'}
+                  </div>
+                  <h3 className="text-lg font-black text-white">
+                    {recargaTipo === 'credito' ? 'Carregar saldo' : 'Estornar saldo'}
+                  </h3>
+                  <p className="text-white/70 text-sm mt-0.5">
+                    {recargaCliente.nome ?? formatarCelular(recargaCliente.telefone)}
+                  </p>
+                  <p className="text-teal-300 text-xs mt-1">
+                    Saldo atual: {formatarReal(recargaCliente.saldo_disponivel)}
+                  </p>
+                </div>
+
+                <div className="px-6 py-5 space-y-4">
+                  {/* Atalhos de valor */}
+                  {recargaTipo === 'credito' && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {[50, 100, 150, 200].map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => setRecargaValor(String(v))}
+                          className={`py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                            recargaValor === String(v)
+                              ? 'border-teal-500 bg-teal-50 text-teal-700'
+                              : 'border-slate-200 text-slate-600 hover:border-teal-300'
+                          }`}
+                        >
+                          R${v}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                      Valor (R$) *
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={recargaValor}
+                      onChange={(e) => setRecargaValor(e.target.value)}
+                      placeholder="0,00"
+                      className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-xl font-black text-slate-800 outline-none focus:border-teal-400 transition-colors"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                      Descrição (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={recargaDesc}
+                      onChange={(e) => setRecargaDesc(e.target.value)}
+                      placeholder={recargaTipo === 'credito' ? 'Ex: pagamento em dinheiro' : 'Ex: cliente desistiu'}
+                      className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-teal-400 transition-colors"
+                    />
+                  </div>
+
+                  {recargaErro && (
+                    <p className="text-sm text-red-600 font-medium bg-red-50 rounded-xl px-3 py-2">
+                      {recargaErro}
+                    </p>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setModalRecarga(false)}
+                      className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={confirmarRecarga}
+                      disabled={recargaCarregando || !recargaValor}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-white text-sm disabled:opacity-40 transition-opacity"
+                      style={{ background: '#1A9B8A' }}
+                    >
+                      {recargaCarregando
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
+                        : recargaTipo === 'credito' ? '✅ Confirmar recarga' : '↩️ Confirmar estorno'
+                      }
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-16">

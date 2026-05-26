@@ -62,17 +62,39 @@ export default function ContaPage() {
   const [garcomPix, setGarcomPix] = useState(false)
   const [pixChave, setPixChave] = useState<string | null>(null)
   const [corPrimaria, setCorPrimaria] = useState('#1A9B8A')
+  const [saldoHabilitado, setSaldoHabilitado] = useState(false)
+  const [saldoCliente, setSaldoCliente] = useState<{
+    id: string; nome: string | null; telefone: string; saldo_disponivel: number
+  } | null>(null)
 
   // IDs de itens que já sabemos que estão "pronto" — para detectar novos
   const prontosSabidos = useRef<Set<string>>(new Set())
 
-  // Carrega chave PIX e cor primária do restaurante
+  // Carrega chave PIX, cor primária e saldo do restaurante
   useEffect(() => {
     fetch(`/api/configuracoes/banner?mesa_token=${token}`)
       .then((r) => r.json())
       .then((d) => {
         setPixChave(d.branding?.pix_chave ?? null)
         setCorPrimaria(d.branding?.cor_primaria ?? '#1A9B8A')
+
+        const habilitado = d.branding?.saldo_habilitado ?? false
+        setSaldoHabilitado(habilitado)
+
+        if (habilitado) {
+          try {
+            const salvo = localStorage.getItem(`menue_saldo_${token}`)
+            if (salvo) {
+              const parsed = JSON.parse(salvo)
+              setSaldoCliente(parsed)
+              // Revalida saldo atual no servidor
+              fetch(`/api/pub/saldo?cliente_id=${parsed.id}`)
+                .then(r => r.json())
+                .then(sd => { if (sd.cliente) setSaldoCliente(sd.cliente) })
+                .catch(() => {})
+            }
+          } catch {}
+        }
       })
       .catch(() => {})
   }, [token])
@@ -234,6 +256,37 @@ export default function ContaPage() {
           Olá, <span className="font-semibold text-slate-700">{clienteNome}</span>! Aqui está tudo o que você pediu.
         </p>
 
+        {/* Card de saldo pré-pago */}
+        {saldoHabilitado && saldoCliente && (
+          <div
+            className="rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3 shadow-sm"
+            style={{ background: `linear-gradient(135deg, #0a2420, #1A9B8A)` }}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 text-xl">
+                💳
+              </div>
+              <div className="min-w-0">
+                <p className="text-white/70 text-xs font-semibold leading-none mb-1">
+                  Saldo pré-pago
+                </p>
+                <p className="text-white text-sm font-bold leading-none truncate">
+                  {saldoCliente.nome
+                    ? `${saldoCliente.nome.split(' ')[0]} · ${saldoCliente.telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}`
+                    : saldoCliente.telefone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-white/60 text-[10px] leading-tight mb-0.5">saldo restante</p>
+              <p className="text-white font-black text-xl leading-none">
+                {formatarReal(saldoCliente.saldo_disponivel)}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Lista de pedidos */}
         {pedidos.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
@@ -325,8 +378,19 @@ export default function ContaPage() {
                 <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: `rgba(${rgb}, 0.75)` }}>Total da conta</p>
                 <p className="text-3xl font-black text-white">{formatarReal(totalGeral)}</p>
               </div>
-              <ShoppingBag className="w-10 h-10 text-white/20" />
+              {saldoHabilitado && saldoCliente
+                ? <span className="text-3xl">💳</span>
+                : <ShoppingBag className="w-10 h-10 text-white/20" />
+              }
             </div>
+            {saldoHabilitado && saldoCliente && (
+              <div className="mt-3 flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <CheckCircle2 className="w-4 h-4 text-green-300 shrink-0" />
+                <p className="text-xs font-semibold text-white/90">
+                  Pago via saldo pré-pago · restam {formatarReal(saldoCliente.saldo_disponivel)}
+                </p>
+              </div>
+            )}
             {todosEntregues && (
               <p className="text-xs mt-2" style={{ color: `rgba(${rgb}, 0.75)` }}>✓ Todos os itens foram entregues</p>
             )}
@@ -343,6 +407,29 @@ export default function ContaPage() {
             </div>
           </div>
         )}
+        {/* Saldo: botão para chamar garçom encerrar mesa */}
+        {saldoHabilitado && saldoCliente && pedidos.length > 0 && !garcomChamado && (
+          <div className="space-y-2">
+            <button
+              onClick={() => chamarGarcom('conta')}
+              disabled={chamandoGarcom}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 font-semibold text-sm transition-colors"
+              style={{ borderColor: corPrimaria, color: corPrimaria }}
+            >
+              {chamandoGarcom
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <ConciergeBell className="w-4 h-4" />}
+              Chamar garçom para encerrar
+            </button>
+            <button
+              onClick={() => router.push(`/mesa/${token}/cardapio`)}
+              className="w-full text-center text-xs text-slate-400 py-1"
+            >
+              + Adicionar mais itens
+            </button>
+          </div>
+        )}
+
         {garcomPix && (
           <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: corFundoClaro(rgb), border: `1px solid ${corBorda(rgb)}` }}>
             <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color: corPrimaria }} />
@@ -355,7 +442,7 @@ export default function ContaPage() {
       </div>
 
       {/* Botões fixos na base */}
-      {pedidos.length > 0 && !garcomChamado && !garcomPix && (
+      {pedidos.length > 0 && !garcomChamado && !garcomPix && !(saldoHabilitado && saldoCliente) && (
         <div className="fixed bottom-0 left-0 right-0 p-4 space-y-2 bg-white/80 backdrop-blur border-t border-slate-100">
           <div className="max-w-lg mx-auto space-y-2">
             {/* Pagar via PIX — só aparece se o restaurante configurou a chave */}
