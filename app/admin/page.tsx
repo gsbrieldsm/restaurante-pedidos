@@ -139,6 +139,7 @@ export default function AdminDashboard() {
   const [etapaPagamento, setEtapaPagamento] = useState(false)
   const [formaSelecionada, setFormaSelecionada] = useState<FormaPagamento | null>(null)
   const [fechando, setFechando] = useState(false)
+  const [saldoComanda, setSaldoComanda] = useState<{ id: string; saldo_disponivel: number; telefone: string } | null>(null)
 
   const buscarTudo = useCallback(async () => {
     const [resComandas, resMesas, resOverview] = await Promise.all([
@@ -179,10 +180,26 @@ export default function AdminDashboard() {
     setComandaSelecionada(comanda)
     setEtapaPagamento(false)
     setFormaSelecionada(null)
+    setSaldoComanda(null)
     setLoadingModal(true)
-    const resp = await fetch(`/api/admin/mesas/${comanda.id}?por=sessao`)
-    const data = await resp.json()
+
+    const [respPedidos, respSaldo] = await Promise.all([
+      fetch(`/api/admin/mesas/${comanda.id}?por=sessao`),
+      comanda.cliente_whatsapp
+        ? fetch(`/api/garcom/saldo?q=${comanda.cliente_whatsapp.replace(/\D/g, '')}`)
+        : Promise.resolve(null),
+    ])
+
+    const data = await respPedidos.json()
     setPedidosComanda(data.pedidos || [])
+
+    if (respSaldo) {
+      const dataSaldo = await respSaldo.json()
+      if (dataSaldo.clientes?.length > 0) {
+        setSaldoComanda(dataSaldo.clientes[0])
+      }
+    }
+
     setLoadingModal(false)
   }
 
@@ -482,6 +499,22 @@ export default function AdminDashboard() {
               </span>
             </DialogTitle>
           </DialogHeader>
+
+          {/* Saldo pré-pago do cliente */}
+          {saldoComanda && (
+            <div className="flex items-center justify-between rounded-xl px-4 py-2.5 border border-teal-200 bg-teal-50">
+              <div className="flex items-center gap-2.5">
+                <span className="text-lg">💳</span>
+                <div>
+                  <p className="text-xs text-teal-600 font-semibold leading-none mb-0.5">Saldo pré-pago</p>
+                  <p className="text-xs text-slate-500">{saldoComanda.telefone}</p>
+                </div>
+              </div>
+              <p className="text-lg font-black text-teal-700">
+                R$ {Number(saldoComanda.saldo_disponivel).toFixed(2).replace('.', ',')}
+              </p>
+            </div>
+          )}
 
           {etapaPagamento ? (
             <div className="space-y-5 mt-2">
