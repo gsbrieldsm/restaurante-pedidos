@@ -133,8 +133,9 @@ export default function PlanosPage() {
   const router = useRouter()
   const [tipoNegocio, setTipoNegocio] = useState<TipoNegocio>('mesa')
   const [planoSelecionado, setPlanoSelecionado] = useState<TierMesa>('pro')
-  const [aceitando, setAceitando] = useState(false)
-  const [aceito,    setAceito]    = useState(false)
+  const [aceitando,     setAceitando]     = useState(false)
+  const [aceito,        setAceito]        = useState(false)
+  const [termosAceitos, setTermosAceitos] = useState(false)
 
   const plano = PLANOS_MESA.find((p) => p.id === planoSelecionado)!
 
@@ -428,11 +429,52 @@ export default function PlanosPage() {
                 </div>
               </div>
 
+              {/* Checkbox de aceite dos Termos de Uso */}
+              <div className="px-8 pb-2">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative mt-0.5 shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={termosAceitos}
+                      onChange={(e) => setTermosAceitos(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all"
+                      style={{
+                        borderColor:     termosAceitos ? plano.cor : '#cbd5e1',
+                        background:      termosAceitos ? plano.cor : '#fff',
+                      }}
+                    >
+                      {termosAceitos && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-xs text-slate-600 leading-relaxed">
+                    Li e aceito os{' '}
+                    <a
+                      href="/termos"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold underline underline-offset-2"
+                      style={{ color: plano.cor }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Termos de Uso
+                    </a>{' '}
+                    do Menuê+
+                  </span>
+                </label>
+              </div>
+
               <div className="px-8 pb-8 pt-4">
                 <Button
                   onClick={iniciarTrial}
-                  disabled={aceitando || aceito}
-                  className="w-full text-base font-bold text-white hover:opacity-90"
+                  disabled={aceitando || aceito || !termosAceitos}
+                  className="w-full text-base font-bold text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ background: aceito ? '#16a34a' : plano.cor, height: '52px' }}
                 >
                   {aceito ? (
