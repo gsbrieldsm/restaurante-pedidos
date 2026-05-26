@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   ShoppingCart, Plus, Minus, Trash2, ChevronRight,
   Clock, Loader2, Search, Receipt, ConciergeBell, CheckCircle2, X,
-  PartyPopper, RotateCcw
+  PartyPopper, RotateCcw, MessageCircle, RefreshCw
 } from 'lucide-react'
 import type { CardapioItem, GrupoOpcao, OpcaoSelecionada, ItemCarrinho } from '@/lib/supabase/types'
 import { darkenHex, hexToRgbParts } from '@/lib/cor'
@@ -63,11 +63,16 @@ export default function CardapioPage() {
   const [saldoCliente, setSaldoCliente] = useState<{
     id: string; nome: string | null; telefone: string; saldo_disponivel: number
   } | null>(null)
-  const [modalSaldo, setModalSaldo]           = useState(false)  // modal de identificação
+  const [modalSaldo, setModalSaldo]           = useState(false)
   const [saldoTelefone, setSaldoTelefone]     = useState('')
   const [saldoNome, setSaldoNome]             = useState('')
   const [saldoIdentificando, setSaldoIdentificando] = useState(false)
   const [saldoErro, setSaldoErro]             = useState('')
+  // OTP
+  const [saldoEtapa, setSaldoEtapa]           = useState<'telefone' | 'otp'>('telefone')
+  const [saldoOtp, setSaldoOtp]               = useState('')
+  const [saldoClienteId, setSaldoClienteId]   = useState<string | null>(null)
+  const [saldoReenviando, setSaldoReenviando] = useState(false)
 
   useEffect(() => {
     // Se veio via garçom com ?sessao=, salva no sessionStorage
@@ -310,11 +315,77 @@ export default function CardapioPage() {
 
     if (!resp.ok) { setSaldoErro(data.error ?? 'Erro ao identificar.'); return }
 
+    // Celular já verificado anteriormente → entra direto
+    if (data.cliente) {
+      setSaldoCliente(data.cliente)
+      localStorage.setItem(`menue_saldo_${token}`, JSON.stringify(data.cliente))
+      setModalSaldo(false)
+      setSaldoTelefone('')
+      setSaldoNome('')
+      return
+    }
+
+    // Primeiro acesso → precisa verificar via WhatsApp OTP
+    if (data.precisa_verificar) {
+      setSaldoClienteId(data.cliente_id)
+      setSaldoEtapa('otp')
+      setSaldoOtp('')
+    }
+  }
+
+  async function verificarOTP() {
+    if (!saldoClienteId || saldoOtp.replace(/\D/g, '').length < 6) return
+
+    setSaldoIdentificando(true)
+    setSaldoErro('')
+
+    const resp = await fetch('/api/pub/saldo/verificar', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ cliente_id: saldoClienteId, codigo: saldoOtp.trim() }),
+    })
+    const data = await resp.json()
+    setSaldoIdentificando(false)
+
+    if (!resp.ok) {
+      if (data.code === 'otp_expirado') {
+        setSaldoErro('Código expirado. Clique em "Reenviar código" para receber um novo.')
+      } else {
+        setSaldoErro(data.error ?? 'Código inválido.')
+      }
+      return
+    }
+
     setSaldoCliente(data.cliente)
     localStorage.setItem(`menue_saldo_${token}`, JSON.stringify(data.cliente))
     setModalSaldo(false)
     setSaldoTelefone('')
     setSaldoNome('')
+    setSaldoEtapa('telefone')
+    setSaldoOtp('')
+    setSaldoClienteId(null)
+  }
+
+  async function reenviarOTP() {
+    const tel = saldoTelefone.replace(/\D/g, '')
+    if (tel.length < 10) return
+
+    setSaldoReenviando(true)
+    setSaldoErro('')
+
+    const resp = await fetch('/api/pub/saldo', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ mesa_token: token, telefone: tel, nome: saldoNome }),
+    })
+    const data = await resp.json()
+    setSaldoReenviando(false)
+
+    if (!resp.ok) { setSaldoErro(data.error ?? 'Erro ao reenviar.'); return }
+    if (data.precisa_verificar) {
+      setSaldoClienteId(data.cliente_id)
+      setSaldoOtp('')
+    }
   }
 
   async function finalizarPedido() {
@@ -587,7 +658,7 @@ export default function CardapioPage() {
           <div className="text-right shrink-0">
             <p className="text-white/60 text-[10px] leading-tight">disponível para gastar</p>
             <button
-              onClick={() => setModalSaldo(true)}
+              onClick={() => { setSaldoEtapa('telefone'); setSaldoOtp(''); setSaldoErro(''); setModalSaldo(true) }}
               className="text-white/70 text-xs underline underline-offset-2 mt-0.5"
             >
               trocar conta
@@ -607,7 +678,7 @@ export default function CardapioPage() {
             <p className="text-xs text-slate-500 mt-0.5">Identifique-se para usar seu saldo</p>
           </div>
           <button
-            onClick={() => setModalSaldo(true)}
+            onClick={() => { setSaldoEtapa('telefone'); setSaldoOtp(''); setSaldoErro(''); setModalSaldo(true) }}
             className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white"
             style={{ background: cor }}
           >
@@ -1103,72 +1174,160 @@ export default function CardapioPage() {
             <div className="px-6 pt-4 pb-5 text-center"
               style={{ background: `linear-gradient(135deg, ${darkenHex(cor, 0.25)}, ${cor})` }}>
               <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-3 text-2xl">
-                💳
+                {saldoEtapa === 'otp' ? <MessageCircle className="w-7 h-7 text-white" /> : '💳'}
               </div>
-              <h2 className="text-lg font-black text-white">Identificação de saldo</h2>
-              <p className="text-white/70 text-sm mt-1">
-                Informe seu celular para acessar seu saldo pré-pago
-              </p>
+              {saldoEtapa === 'telefone' ? (
+                <>
+                  <h2 className="text-lg font-black text-white">Identificação de saldo</h2>
+                  <p className="text-white/70 text-sm mt-1">
+                    Informe seu celular para acessar seu saldo pré-pago
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-lg font-black text-white">Verificar WhatsApp</h2>
+                  <p className="text-white/70 text-sm mt-1">
+                    Enviamos um código de 6 dígitos para
+                  </p>
+                  <p className="text-white font-bold text-sm mt-0.5">
+                    {saldoTelefone || 'seu WhatsApp'}
+                  </p>
+                </>
+              )}
             </div>
 
-            {/* Formulário */}
-            <div className="px-6 py-5 space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                  Celular com DDD *
-                </label>
-                <input
-                  type="tel"
-                  value={saldoTelefone}
-                  onChange={(e) => setSaldoTelefone(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && identificarSaldo()}
-                  placeholder="(47) 99999-0000"
-                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base font-semibold text-slate-800 outline-none focus:border-teal-400 transition-colors"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                  Seu nome (opcional)
-                </label>
-                <input
-                  type="text"
-                  value={saldoNome}
-                  onChange={(e) => setSaldoNome(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && identificarSaldo()}
-                  placeholder="Como quer ser chamado?"
-                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 outline-none focus:border-teal-400 transition-colors"
-                />
-              </div>
+            {/* Etapa 1: telefone */}
+            {saldoEtapa === 'telefone' && (
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                    Celular com DDD *
+                  </label>
+                  <input
+                    type="tel"
+                    value={saldoTelefone}
+                    onChange={(e) => setSaldoTelefone(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && identificarSaldo()}
+                    placeholder="(47) 99999-0000"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base font-semibold text-slate-800 outline-none focus:border-teal-400 transition-colors"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                    Seu nome (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={saldoNome}
+                    onChange={(e) => setSaldoNome(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && identificarSaldo()}
+                    placeholder="Como quer ser chamado?"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 outline-none focus:border-teal-400 transition-colors"
+                  />
+                </div>
 
-              {saldoErro && (
-                <p className="text-sm text-red-600 font-medium bg-red-50 rounded-xl px-3 py-2">
-                  {saldoErro}
-                </p>
-              )}
-
-              <button
-                onClick={identificarSaldo}
-                disabled={saldoIdentificando || saldoTelefone.replace(/\D/g, '').length < 10}
-                className="w-full flex items-center justify-center gap-2 font-bold text-base text-white rounded-2xl disabled:opacity-40 transition-opacity"
-                style={{ background: cor, height: '52px' }}
-              >
-                {saldoIdentificando ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Verificando...</>
-                ) : (
-                  <>Ver meu saldo <ChevronRight className="w-5 h-5" /></>
+                {saldoErro && (
+                  <p className="text-sm text-red-600 font-medium bg-red-50 rounded-xl px-3 py-2">
+                    {saldoErro}
+                  </p>
                 )}
-              </button>
 
-              {saldoCliente && (
                 <button
-                  onClick={() => setModalSaldo(false)}
-                  className="w-full text-center text-sm text-slate-400 py-1"
+                  onClick={identificarSaldo}
+                  disabled={saldoIdentificando || saldoTelefone.replace(/\D/g, '').length < 10}
+                  className="w-full flex items-center justify-center gap-2 font-bold text-base text-white rounded-2xl disabled:opacity-40 transition-opacity"
+                  style={{ background: cor, height: '52px' }}
                 >
-                  Cancelar
+                  {saldoIdentificando ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Aguarde...</>
+                  ) : (
+                    <>Continuar <ChevronRight className="w-5 h-5" /></>
+                  )}
                 </button>
-              )}
-            </div>
+
+                {saldoCliente && (
+                  <button
+                    onClick={() => setModalSaldo(false)}
+                    className="w-full text-center text-sm text-slate-400 py-1"
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Etapa 2: OTP */}
+            {saldoEtapa === 'otp' && (
+              <div className="px-6 py-5 space-y-4">
+                {/* Instruções */}
+                <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                  <span className="text-xl mt-0.5">📱</span>
+                  <p className="text-sm text-green-800 leading-relaxed">
+                    Abra o <strong>WhatsApp</strong> e use o código de 6 dígitos que acabamos de enviar.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                    Código de verificação *
+                  </label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={saldoOtp}
+                    onChange={(e) => setSaldoOtp(e.target.value.slice(0, 6))}
+                    onKeyDown={(e) => e.key === 'Enter' && verificarOTP()}
+                    placeholder="000000"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-2xl font-black text-center text-slate-800 outline-none focus:border-teal-400 transition-colors tracking-[0.4em]"
+                    autoFocus
+                  />
+                </div>
+
+                {saldoErro && (
+                  <p className="text-sm text-red-600 font-medium bg-red-50 rounded-xl px-3 py-2">
+                    {saldoErro}
+                  </p>
+                )}
+
+                <button
+                  onClick={verificarOTP}
+                  disabled={saldoIdentificando || saldoOtp.replace(/\D/g, '').length < 6}
+                  className="w-full flex items-center justify-center gap-2 font-bold text-base text-white rounded-2xl disabled:opacity-40 transition-opacity"
+                  style={{ background: cor, height: '52px' }}
+                >
+                  {saldoIdentificando ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Verificando...</>
+                  ) : (
+                    <><CheckCircle2 className="w-5 h-5" /> Verificar código</>
+                  )}
+                </button>
+
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    onClick={() => {
+                      setSaldoEtapa('telefone')
+                      setSaldoOtp('')
+                      setSaldoErro('')
+                    }}
+                    className="text-sm text-slate-400 underline underline-offset-2"
+                  >
+                    ← Trocar número
+                  </button>
+                  <button
+                    onClick={reenviarOTP}
+                    disabled={saldoReenviando}
+                    className="flex items-center gap-1.5 text-sm font-medium disabled:opacity-50"
+                    style={{ color: cor }}
+                  >
+                    {saldoReenviando
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Reenviando...</>
+                      : <><RefreshCw className="w-3.5 h-3.5" /> Reenviar código</>
+                    }
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -29,3 +29,37 @@ export async function GET() {
 
   return NextResponse.json({ mesas: mesasRes.data, plano, limite_mesas: limiteMesas })
 }
+
+// PATCH — atualiza nome personalizado (Business+)
+export async function PATCH(req: Request) {
+  const tenantId = await getTenantId()
+  if (!tenantId) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+
+  const supabase = createServiceClient()
+
+  // Verifica se o plano permite nome_mesa
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('plano')
+    .eq('id', tenantId)
+    .single()
+
+  const config = getPlanoConfig(tenant?.plano)
+  if (!config.nome_mesa) {
+    return NextResponse.json({ error: 'Recurso disponível apenas no plano Business ou superior.' }, { status: 403 })
+  }
+
+  const { mesa_id, nome } = await req.json()
+  if (!mesa_id) return NextResponse.json({ error: 'mesa_id obrigatório.' }, { status: 422 })
+
+  const { data, error } = await supabase
+    .from('mesas')
+    .update({ nome: nome?.trim() || null })
+    .eq('id', mesa_id)
+    .eq('tenant_id', tenantId)
+    .select('id, numero, nome')
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true, mesa: data })
+}

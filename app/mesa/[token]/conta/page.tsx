@@ -51,6 +51,7 @@ export default function ContaPage() {
   const [pedidos, setPedidos] = useState<PedidoComItens[]>([])
   const [clienteNome, setClienteNome] = useState('')
   const [mesaNumero, setMesaNumero] = useState<number | null>(null)
+  const [mesaNome, setMesaNome]     = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set())
   const [itemPronto, setItemPronto] = useState(false)
@@ -131,6 +132,7 @@ export default function ContaPage() {
     setPedidos(pedidosNovos)
     setClienteNome(data.cliente_nome ?? '')
     setMesaNumero(data.mesa_numero)
+    setMesaNome(data.mesa_nome ?? null)
     setLoading(false)
 
     if (data.pedidos?.length && loading) {
@@ -224,7 +226,7 @@ export default function ContaPage() {
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold tracking-widest uppercase leading-none" style={{ color: `rgba(${rgb}, 0.75)` }}>Menuê+</p>
             <h1 className="text-white font-black text-2xl leading-tight">
-              Mesa {mesaNumero}
+              {mesaNome ?? `Mesa ${mesaNumero}`}
             </h1>
             <p className="text-sm font-medium" style={{ color: `rgba(${rgb}, 0.85)` }}>Minha conta · {clienteNome}</p>
           </div>

@@ -21,7 +21,7 @@ export async function GET(
   // Valida que a sessão pertence a essa mesa
   const { data: sessao } = await supabase
     .from('sessoes_mesa')
-    .select('id, cliente_nome, mesas(numero)')
+    .select('id, cliente_nome, mesas(numero, nome)')
     .eq('id', sessaoId)
     .eq('ativa', true)
     .single()
@@ -42,11 +42,12 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const mesa = sessao.mesas as unknown as { numero: number }
+  const mesa = sessao.mesas as unknown as { numero: number; nome: string | null }
 
   return NextResponse.json({
-    pedidos: pedidos ?? [],
+    pedidos:      pedidos ?? [],
     cliente_nome: sessao.cliente_nome,
-    mesa_numero: mesa?.numero,
+    mesa_numero:  mesa?.numero,
+    mesa_nome:    mesa?.nome ?? null,
   })
 }

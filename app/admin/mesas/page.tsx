@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   QrCode, Printer, Download, BarChart3, Users,
-  DollarSign, Clock, TrendingUp, Medal,
+  DollarSign, Clock, TrendingUp, Medal, Pencil, Check, X, Lock,
 } from 'lucide-react'
 import type { Mesa } from '@/lib/supabase/types'
 import QRCode from 'qrcode'
@@ -57,6 +57,12 @@ export default function MesasQRPage() {
   const [plano, setPlano] = useState<string>('')
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  // Edição de nome
+  const [editandoNome, setEditandoNome] = useState<string | null>(null) // mesa.id
+  const [nomeTemp, setNomeTemp]         = useState('')
+  const [salvandoNome, setSalvandoNome] = useState(false)
+  const temNomeMesa = ['business', 'enterprise', 'free'].includes(plano)
+
   useEffect(() => {
     fetch('/api/admin/mesas')
       .then(r => r.json())
@@ -80,6 +86,25 @@ export default function MesasQRPage() {
     buscarStats()
   }, [])
 
+  function exibirNomeMesa(mesa: Mesa) {
+    return mesa.nome?.trim() || `Mesa ${mesa.numero}`
+  }
+
+  async function salvarNome(mesa: Mesa) {
+    setSalvandoNome(true)
+    const res = await fetch('/api/admin/mesas', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ mesa_id: mesa.id, nome: nomeTemp }),
+    })
+    setSalvandoNome(false)
+    if (res.ok) {
+      const { mesa: atualizada } = await res.json()
+      setMesas((prev) => prev.map((m) => m.id === atualizada.id ? { ...m, nome: atualizada.nome } : m))
+      setEditandoNome(null)
+    }
+  }
+
   async function abrirQR(mesa: Mesa) {
     setQrSelecionada(mesa)
     const url = `${getQrBase()}/mesa/${mesa.qr_token}`
@@ -92,28 +117,31 @@ export default function MesasQRPage() {
 
   function baixarQR() {
     if (!qrUrl || !qrSelecionada) return
+    const nomeArquivo = (qrSelecionada.nome?.trim() || `mesa-${qrSelecionada.numero}`)
+      .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
     const a = document.createElement('a')
     a.href = qrUrl
-    a.download = `mesa-${qrSelecionada.numero}-qr.png`
+    a.download = `${nomeArquivo}-qr.png`
     a.click()
   }
 
   function imprimirQR() {
     if (!qrUrl || !qrSelecionada) return
+    const nome = exibirNomeMesa(qrSelecionada)
     const win = window.open('', '_blank')!
     win.document.write(`
-      <html><head><title>Mesa ${qrSelecionada.numero}</title>
+      <html><head><title>${nome}</title>
       <style>
         @page { size: A4; margin: 0 }
         body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:white}
         .card{text-align:center;padding:32px;border:2px solid #e2e8f0;border-radius:16px;max-width:300px}
-        h1{font-size:28px;font-weight:900;margin:0 0 4px;color:#1e293b}
+        h1{font-size:24px;font-weight:900;margin:0 0 4px;color:#1e293b;line-height:1.2}
         p{color:#64748b;font-size:14px;margin:0 0 20px}
         img{width:240px;height:240px}
         small{display:block;margin-top:16px;color:#94a3b8;font-size:12px}
       </style></head>
       <body><div class="card">
-        <h1>Mesa ${qrSelecionada.numero}</h1>
+        <h1>${nome}</h1>
         <p>Escaneie para fazer seu pedido</p>
         <img src="${qrUrl}" />
         <small>Aponte a câmera do celular para o código</small>
@@ -133,13 +161,13 @@ export default function MesasQRPage() {
           width: 300, margin: 2,
           color: { dark: '#1e293b', light: '#ffffff' },
         })
-        return { numero: mesa.numero, dataUrl }
+        return { numero: mesa.numero, nome: mesa.nome, dataUrl }
       })
     )
 
-    const cardsHtml = qrs.map(({ numero, dataUrl }) => `
+    const cardsHtml = qrs.map(({ numero, nome, dataUrl }) => `
       <div class="card">
-        <h2>${numero}</h2>
+        <h2>${nome || `Mesa ${numero}`}</h2>
         <p>Escaneie para pedir</p>
         <img src="${dataUrl}" />
         <small>Aponte a câmera do celular</small>
@@ -436,13 +464,68 @@ export default function MesasQRPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {mesas.map((mesa) => {
-              const cfg = STATUS_CONFIG[mesa.status]
+              const cfg       = STATUS_CONFIG[mesa.status]
+              const estaEditando = editandoNome === mesa.id
               return (
                 <Card key={mesa.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4 text-center space-y-2">
-                    <p className="text-3xl font-black text-slate-700">{mesa.numero}</p>
+
+                    {/* Número pequeno + nome em destaque */}
+                    <p className="text-xs text-slate-400 font-medium">#{mesa.numero}</p>
+
+                    {/* Nome / editor inline */}
+                    {estaEditando ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          autoFocus
+                          value={nomeTemp}
+                          onChange={(e) => setNomeTemp(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') salvarNome(mesa)
+                            if (e.key === 'Escape') setEditandoNome(null)
+                          }}
+                          placeholder={`Mesa ${mesa.numero}`}
+                          className="flex-1 border border-teal-400 rounded-lg px-2 py-1 text-xs text-slate-800 outline-none min-w-0"
+                        />
+                        <button
+                          onClick={() => salvarNome(mesa)}
+                          disabled={salvandoNome}
+                          className="w-6 h-6 rounded-full bg-teal-500 text-white flex items-center justify-center shrink-0"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setEditandoNome(null)}
+                          className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center shrink-0"
+                        >
+                          <X className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-1.5 min-h-[28px]">
+                        <p className="font-black text-slate-700 text-sm leading-tight truncate">
+                          {mesa.nome ?? `Mesa ${mesa.numero}`}
+                        </p>
+                        {temNomeMesa ? (
+                          <button
+                            onClick={() => { setEditandoNome(mesa.id); setNomeTemp(mesa.nome ?? '') }}
+                            className="text-slate-300 hover:text-teal-500 transition-colors shrink-0"
+                            title="Renomear"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        ) : (
+                          <span title="Disponível no plano Business" className="text-slate-300 shrink-0 cursor-help">
+                            <Lock className="w-3 h-3" />
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     <Badge className={`${cfg.cor} border-0`}>{cfg.label}</Badge>
                     <p className="text-xs text-slate-400">{mesa.capacidade} lugares</p>
                     <Button onClick={() => abrirQR(mesa)} variant="outline" size="sm" className="w-full gap-1.5 text-xs">
@@ -454,6 +537,15 @@ export default function MesasQRPage() {
               )
             })}
           </div>
+
+          {/* Dica para planos sem nome_mesa */}
+          {!temNomeMesa && (
+            <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-1">
+              <Lock className="w-3.5 h-3.5" />
+              Nomes personalizados disponíveis a partir do plano <strong>Business</strong>
+            </p>
+          )}
+        </>
         )
       )}
 
@@ -461,7 +553,7 @@ export default function MesasQRPage() {
       {qrSelecionada && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setQrSelecionada(null)}>
           <div className="bg-white rounded-2xl p-6 max-w-xs w-full text-center shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-black text-slate-800 mb-1">Mesa {qrSelecionada.numero}</h2>
+            <h2 className="text-2xl font-black text-slate-800 mb-1">{exibirNomeMesa(qrSelecionada)}</h2>
             <p className="text-sm text-slate-500 mb-4">Escaneie para fazer o pedido</p>
             {qrUrl && <img src={qrUrl} alt="QR Code" className="w-48 h-48 mx-auto rounded-xl" />}
             <p className="text-xs text-slate-400 mt-3 mb-5 font-mono break-all">

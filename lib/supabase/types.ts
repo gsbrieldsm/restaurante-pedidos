@@ -47,6 +47,7 @@ export interface Database {
 export interface Mesa {
   id: string
   numero: number
+  nome: string | null
   qr_token: string
   status: StatusMesa
   capacidade: number
@@ -127,6 +128,7 @@ export interface NotificacaoWhatsapp {
 export interface ViewMesaStatus {
   id: string
   numero: number
+  nome: string | null
   status: StatusMesa
   capacidade: number
   sessao_id: string | null

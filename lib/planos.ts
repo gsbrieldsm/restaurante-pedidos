@@ -12,6 +12,7 @@ export interface PlanoConfig {
   bloqueado:      string[]
   /** recursos premium por feature flag */
   saldo_pre_pago: boolean  // carteira pré-paga vinculada ao celular
+  nome_mesa:      boolean  // nome personalizado por QR code (ex: "Arquibancada Quadra 1")
 }
 
 export const PLANOS: Record<PlanoId, PlanoConfig> = {
@@ -20,30 +21,35 @@ export const PLANOS: Record<PlanoId, PlanoConfig> = {
     estacoes:       0,
     bloqueado:      [],  // acesso total (teste/bônus)
     saldo_pre_pago: true,
+    nome_mesa:      true,
   },
   starter: {
     mesas:          15,
     estacoes:       2,
     bloqueado:      ['/admin/tempo', '/admin/clientes', '/admin/faturamento'],
     saldo_pre_pago: false,
+    nome_mesa:      false,
   },
   pro: {
     mesas:          30,
     estacoes:       4,
     bloqueado:      [],
     saldo_pre_pago: false,
+    nome_mesa:      false,
   },
   business: {
     mesas:          60,
     estacoes:       0,
     bloqueado:      [],
     saldo_pre_pago: true,
+    nome_mesa:      true,
   },
   enterprise: {
     mesas:          0,
     estacoes:       0,
     bloqueado:      [],  // negociado individualmente — acesso total
     saldo_pre_pago: true,
+    nome_mesa:      true,
   },
 }
 
@@ -58,4 +64,5 @@ export const RECURSO_LABEL: Record<string, { titulo: string; planoMinimo: string
   '/admin/clientes':    { titulo: 'Histórico de Clientes',  planoMinimo: 'Pro'      },
   '/admin/faturamento': { titulo: 'Relatórios Financeiros', planoMinimo: 'Pro'      },
   'saldo_pre_pago':     { titulo: 'Saldo Pré-pago',         planoMinimo: 'Business' },
+  'nome_mesa':          { titulo: 'Nome personalizado de QR', planoMinimo: 'Business' },
 }
