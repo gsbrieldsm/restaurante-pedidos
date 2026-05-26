@@ -109,6 +109,26 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Recargas de saldo pré-pago no período
+  const { data: recargasRaw } = await supabase
+    .from('clientes_saldo_transacoes')
+    .select('id, tipo, valor, descricao, criado_em, cliente_id, clientes_saldo(nome, telefone)')
+    .eq('tenant_id', tenantId)
+    .eq('tipo', 'credito')
+    .gte('criado_em', inicio.toISOString())
+    .order('criado_em', { ascending: false })
+
+  const recargas = (recargasRaw ?? []).map((r: any) => ({
+    id:          r.id,
+    valor:       r.valor,
+    descricao:   r.descricao,
+    criado_em:   r.criado_em,
+    nome:        r.clientes_saldo?.nome ?? null,
+    telefone:    r.clientes_saldo?.telefone ?? null,
+  }))
+
+  const totalRecargas = recargas.reduce((acc: number, r: any) => acc + r.valor, 0)
+
   const pagamentos = data ?? []
   const totaisPorForma = { dinheiro: 0, pix: 0, debito: 0, credito: 0 } as Record<string, number>
   for (const p of pagamentos) {
@@ -119,5 +139,7 @@ export async function GET(req: Request) {
     pagamentos,
     totais: totaisPorForma,
     total_geral: pagamentos.reduce((acc, p) => acc + p.valor, 0),
+    recargas,
+    total_recargas: totalRecargas,
   })
 }

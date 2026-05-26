@@ -7,7 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
-import { Banknote, QrCode, CreditCard } from 'lucide-react'
+import { Banknote, QrCode, CreditCard, Wallet } from 'lucide-react'
 import { PainelHero } from '@/components/admin/PainelHero'
 
 const CORES_GRAFICO = ['#1A9B8A', '#F05A4F', '#7c3aed', '#d97706', '#059669', '#0891b2']
@@ -39,9 +39,11 @@ export default function FaturamentoPage() {
   const [porHora, setPorHora] = useState<any[]>([])
   const [itensMaisVendidos, setItensMaisVendidos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
+  const [pagamentos,      setPagamentos]      = useState<Pagamento[]>([])
   const [totaisPagamentos, setTotaisPagamentos] = useState<Record<string, number>>({})
-  const [totalPagamentos, setTotalPagamentos] = useState(0)
+  const [totalPagamentos,  setTotalPagamentos]  = useState(0)
+  const [recargas,         setRecargas]         = useState<any[]>([])
+  const [totalRecargas,    setTotalRecargas]     = useState(0)
 
   useEffect(() => {
     async function buscar() {
@@ -125,12 +127,14 @@ export default function FaturamentoPage() {
         )
       }
 
-      // Pagamentos por forma
+      // Pagamentos por forma + recargas de saldo
       const resPag = await fetch(`/api/admin/pagamentos?periodo=${periodo}`)
       const dataPag = await resPag.json()
       setPagamentos(dataPag.pagamentos ?? [])
       setTotaisPagamentos(dataPag.totais ?? {})
       setTotalPagamentos(dataPag.total_geral ?? 0)
+      setRecargas(dataPag.recargas ?? [])
+      setTotalRecargas(dataPag.total_recargas ?? 0)
 
       setLoading(false)
     }
@@ -183,6 +187,26 @@ export default function FaturamentoPage() {
       {aba === 'pagamentos' ? (
         /* ── ABA PAGAMENTOS ── */
         <div className="space-y-6">
+          {/* Card saldo pré-pago (só aparece se tiver recargas) */}
+          {totalRecargas > 0 && (
+            <div className="rounded-2xl border-2 border-teal-300 bg-teal-50 p-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
+                  <Wallet className="w-6 h-6 text-teal-700" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-teal-600 mb-0.5">Saldo pré-pago carregado</p>
+                  <p className="text-2xl font-black text-teal-700">{formatarReal(totalRecargas)}</p>
+                  <p className="text-xs text-teal-600 mt-0.5">{recargas.length} recarga{recargas.length !== 1 ? 's' : ''} no período</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-teal-500">dinheiro recebido</p>
+                <p className="text-xs text-teal-500">antes do consumo</p>
+              </div>
+            </div>
+          )}
+
           {/* Cards por forma */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {(Object.keys(FORMAS_CONFIG) as FormaPagamento[]).map((forma) => {
@@ -235,6 +259,41 @@ export default function FaturamentoPage() {
                     <Tooltip formatter={(v) => formatarReal(Number(v))} />
                   </PieChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Histórico de recargas de saldo */}
+          {recargas.length > 0 && (
+            <Card className="border-teal-200">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-teal-600" />
+                  Recargas de Saldo Pré-pago
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y divide-slate-50">
+                  {recargas.map((r: any) => (
+                    <div key={r.id} className="flex items-center gap-3 py-3">
+                      <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center shrink-0 text-sm font-black text-teal-700">
+                        {r.nome ? r.nome[0].toUpperCase() : '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-800">
+                          {r.nome ?? 'Cliente'}{r.telefone ? ` · ${r.telefone}` : ''}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {new Date(r.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-sm text-teal-700">+{formatarReal(r.valor)}</p>
+                        <p className="text-xs text-slate-400">Recarga</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}
