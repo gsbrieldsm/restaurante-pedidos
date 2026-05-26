@@ -137,7 +137,21 @@ export async function PATCH(req: NextRequest) {
   const foiAprovadoAgora = status === 'aprovado' && parceiro?.status !== 'aprovado'
   if (foiAprovadoAgora && parceiro?.email && process.env.RESEND_API_KEY) {
     const codigoFinal = atualizado.codigo_indicacao ?? updates.codigo_indicacao ?? ''
-    const resend = new Resend(process.env.RESEND_API_KEY)
+    const resend      = new Resend(process.env.RESEND_API_KEY)
+    const appUrl      = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.menue.com.br'
+
+    // Busca o PDF do kit de parceiro para anexar
+    let pdfAttachment: { filename: string; content: Buffer } | null = null
+    try {
+      const pdfRes = await fetch(`${appUrl}/kit-parceiro-menue.pdf`)
+      if (pdfRes.ok) {
+        const buffer = Buffer.from(await pdfRes.arrayBuffer())
+        pdfAttachment = { filename: 'Kit-Parceiro-Menue.pdf', content: buffer }
+      }
+    } catch (err) {
+      console.error('[parceiros] erro ao buscar PDF kit:', err)
+    }
+
     resend.emails.send({
       from:    process.env.RESEND_FROM ?? 'Menuê+ <noreply@menue.com.br>',
       to:      parceiro.email,
@@ -147,6 +161,7 @@ export async function PATCH(req: NextRequest) {
         email:            parceiro.email,
         codigo_indicacao: codigoFinal,
       }),
+      ...(pdfAttachment ? { attachments: [pdfAttachment] } : {}),
     }).catch((err: unknown) => console.error('[parceiros] erro ao enviar email:', err))
   }
 
