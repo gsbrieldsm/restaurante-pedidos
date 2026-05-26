@@ -455,12 +455,12 @@ export default function ConfiguracoesPage() {
               </div>
               <button
                 onClick={() => setBranding((b) => ({ ...b, saldo_habilitado: !b.saldo_habilitado }))}
-                className={`relative shrink-0 w-12 h-6 rounded-full transition-colors ${
+                className={`relative shrink-0 inline-flex w-11 h-6 rounded-full transition-colors cursor-pointer ${
                   branding.saldo_habilitado ? 'bg-teal-500' : 'bg-slate-300'
                 }`}
               >
-                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  branding.saldo_habilitado ? 'translate-x-6' : 'translate-x-0.5'
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                  branding.saldo_habilitado ? 'translate-x-5' : 'translate-x-0'
                 }`} />
               </button>
             </div>
