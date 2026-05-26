@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { getPlanoConfig } from '@/lib/planos'
 import {
   Trash2, RefreshCw, Users, ClipboardList,
   DollarSign, Bell, TableProperties, AlertTriangle, CheckCircle2, Loader2, ShieldAlert,
@@ -122,6 +123,13 @@ const NIVEL_CONFIG = {
 }
 
 export default function ConfiguracoesPage() {
+  // Lê plano do cookie (client-side)
+  const planoAtual = typeof document !== 'undefined'
+    ? document.cookie.match(/tenant_plano=([^;]+)/)?.[1] ?? 'starter'
+    : 'starter'
+  const planoConfig     = getPlanoConfig(planoAtual)
+  const temSaldoPrePago = planoConfig.saldo_pre_pago
+
   // --- Identidade Visual state ---
   const [branding, setBranding] = useState({
     restaurante_nome:     '',
@@ -437,30 +445,42 @@ export default function ConfiguracoesPage() {
           {/* Saldo pré-pago */}
           <div className="rounded-2xl border-2 p-4 transition-all"
             style={{
-              borderColor: branding.saldo_habilitado ? '#1A9B8A' : '#e2e8f0',
-              background:  branding.saldo_habilitado ? '#f0fdfa' : '#f8fafc',
+              borderColor: !temSaldoPrePago ? '#e2e8f0' : branding.saldo_habilitado ? '#1A9B8A' : '#e2e8f0',
+              background:  !temSaldoPrePago ? '#f8fafc'  : branding.saldo_habilitado ? '#f0fdfa' : '#f8fafc',
+              opacity:     !temSaldoPrePago ? 0.7 : 1,
             }}>
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-base">💳</span>
                   <p className="text-sm font-black text-slate-800">Saldo pré-pago por cliente</p>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">NOVO</span>
+                  {temSaldoPrePago
+                    ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">NOVO</span>
+                    : <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Business</span>
+                  }
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   Clientes carregam saldo no caixa (via garçom) e só conseguem pedir o que têm disponível.
                   O saldo fica vinculado ao celular — funciona em qualquer QR code do estabelecimento.
                   Ideal para bares, eventos e festas.
                 </p>
+                {!temSaldoPrePago && (
+                  <p className="text-xs font-semibold text-amber-600 mt-2">
+                    🔒 Disponível no plano Business ou superior.
+                  </p>
+                )}
               </div>
               <button
-                onClick={() => setBranding((b) => ({ ...b, saldo_habilitado: !b.saldo_habilitado }))}
-                className={`relative shrink-0 inline-flex w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                  branding.saldo_habilitado ? 'bg-teal-500' : 'bg-slate-300'
+                disabled={!temSaldoPrePago}
+                onClick={() => temSaldoPrePago && setBranding((b) => ({ ...b, saldo_habilitado: !b.saldo_habilitado }))}
+                className={`relative shrink-0 inline-flex w-11 h-6 rounded-full transition-colors ${
+                  !temSaldoPrePago
+                    ? 'bg-slate-200 cursor-not-allowed'
+                    : branding.saldo_habilitado ? 'bg-teal-500 cursor-pointer' : 'bg-slate-300 cursor-pointer'
                 }`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                  branding.saldo_habilitado ? 'translate-x-5' : 'translate-x-0'
+                  branding.saldo_habilitado && temSaldoPrePago ? 'translate-x-5' : 'translate-x-0'
                 }`} />
               </button>
             </div>

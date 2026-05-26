@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getPlanoConfig } from '@/lib/planos'
 
 // Valida autenticação — aceita mmu:{uuid} e o token legado
 async function getTenantIdAutenticado(): Promise<string | null> {
@@ -61,6 +62,14 @@ export async function POST(req: Request) {
   const body     = await req.json()
   const supabase = createServiceClient()
 
+  // Verifica se o plano do tenant permite saldo pré-pago
+  let planoPermiteSaldo = false
+  if (tenantId !== '__legado__') {
+    const cookieStore = await cookies()
+    const plano = cookieStore.get('tenant_plano')?.value ?? 'starter'
+    planoPermiteSaldo = getPlanoConfig(plano).saldo_pre_pago
+  }
+
   const payload = {
     banner_ativo:         body.banner_ativo         ?? false,
     banner_titulo:        body.banner_titulo         ?? '',
@@ -73,7 +82,7 @@ export async function POST(req: Request) {
     restaurante_logo_url: body.restaurante_logo_url  ?? null,
     cor_primaria:         body.cor_primaria          ?? '#1A9B8A',
     pix_chave:            body.pix_chave?.trim()     || null,
-    saldo_habilitado:     body.saldo_habilitado       ?? false,
+    saldo_habilitado:     planoPermiteSaldo ? (body.saldo_habilitado ?? false) : false,
     atualizado_em:        new Date().toISOString(),
   }
 
