@@ -112,19 +112,32 @@ export async function GET(req: Request) {
   // Recargas de saldo pré-pago no período
   const { data: recargasRaw } = await supabase
     .from('clientes_saldo_transacoes')
-    .select('id, tipo, valor, descricao, criado_em, cliente_id, clientes_saldo(nome, telefone)')
+    .select('id, valor, descricao, criado_em, cliente_id')
     .eq('tenant_id', tenantId)
     .eq('tipo', 'credito')
     .gte('criado_em', inicio.toISOString())
     .order('criado_em', { ascending: false })
 
+  // Busca nomes/telefones dos clientes envolvidos
+  const clienteIds = [...new Set((recargasRaw ?? []).map((r: any) => r.cliente_id).filter(Boolean))]
+  let clientesMap: Record<string, { nome: string | null; telefone: string }> = {}
+  if (clienteIds.length > 0) {
+    const { data: clientes } = await supabase
+      .from('clientes_saldo')
+      .select('id, nome, telefone')
+      .in('id', clienteIds)
+    for (const c of clientes ?? []) {
+      clientesMap[c.id] = { nome: c.nome, telefone: c.telefone }
+    }
+  }
+
   const recargas = (recargasRaw ?? []).map((r: any) => ({
-    id:          r.id,
-    valor:       r.valor,
-    descricao:   r.descricao,
-    criado_em:   r.criado_em,
-    nome:        r.clientes_saldo?.nome ?? null,
-    telefone:    r.clientes_saldo?.telefone ?? null,
+    id:        r.id,
+    valor:     r.valor,
+    descricao: r.descricao,
+    criado_em: r.criado_em,
+    nome:      clientesMap[r.cliente_id]?.nome ?? null,
+    telefone:  clientesMap[r.cliente_id]?.telefone ?? null,
   }))
 
   const totalRecargas = recargas.reduce((acc: number, r: any) => acc + r.valor, 0)
