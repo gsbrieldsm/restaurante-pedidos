@@ -342,9 +342,9 @@ export default function DeliveryPage() {
                 </div>
                 <button
                   onClick={() => setConfig((c) => ({ ...c, ativo: !c.ativo }))}
-                  className={`w-12 h-6 rounded-full transition-colors ${config.ativo ? 'bg-teal-500' : 'bg-slate-300'}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${config.ativo ? 'bg-teal-500' : 'bg-slate-300'}`}
                 >
-                  <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform mx-0.5 ${config.ativo ? 'translate-x-6' : 'translate-x-0'}`} />
+                  <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${config.ativo ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
               </div>
             </div>
