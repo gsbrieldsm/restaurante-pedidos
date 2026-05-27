@@ -7,7 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, Legend,
 } from 'recharts'
-import { Clock, TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Package, Search, X } from 'lucide-react'
+import { Clock, TrendingUp, AlertTriangle, ShoppingCart, DollarSign, Package, Search, X, CalendarDays } from 'lucide-react'
 import { PainelHero } from '@/components/admin/PainelHero'
 
 /* ─── tipos ─────────────────────────────────────────────── */
@@ -54,7 +54,7 @@ const PERIODO_LABELS: Record<string, string> = {
   mes: 'últimos 30 dias',
 }
 
-type Periodo = 'hoje' | 'semana' | 'mes'
+type Periodo = 'hoje' | 'semana' | 'mes' | 'custom'
 type Aba = 'tempo' | 'vendas' | 'margem'
 
 /* ─── cor da margem ─────────────────────────────────────────── */
@@ -71,6 +71,12 @@ export default function PerformancePage() {
   const [loading, setLoading] = useState(true)
   const [buscaVendas, setBuscaVendas] = useState('')
 
+  // Período customizado
+  const hoje = new Date().toISOString().split('T')[0]
+  const [customDe,  setCustomDe]  = useState(hoje)
+  const [customAte, setCustomAte] = useState(hoje)
+  const [customAtivo, setCustomAtivo] = useState({ de: hoje, ate: hoje })
+
   const [statsTempo, setStatsTempo] = useState<EstatisticaTempo[]>([])
   const [statsVendas, setStatsVendas] = useState<EstatisticaVenda[]>([])
   const [statsMargem, setStatsMargem] = useState<EstatisticaMargem[]>([])
@@ -81,17 +87,30 @@ export default function PerformancePage() {
       setLoading(true)
       const supabase = createClient()
 
-      const inicio = new Date()
-      if (periodo === 'hoje') inicio.setHours(0, 0, 0, 0)
-      else if (periodo === 'semana') inicio.setDate(inicio.getDate() - 7)
-      else inicio.setDate(inicio.getDate() - 30)
+      let inicio = new Date()
+      let fim: Date | null = null
+      if (periodo === 'hoje') {
+        inicio.setHours(0, 0, 0, 0)
+      } else if (periodo === 'semana') {
+        inicio.setDate(inicio.getDate() - 7)
+        inicio.setHours(0, 0, 0, 0)
+      } else if (periodo === 'mes') {
+        inicio.setDate(inicio.getDate() - 30)
+        inicio.setHours(0, 0, 0, 0)
+      } else {
+        // custom
+        inicio = new Date(`${customAtivo.de}T00:00:00`)
+        fim    = new Date(`${customAtivo.ate}T23:59:59`)
+      }
 
       /* ── 1. Dados de tempo ───────────────────────────────── */
-      const { data: rawTempo } = await supabase
+      let queryTempo = supabase
         .from('pedido_itens')
         .select('item_nome, estacao, tempo_real_minutos, tempo_preparo_estimado')
         .not('tempo_real_minutos', 'is', null)
         .gte('criado_em', inicio.toISOString())
+      if (fim) queryTempo = queryTempo.lte('criado_em', fim.toISOString())
+      const { data: rawTempo } = await queryTempo
 
       const dadosTempo = (rawTempo ?? []) as Array<{
         item_nome: string; estacao: string
@@ -131,11 +150,13 @@ export default function PerformancePage() {
       )
 
       /* ── 2. Dados de vendas ─────────────────────────────── */
-      const { data: rawVendas } = await supabase
+      let queryVendas = supabase
         .from('pedido_itens')
         .select('item_nome, estacao, quantidade, item_preco')
         .gte('criado_em', inicio.toISOString())
         .neq('status', 'cancelado')
+      if (fim) queryVendas = queryVendas.lte('criado_em', fim.toISOString())
+      const { data: rawVendas } = await queryVendas
 
       const dadosVendas = (rawVendas ?? []) as Array<{
         item_nome: string; estacao: string; quantidade: number; item_preco: number
@@ -192,7 +213,7 @@ export default function PerformancePage() {
     }
 
     buscar()
-  }, [periodo])
+  }, [periodo, customAtivo])
 
   /* ─── KPIs por aba ─────────────────────────────────────── */
   const totalVendidos   = statsVendas.reduce((a, s) => a + s.quantidade, 0)
@@ -264,7 +285,11 @@ export default function PerformancePage() {
       {/* Hero contextual por aba */}
       <PainelHero
         secao={hero.secao}
-        titulo={`Resultado — ${PERIODO_LABELS[periodo]}`}
+        titulo={
+        periodo === 'custom'
+          ? `Resultado — ${new Date(`${customAtivo.de}T12:00:00`).toLocaleDateString('pt-BR')} até ${new Date(`${customAtivo.ate}T12:00:00`).toLocaleDateString('pt-BR')}`
+          : `Resultado — ${PERIODO_LABELS[periodo]}`
+      }
         metricaLabel={hero.metricaLabel}
         metricaValor={hero.metricaValor}
         metricaDestaque={hero.metricaDestaque}
@@ -273,7 +298,7 @@ export default function PerformancePage() {
       />
 
       {/* Seletor de período */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         {(['hoje', 'semana', 'mes'] as Periodo[]).map((p) => (
           <button
             key={p}
@@ -287,6 +312,52 @@ export default function PerformancePage() {
             {p === 'hoje' ? 'Hoje' : p === 'semana' ? '7 dias' : '30 dias'}
           </button>
         ))}
+
+        {/* Botão período customizado */}
+        <button
+          onClick={() => setPeriodo('custom')}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+            periodo === 'custom'
+              ? 'bg-teal-600 text-white shadow'
+              : 'bg-white text-slate-500 border border-slate-200 hover:border-teal-400'
+          }`}
+        >
+          <CalendarDays className="w-3.5 h-3.5" />
+          Personalizado
+        </button>
+
+        {/* Painel de datas — aparece quando custom está ativo */}
+        {periodo === 'custom' && (
+          <div className="flex flex-wrap items-center gap-2 ml-1 bg-white border border-slate-200 rounded-2xl px-4 py-2.5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-500 whitespace-nowrap">De</label>
+              <input
+                type="date"
+                value={customDe}
+                max={customAte}
+                onChange={(e) => setCustomDe(e.target.value)}
+                className="border border-slate-200 rounded-lg px-2.5 py-1 text-sm text-slate-700 outline-none focus:border-teal-400 transition-colors"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-500 whitespace-nowrap">Até</label>
+              <input
+                type="date"
+                value={customAte}
+                min={customDe}
+                max={hoje}
+                onChange={(e) => setCustomAte(e.target.value)}
+                className="border border-slate-200 rounded-lg px-2.5 py-1 text-sm text-slate-700 outline-none focus:border-teal-400 transition-colors"
+              />
+            </div>
+            <button
+              onClick={() => setCustomAtivo({ de: customDe, ate: customAte })}
+              className="flex items-center gap-1.5 px-3 py-1 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors"
+            >
+              Aplicar
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Abas */}
