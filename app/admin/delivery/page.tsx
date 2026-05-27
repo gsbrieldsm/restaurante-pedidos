@@ -107,28 +107,38 @@ export default function DeliveryPage() {
   const [novaZona,     setNovaZona]     = useState({ nome: '', km_min: '', km_max: '', taxa: '' })
   const [adicionandoZ, setAdicionandoZ] = useState(false)
 
-  /* ── busca CEP automaticamente ───────────────────────────────── */
+  /* ── busca CEP ───────────────────────────────────────────────── */
   const [buscandoCEP, setBuscandoCEP] = useState(false)
-  useEffect(() => {
+  const [cepErro,     setCepErro]     = useState('')
+
+  async function buscarCEP() {
     const cep = config.cep?.replace(/\D/g, '') ?? ''
     if (cep.length !== 8) return
-    let cancelado = false
     setBuscandoCEP(true)
-    fetch(`https://viacep.com.br/ws/${cep}/json/`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelado || data.erro) return
-        setConfig((c) => ({
-          ...c,
-          endereco: data.logradouro || c.endereco,
-          bairro:   data.bairro    || c.bairro,
-          cidade:   data.localidade || c.cidade,
-          uf:       data.uf        || c.uf,
-        }))
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelado) setBuscandoCEP(false) })
-    return () => { cancelado = true }
+    setCepErro('')
+    try {
+      const res  = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      const data = await res.json()
+      if (data.erro) { setCepErro('CEP não encontrado.'); return }
+      setConfig((c) => ({
+        ...c,
+        endereco: data.logradouro || c.endereco,
+        bairro:   data.bairro    || c.bairro,
+        cidade:   data.localidade || c.cidade,
+        uf:       data.uf        || c.uf,
+      }))
+    } catch {
+      setCepErro('Erro ao buscar CEP.')
+    } finally {
+      setBuscandoCEP(false)
+    }
+  }
+
+  // Auto-busca quando CEP ficar completo
+  useEffect(() => {
+    const cep = config.cep?.replace(/\D/g, '') ?? ''
+    if (cep.length === 8) buscarCEP()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.cep])
 
   /* pedidos */
@@ -386,18 +396,33 @@ export default function DeliveryPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-xs text-slate-500 mb-1">CEP</label>
-                  <div className="relative">
-                    <Input
-                      value={formatarCEP(config.cep ?? '')}
-                      onChange={(e) => setConfig((c) => ({ ...c, cep: e.target.value.replace(/\D/g, '') }))}
-                      placeholder="00000-000"
-                      maxLength={9}
-                      className="pr-8"
-                    />
-                    {buscandoCEP && (
-                      <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-500 animate-spin" />
-                    )}
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        value={formatarCEP(config.cep ?? '')}
+                        onChange={(e) => {
+                          setCepErro('')
+                          setConfig((c) => ({ ...c, cep: e.target.value.replace(/\D/g, '') }))
+                        }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') buscarCEP() }}
+                        placeholder="00000-000"
+                        maxLength={9}
+                        className="pr-8"
+                      />
+                      {buscandoCEP && (
+                        <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-500 animate-spin" />
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={buscarCEP}
+                      disabled={buscandoCEP || (config.cep?.replace(/\D/g, '') ?? '').length !== 8}
+                      className="px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 disabled:opacity-40 transition-colors shrink-0"
+                    >
+                      Buscar
+                    </button>
                   </div>
+                  {cepErro && <p className="text-xs text-red-500 mt-1">{cepErro}</p>}
                 </div>
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-xs text-slate-500 mb-1">UF</label>
