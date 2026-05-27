@@ -112,7 +112,7 @@ export async function GET(req: Request) {
   // Recargas de saldo pré-pago no período
   const { data: recargasRaw } = await supabase
     .from('clientes_saldo_transacoes')
-    .select('id, valor, descricao, criado_em, cliente_id')
+    .select('id, valor, descricao, criado_em, cliente_id, forma_pagamento')
     .eq('tenant_id', tenantId)
     .eq('tipo', 'credito')
     .gte('criado_em', inicio.toISOString())
@@ -132,12 +132,13 @@ export async function GET(req: Request) {
   }
 
   const recargas = (recargasRaw ?? []).map((r: any) => ({
-    id:        r.id,
-    valor:     r.valor,
-    descricao: r.descricao,
-    criado_em: r.criado_em,
-    nome:      clientesMap[r.cliente_id]?.nome ?? null,
-    telefone:  clientesMap[r.cliente_id]?.telefone ?? null,
+    id:              r.id,
+    valor:           r.valor,
+    descricao:       r.descricao,
+    criado_em:       r.criado_em,
+    forma_pagamento: r.forma_pagamento ?? null,
+    nome:            clientesMap[r.cliente_id]?.nome ?? null,
+    telefone:        clientesMap[r.cliente_id]?.telefone ?? null,
   }))
 
   const totalRecargas = recargas.reduce((acc: number, r: any) => acc + r.valor, 0)

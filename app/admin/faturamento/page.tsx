@@ -274,25 +274,38 @@ export default function FaturamentoPage() {
               </CardHeader>
               <CardContent>
                 <div className="divide-y divide-slate-50">
-                  {recargas.map((r: any) => (
-                    <div key={r.id} className="flex items-center gap-3 py-3">
-                      <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center shrink-0 text-sm font-black text-teal-700">
-                        {r.nome ? r.nome[0].toUpperCase() : '?'}
+                  {recargas.map((r: any) => {
+                    const formaEmoji: Record<string, string> = {
+                      dinheiro: '💵', pix: '📲', debito: '💳', credito: '💳',
+                    }
+                    const formaLabel: Record<string, string> = {
+                      dinheiro: 'Dinheiro', pix: 'Pix', debito: 'Débito', credito: 'Crédito',
+                    }
+                    return (
+                      <div key={r.id} className="flex items-center gap-3 py-3">
+                        <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center shrink-0 text-sm font-black text-teal-700">
+                          {r.nome ? r.nome[0].toUpperCase() : '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-800">
+                            {r.nome ?? 'Cliente'}{r.telefone ? ` · ${r.telefone}` : ''}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {new Date(r.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            {r.forma_pagamento && (
+                              <span className="ml-2 inline-flex items-center gap-0.5">
+                                {formaEmoji[r.forma_pagamento] ?? '💳'} {formaLabel[r.forma_pagamento] ?? r.forma_pagamento}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold text-sm text-teal-700">+{formatarReal(r.valor)}</p>
+                          <p className="text-xs text-slate-400">Recarga</p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-800">
-                          {r.nome ?? 'Cliente'}{r.telefone ? ` · ${r.telefone}` : ''}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          {new Date(r.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-bold text-sm text-teal-700">+{formatarReal(r.valor)}</p>
-                        <p className="text-xs text-slate-400">Recarga</p>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </CardContent>
             </Card>

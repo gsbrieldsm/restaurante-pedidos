@@ -51,7 +51,7 @@ const STEPS = [
     n: '02',
     title: 'Cliente faz o pedido',
     desc: 'Escolhe os itens, adiciona observações e confirma. Simples como pedir por WhatsApp.',
-    color: '#0f3d35',
+    color: '#127a6d',
   },
   {
     n: '03',
@@ -63,7 +63,7 @@ const STEPS = [
     n: '04',
     title: 'Garçom entrega',
     desc: 'Notificação automática quando o item fica pronto. Um clique para confirmar a entrega.',
-    color: '#0f3d35',
+    color: '#127a6d',
   },
 ]
 
@@ -87,7 +87,7 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section
         className="relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 60%, #1A9B8A 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #0d6b5e 0%, #1A9B8A 55%, #26c6b5 100%)' }}
       >
         {/* Glow */}
         <div
@@ -144,10 +144,10 @@ export default function LandingPage() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.05] tracking-tight">
-              Seu restaurante{' '}
+              Gastronomia{' '}
               <span style={{ color: '#5EEAD4' }}>sem filas,</span>{' '}
-              sem erro,{' '}
-              <span style={{ color: '#5EEAD4' }}>sem papel.</span>
+              sem papel e{' '}
+              <span style={{ color: '#5EEAD4' }}>sem erros!</span>
             </h1>
 
             <p className="text-teal-200/70 text-lg leading-relaxed max-w-lg">
@@ -346,7 +346,7 @@ export default function LandingPage() {
       {/* ── PREÇO ── */}
       <section
         className="py-24 px-6"
-        style={{ background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 60%, #1A9B8A 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #0d6b5e 0%, #1A9B8A 55%, #26c6b5 100%)' }}
       >
         <div className="max-w-5xl mx-auto text-center">
           <p className="text-xs font-bold uppercase tracking-widest mb-3 text-teal-400">
@@ -505,7 +505,7 @@ export default function LandingPage() {
       {/* ── FOOTER ── */}
       <footer
         className="py-8 px-6 text-center"
-        style={{ background: '#0a2420' }}
+        style={{ background: '#0d6b5e' }}
       >
         <div className="flex items-center justify-center gap-2 mb-2">
           <div
@@ -516,10 +516,10 @@ export default function LandingPage() {
           </div>
           <span className="text-white font-bold">Menuê+</span>
         </div>
-        <p className="text-teal-700 text-xs">
+        <p className="text-teal-200/60 text-xs">
           © {new Date().getFullYear()} Menuê+ · Cardápio digital para restaurantes
         </p>
-        <Link href="/parceiros" className="text-teal-700 text-xs hover:text-teal-500 underline underline-offset-2 mt-1 inline-block transition-colors">
+        <Link href="/parceiros" className="text-teal-200/60 text-xs hover:text-teal-200 underline underline-offset-2 mt-1 inline-block transition-colors">
           Programa de Parceiros →
         </Link>
       </footer>

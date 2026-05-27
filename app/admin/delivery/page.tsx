@@ -107,6 +107,30 @@ export default function DeliveryPage() {
   const [novaZona,     setNovaZona]     = useState({ nome: '', km_min: '', km_max: '', taxa: '' })
   const [adicionandoZ, setAdicionandoZ] = useState(false)
 
+  /* ── busca CEP automaticamente ───────────────────────────────── */
+  const [buscandoCEP, setBuscandoCEP] = useState(false)
+  useEffect(() => {
+    const cep = config.cep?.replace(/\D/g, '') ?? ''
+    if (cep.length !== 8) return
+    let cancelado = false
+    setBuscandoCEP(true)
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelado || data.erro) return
+        setConfig((c) => ({
+          ...c,
+          endereco: data.logradouro || c.endereco,
+          bairro:   data.bairro    || c.bairro,
+          cidade:   data.localidade || c.cidade,
+          uf:       data.uf        || c.uf,
+        }))
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelado) setBuscandoCEP(false) })
+    return () => { cancelado = true }
+  }, [config.cep])
+
   /* pedidos */
   const [pedidos,       setPedidos]       = useState<DeliveryPedido[]>([])
   const [pedidoAberto,  setPedidoAberto]  = useState<DeliveryPedido | null>(null)
@@ -362,12 +386,18 @@ export default function DeliveryPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-xs text-slate-500 mb-1">CEP</label>
-                  <Input
-                    value={formatarCEP(config.cep ?? '')}
-                    onChange={(e) => setConfig((c) => ({ ...c, cep: e.target.value.replace(/\D/g, '') }))}
-                    placeholder="00000-000"
-                    maxLength={9}
-                  />
+                  <div className="relative">
+                    <Input
+                      value={formatarCEP(config.cep ?? '')}
+                      onChange={(e) => setConfig((c) => ({ ...c, cep: e.target.value.replace(/\D/g, '') }))}
+                      placeholder="00000-000"
+                      maxLength={9}
+                      className="pr-8"
+                    />
+                    {buscandoCEP && (
+                      <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-teal-500 animate-spin" />
+                    )}
+                  </div>
                 </div>
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-xs text-slate-500 mb-1">UF</label>

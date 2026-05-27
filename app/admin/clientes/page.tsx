@@ -133,6 +133,7 @@ export default function ClientesPage() {
   const [recargaTipo, setRecargaTipo]       = useState<'credito' | 'estorno'>('credito')
   const [recargaValor, setRecargaValor]     = useState('')
   const [recargaDesc, setRecargaDesc]       = useState('')
+  const [recargaFormaPag, setRecargaFormaPag] = useState('')
   const [recargaCarregando, setRecargaCarregando] = useState(false)
   const [recargaErro, setRecargaErro]       = useState('')
 
@@ -177,6 +178,7 @@ export default function ClientesPage() {
     setRecargaTipo(tipo)
     setRecargaValor('')
     setRecargaDesc('')
+    setRecargaFormaPag('')
     setRecargaErro('')
     setModalRecarga(true)
   }
@@ -185,6 +187,9 @@ export default function ClientesPage() {
     if (!recargaCliente) return
     const valor = parseFloat(recargaValor.replace(',', '.'))
     if (!valor || valor <= 0) { setRecargaErro('Informe um valor válido.'); return }
+    if (recargaTipo === 'credito' && !recargaFormaPag) {
+      setRecargaErro('Selecione a forma de pagamento.'); return
+    }
     if (recargaTipo === 'estorno' && valor > recargaCliente.saldo_disponivel) {
       setRecargaErro('Estorno não pode ser maior que o saldo atual.'); return
     }
@@ -196,10 +201,11 @@ export default function ClientesPage() {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
-        cliente_id: recargaCliente.id,
+        cliente_id:      recargaCliente.id,
         valor,
-        tipo:      recargaTipo,
-        descricao: recargaDesc.trim() || undefined,
+        tipo:            recargaTipo,
+        descricao:       recargaDesc.trim() || undefined,
+        forma_pagamento: recargaTipo === 'credito' ? recargaFormaPag : undefined,
       }),
     })
     const data = await res.json()
@@ -664,6 +670,37 @@ export default function ClientesPage() {
                       autoFocus
                     />
                   </div>
+
+                  {/* Forma de pagamento — só para recarga */}
+                  {recargaTipo === 'credito' && (
+                    <div>
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                        Forma de pagamento *
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { value: 'dinheiro', label: 'Dinheiro', emoji: '💵' },
+                          { value: 'pix',      label: 'Pix',      emoji: '📲' },
+                          { value: 'debito',   label: 'Débito',   emoji: '💳' },
+                          { value: 'credito',  label: 'Crédito',  emoji: '💳' },
+                        ].map((f) => (
+                          <button
+                            key={f.value}
+                            type="button"
+                            onClick={() => setRecargaFormaPag(f.value)}
+                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${
+                              recargaFormaPag === f.value
+                                ? 'border-teal-500 bg-teal-50 text-teal-700'
+                                : 'border-slate-200 text-slate-600 hover:border-teal-300'
+                            }`}
+                          >
+                            <span>{f.emoji}</span>
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">

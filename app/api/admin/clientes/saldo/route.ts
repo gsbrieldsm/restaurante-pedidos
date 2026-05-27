@@ -70,13 +70,16 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'Requisição inválida.' }, { status: 400 })
 
-  const { cliente_id, valor, tipo = 'credito', descricao } = body
+  const { cliente_id, valor, tipo = 'credito', descricao, forma_pagamento } = body
 
   if (!cliente_id || !valor || valor <= 0) {
     return NextResponse.json({ error: 'cliente_id e valor obrigatórios.' }, { status: 422 })
   }
   if (!['credito', 'estorno'].includes(tipo)) {
     return NextResponse.json({ error: 'Tipo inválido.' }, { status: 422 })
+  }
+  if (tipo === 'credito' && !forma_pagamento) {
+    return NextResponse.json({ error: 'Forma de pagamento obrigatória para recargas.' }, { status: 422 })
   }
 
   const supabase = createServiceClient()
@@ -110,13 +113,14 @@ export async function POST(req: NextRequest) {
   }
 
   await supabase.from('clientes_saldo_transacoes').insert({
-    tenant_id:       tenantId,
-    cliente_id:      cliente_id,
+    tenant_id:        tenantId,
+    cliente_id:       cliente_id,
     tipo,
-    valor:           Number(valor),
-    saldo_anterior:  saldoAnterior,
-    saldo_posterior: saldoPosterior,
-    descricao:       descricao || (tipo === 'credito' ? 'Recarga pelo admin' : 'Estorno pelo admin'),
+    valor:            Number(valor),
+    saldo_anterior:   saldoAnterior,
+    saldo_posterior:  saldoPosterior,
+    descricao:        descricao || (tipo === 'credito' ? 'Recarga pelo admin' : 'Estorno pelo admin'),
+    forma_pagamento:  tipo === 'credito' ? (forma_pagamento ?? null) : null,
   })
 
   return NextResponse.json({ ok: true, cliente: atualizado })
