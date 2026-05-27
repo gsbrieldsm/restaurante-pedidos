@@ -24,7 +24,7 @@ const NAV = [
 
 const OPERACOES = [
   { href: '/garcom',          emoji: '🛎️', label: 'Painel do Garçom' },
-  { href: '/entrega',         emoji: '🚚', label: 'Painel Entrega'   },
+  { href: '/entrega',         emoji: '🛵', label: 'Painel Entrega'   },
   { href: '/estacao/cozinha', emoji: '🍳', label: 'Cozinha'          },
   { href: '/estacao/bar',     emoji: '🍺', label: 'Bar'              },
   { href: '/estacao/drinks',  emoji: '🍹', label: 'Drinks'           },
