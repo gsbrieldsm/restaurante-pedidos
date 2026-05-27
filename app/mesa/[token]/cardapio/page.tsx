@@ -39,6 +39,8 @@ export default function CardapioPage() {
   const [selecoes, setSelecoes] = useState<Record<string, string[]>>({}) // grupoId → [opcaoId]
   const [obsOpcional, setObsOpcional] = useState('')
 
+  const [isDelivery, setIsDelivery] = useState(false)
+
   const [chamandoGarcom, setChamandoGarcom] = useState(false)
   const [garcomChamado, setGarcomChamado] = useState(false)
   const [contaFechada, setContaFechada] = useState(false)
@@ -79,6 +81,11 @@ export default function CardapioPage() {
     const sessaoParam = searchParams.get('sessao')
     if (sessaoParam) {
       sessionStorage.setItem('sessao_id', sessaoParam)
+    }
+
+    // Detecta se é sessão de delivery
+    if (sessionStorage.getItem('is_delivery') === '1') {
+      setIsDelivery(true)
     }
 
     const sessaoId = sessionStorage.getItem('sessao_id')
@@ -561,25 +568,27 @@ export default function CardapioPage() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            {/* Chamar garçom */}
-            <button
-              onClick={chamarGarcom}
-              disabled={chamandoGarcom}
-              className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-xl font-medium transition-all ${
-                garcomChamado
-                  ? 'bg-green-500/20 text-green-300'
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              {chamandoGarcom ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : garcomChamado ? (
-                <CheckCircle2 className="w-4 h-4" />
-              ) : (
-                <ConciergeBell className="w-4 h-4" />
-              )}
-              <span>{garcomChamado ? 'Chamado!' : 'Garçom'}</span>
-            </button>
+            {/* Chamar garçom — oculto em sessões de delivery */}
+            {!isDelivery && (
+              <button
+                onClick={chamarGarcom}
+                disabled={chamandoGarcom}
+                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-xl font-medium transition-all ${
+                  garcomChamado
+                    ? 'bg-green-500/20 text-green-300'
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                {chamandoGarcom ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : garcomChamado ? (
+                  <CheckCircle2 className="w-4 h-4" />
+                ) : (
+                  <ConciergeBell className="w-4 h-4" />
+                )}
+                <span>{garcomChamado ? 'Chamado!' : 'Garçom'}</span>
+              </button>
+            )}
 
             {/* Minha conta */}
             <button

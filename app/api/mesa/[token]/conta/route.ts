@@ -21,7 +21,14 @@ export async function GET(
   // Valida que a sessão pertence a essa mesa
   const { data: sessao } = await supabase
     .from('sessoes_mesa')
-    .select('id, cliente_nome, mesas(numero, nome)')
+    .select(`
+      id, cliente_nome, mesas(numero, nome),
+      is_delivery,
+      delivery_nome, delivery_telefone, delivery_endereco, delivery_numero,
+      delivery_complemento, delivery_bairro, delivery_cidade, delivery_uf,
+      delivery_cep, delivery_taxa, delivery_distancia_km,
+      delivery_forma_pagamento, delivery_status
+    `)
     .eq('id', sessaoId)
     .eq('ativa', true)
     .single()
@@ -42,12 +49,28 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const mesa = sessao.mesas as unknown as { numero: number; nome: string | null }
+  const mesa       = sessao.mesas as unknown as { numero: number; nome: string | null }
+  const isDelivery = (sessao as any).is_delivery === true
 
   return NextResponse.json({
     pedidos:      pedidos ?? [],
     cliente_nome: sessao.cliente_nome,
     mesa_numero:  mesa?.numero,
     mesa_nome:    mesa?.nome ?? null,
+    // campos de delivery (presentes se is_delivery=true)
+    is_delivery:               isDelivery,
+    delivery_nome:             (sessao as any).delivery_nome             ?? null,
+    delivery_telefone:         (sessao as any).delivery_telefone         ?? null,
+    delivery_endereco:         (sessao as any).delivery_endereco         ?? null,
+    delivery_numero:           (sessao as any).delivery_numero           ?? null,
+    delivery_complemento:      (sessao as any).delivery_complemento      ?? null,
+    delivery_bairro:           (sessao as any).delivery_bairro           ?? null,
+    delivery_cidade:           (sessao as any).delivery_cidade           ?? null,
+    delivery_uf:               (sessao as any).delivery_uf               ?? null,
+    delivery_cep:              (sessao as any).delivery_cep              ?? null,
+    delivery_taxa:             (sessao as any).delivery_taxa             ?? 0,
+    delivery_distancia_km:     (sessao as any).delivery_distancia_km     ?? null,
+    delivery_forma_pagamento:  (sessao as any).delivery_forma_pagamento  ?? null,
+    delivery_status:           (sessao as any).delivery_status           ?? null,
   })
 }

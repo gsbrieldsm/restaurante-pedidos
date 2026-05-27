@@ -68,6 +68,16 @@ export default function ContaPage() {
     id: string; nome: string | null; telefone: string; saldo_disponivel: number
   } | null>(null)
 
+  // Delivery
+  const [isDelivery,              setIsDelivery]              = useState(false)
+  const [deliveryEndereco,        setDeliveryEndereco]        = useState('')
+  const [deliveryNumero,          setDeliveryNumero]          = useState<string | null>(null)
+  const [deliveryBairro,          setDeliveryBairro]          = useState<string | null>(null)
+  const [deliveryCidade,          setDeliveryCidade]          = useState<string | null>(null)
+  const [deliveryTaxa,            setDeliveryTaxa]            = useState(0)
+  const [deliveryForma,           setDeliveryForma]           = useState<string | null>(null)
+  const [deliveryStatus,          setDeliveryStatus]          = useState<string>('aguardando')
+
   // IDs de itens que já sabemos que estão "pronto" — para detectar novos
   const prontosSabidos = useRef<Set<string>>(new Set())
 
@@ -133,6 +143,19 @@ export default function ContaPage() {
     setClienteNome(data.cliente_nome ?? '')
     setMesaNumero(data.mesa_numero)
     setMesaNome(data.mesa_nome ?? null)
+
+    // Delivery
+    if (data.is_delivery) {
+      setIsDelivery(true)
+      setDeliveryEndereco(data.delivery_endereco ?? '')
+      setDeliveryNumero(data.delivery_numero ?? null)
+      setDeliveryBairro(data.delivery_bairro ?? null)
+      setDeliveryCidade(data.delivery_cidade ?? null)
+      setDeliveryTaxa(data.delivery_taxa ?? 0)
+      setDeliveryForma(data.delivery_forma_pagamento ?? null)
+      setDeliveryStatus(data.delivery_status ?? 'aguardando')
+    }
+
     setLoading(false)
 
     if (data.pedidos?.length && loading) {
@@ -226,9 +249,11 @@ export default function ContaPage() {
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold tracking-widest uppercase leading-none" style={{ color: `rgba(${rgb}, 0.75)` }}>Menuê+</p>
             <h1 className="text-white font-black text-2xl leading-tight">
-              {mesaNome ?? `Mesa ${mesaNumero}`}
+              {isDelivery ? '🚚 Delivery' : (mesaNome ?? `Mesa ${mesaNumero}`)}
             </h1>
-            <p className="text-sm font-medium" style={{ color: `rgba(${rgb}, 0.85)` }}>Minha conta · {clienteNome}</p>
+            <p className="text-sm font-medium" style={{ color: `rgba(${rgb}, 0.85)` }}>
+              {isDelivery ? 'Pedido delivery' : 'Minha conta'} · {clienteNome}
+            </p>
           </div>
           <button
             onClick={buscarConta}
@@ -248,8 +273,39 @@ export default function ContaPage() {
             <span className="text-2xl">🎉</span>
             <div>
               <p className="font-bold text-green-800 text-sm">Um item está pronto!</p>
-              <p className="text-green-600 text-xs">O garçom está a caminho com seu pedido.</p>
+              <p className="text-green-600 text-xs">
+                {isDelivery ? 'Seu pedido está sendo preparado para envio.' : 'O garçom está a caminho com seu pedido.'}
+              </p>
             </div>
+          </div>
+        )}
+
+        {/* Card de delivery */}
+        {isDelivery && (
+          <div className="rounded-2xl border-2 border-teal-200 bg-teal-50 px-4 py-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-widest text-teal-500">Entrega</p>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                deliveryStatus === 'entregue'     ? 'bg-green-100 text-green-700' :
+                deliveryStatus === 'saiu_entrega' ? 'bg-purple-100 text-purple-700' :
+                'bg-amber-100 text-amber-700'
+              }`}>
+                {deliveryStatus === 'entregue'     ? '✓ Entregue' :
+                 deliveryStatus === 'saiu_entrega' ? '🚚 A caminho' :
+                 'Aguardando entregador'}
+              </span>
+            </div>
+            <p className="text-sm text-teal-800 font-medium">
+              {[deliveryEndereco, deliveryNumero].filter(Boolean).join(', ')}
+              {deliveryBairro && ` — ${deliveryBairro}`}
+              {deliveryCidade && `, ${deliveryCidade}`}
+            </p>
+            {deliveryForma && (
+              <p className="text-xs text-teal-600">
+                💳 Pagamento na entrega: <strong className="capitalize">{deliveryForma}</strong>
+                {deliveryTaxa > 0 && ` · Taxa: R$ ${deliveryTaxa.toFixed(2).replace('.', ',')}`}
+              </p>
+            )}
           </div>
         )}
 
@@ -444,7 +500,7 @@ export default function ContaPage() {
       </div>
 
       {/* Botões fixos na base */}
-      {pedidos.length > 0 && !garcomChamado && !garcomPix && !(saldoHabilitado && saldoCliente) && (
+      {pedidos.length > 0 && !garcomChamado && !garcomPix && !(saldoHabilitado && saldoCliente) && !isDelivery && (
         <div className="fixed bottom-0 left-0 right-0 p-4 space-y-2 bg-white/80 backdrop-blur border-t border-slate-100">
           <div className="max-w-lg mx-auto space-y-2">
             {/* Pagar via PIX — só aparece se o restaurante configurou a chave */}
@@ -478,6 +534,22 @@ export default function ContaPage() {
               className="w-full text-center text-xs text-slate-400 py-1"
             >
               + Adicionar mais itens
+            </button>
+          </div>
+        </div>
+
+      )}
+
+      {/* Botão delivery: adicionar mais itens */}
+      {pedidos.length > 0 && isDelivery && deliveryStatus !== 'entregue' && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur border-t border-slate-100">
+          <div className="max-w-lg mx-auto">
+            <button
+              onClick={() => router.push(`/mesa/${token}/cardapio`)}
+              className="w-full h-12 font-bold text-base rounded-xl border-2"
+              style={{ borderColor: corPrimaria, color: corPrimaria }}
+            >
+              + Adicionar mais itens ao pedido
             </button>
           </div>
         </div>

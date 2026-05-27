@@ -36,7 +36,8 @@ export async function POST(req: Request) {
     0
   )
 
-  const tenantId = mesa.tenant_id ?? null
+  const tenantId   = mesa.tenant_id ?? null
+  const isDelivery = (sessao as any).is_delivery === true
 
   // Criar pedido
   const { data: pedido, error: pedidoError } = await supabase
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
       observacao_geral: observacao_geral || null,
       total,
       tenant_id:        tenantId,
+      is_delivery:      isDelivery,
     })
     .select()
     .single()
@@ -72,6 +74,7 @@ export async function POST(req: Request) {
     status:                 'aguardando' as const,
     opcoes_selecionadas:    i.opcoes_selecionadas ?? [],
     tenant_id:              tenantId,
+    is_delivery:            isDelivery,
   }))
 
   const { error: itensError } = await supabase

@@ -6,7 +6,7 @@ import { buscarCEP, geocodificar, haversine } from '@/lib/geocodigo'
 
 /**
  * GET /api/pub/delivery?slug=xxx
- * Retorna config + zonas + cardápio do tenant (para a página pública de delivery).
+ * Retorna config + zonas + cardápio do tenant.
  */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
@@ -34,7 +34,10 @@ export async function GET(req: Request) {
       .eq('disponivel', true)
       .order('categoria')
       .order('ordem'),
-    supabase.from('configuracoes').select('logo_url, cor_primaria, banner_url').eq('tenant_id', tenant.id).maybeSingle(),
+    supabase.from('configuracoes')
+      .select('logo_url, cor_primaria, restaurante_nome, restaurante_logo_url')
+      .eq('tenant_id', tenant.id)
+      .maybeSingle(),
   ])
 
   const config = configRes.data
@@ -44,14 +47,13 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     tenant: {
-      id:   tenant.id,
-      nome: tenant.nome_restaurante,
-      plano: tenant.plano,
-      logo_url:    configVisualRes.data?.logo_url ?? null,
+      id:           tenant.id,
+      nome:         configVisualRes.data?.restaurante_nome ?? tenant.nome_restaurante,
+      logo_url:     configVisualRes.data?.restaurante_logo_url ?? null,
       cor_primaria: configVisualRes.data?.cor_primaria ?? '#1A9B8A',
     },
     config,
-    zonas:   zonaRes.data  ?? [],
+    zonas:   zonaRes.data   ?? [],
     cardapio: cardapioRes.data ?? [],
   })
 }
@@ -61,20 +63,21 @@ export async function GET(req: Request) {
  * Calcula taxa de entrega para um CEP.
  * Body: { cep }
  *
- * POST /api/pub/delivery?slug=xxx&action=pedido
- * Cria um pedido de delivery.
- * Body: { cliente_nome, cliente_telefone, cep, numero, complemento, itens[], observacoes }
+ * POST /api/pub/delivery?slug=xxx&action=sessao
+ * Cria sessão de delivery no sistema (sessoes_mesa).
+ * Body: { nome, telefone, cep, numero, complemento, bairro, cidade, uf,
+ *         taxa_entrega, distancia_km, coords, forma_pagamento }
+ * Retorna: { token, sessao_id, cliente_nome }  ← mesmo formato de sessão normal
  */
 export async function POST(req: Request) {
   const { searchParams } = new URL(req.url)
   const slug   = searchParams.get('slug')
-  const action = searchParams.get('action') ?? 'pedido'
+  const action = searchParams.get('action') ?? 'sessao'
 
   if (!slug) return NextResponse.json({ error: 'slug obrigatório.' }, { status: 400 })
 
   const supabase = createServiceClient()
 
-  // Busca tenant + config
   const { data: tenant } = await supabase
     .from('tenants')
     .select('id, nome_restaurante')
@@ -90,12 +93,12 @@ export async function POST(req: Request) {
 
   const config = configRes.data
   if (!config || !config.ativo) {
-    return NextResponse.json({ error: 'Delivery não está ativo para este restaurante.' }, { status: 403 })
+    return NextResponse.json({ error: 'Delivery não está ativo.' }, { status: 403 })
   }
 
   const body = await req.json()
 
-  // ─── calcular ─────────────────────────────────────────────────────────────
+  /* ─── calcular ────────────────────────────────────────────── */
   if (action === 'calcular') {
     const { cep } = body
     if (!cep) return NextResponse.json({ error: 'CEP obrigatório.' }, { status: 422 })
@@ -105,38 +108,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'CEP não encontrado.' }, { status: 422 })
     }
 
-    // Geocodifica CEP do cliente
     const coordsCliente = await geocodificar(
-      enderecoData.logradouro,
-      '',
-      enderecoData.localidade,
-      enderecoData.uf,
-      cep,
+      enderecoData.logradouro, '', enderecoData.localidade, enderecoData.uf, cep,
     )
 
-    if (!coordsCliente) {
-      // Sem coordenadas — retorna taxa padrão
+    if (!coordsCliente || !config.lat || !config.lng) {
       return NextResponse.json({
-        ok: true,
-        endereco: enderecoData,
+        ok:           true,
+        endereco:     enderecoData,
         distancia_km: null,
         taxa_entrega: config.taxa_padrao,
-        zona: null,
+        zona:         null,
         fora_do_raio: false,
-        aviso: 'Não foi possível calcular a distância exata. Taxa padrão aplicada.',
-      })
-    }
-
-    // Restaurante precisa ter coordenadas
-    if (!config.lat || !config.lng) {
-      return NextResponse.json({
-        ok: true,
-        endereco: enderecoData,
-        distancia_km: null,
-        taxa_entrega: config.taxa_padrao,
-        zona: null,
-        fora_do_raio: false,
-        aviso: 'Endereço do restaurante não geocodificado. Taxa padrão aplicada.',
+        aviso:        'Não foi possível calcular a distância. Taxa padrão aplicada.',
       })
     }
 
@@ -144,99 +128,114 @@ export async function POST(req: Request) {
 
     if (distanciaKm > (config.raio_maximo ?? 15)) {
       return NextResponse.json({
-        ok: false,
+        ok:           false,
         fora_do_raio: true,
         distancia_km: Math.round(distanciaKm * 10) / 10,
-        raio_maximo: config.raio_maximo,
-        error: `Endereço fora do raio de entrega (${config.raio_maximo} km).`,
+        raio_maximo:  config.raio_maximo,
+        error:        `Endereço fora do raio de entrega (${config.raio_maximo} km).`,
       })
     }
 
-    // Encontra zona
     const zonas = zonaRes.data ?? []
     const zona  = zonas.find(
       (z: { km_min: number; km_max: number }) =>
         distanciaKm >= z.km_min && distanciaKm < z.km_max
     ) ?? null
-
-    const taxa = zona ? zona.taxa : config.taxa_padrao
+    const taxa  = zona ? zona.taxa : config.taxa_padrao
 
     return NextResponse.json({
-      ok: true,
-      endereco: enderecoData,
+      ok:           true,
+      endereco:     enderecoData,
       distancia_km: Math.round(distanciaKm * 10) / 10,
       taxa_entrega: taxa,
-      zona: zona ?? null,
+      zona,
       fora_do_raio: false,
-      coords_cliente: coordsCliente,
+      coords:       coordsCliente,
     })
   }
 
-  // ─── pedido ───────────────────────────────────────────────────────────────
+  /* ─── sessao ──────────────────────────────────────────────── */
   const {
-    cliente_nome, cliente_telefone, cep, numero, complemento,
-    bairro: bairroInput, cidade: cidadeInput,
-    lat: latInput, lng: lngInput,
-    distancia_km, taxa_entrega,
-    itens, observacoes,
+    nome, telefone, cep, numero, complemento,
+    bairro, cidade, uf,
+    taxa_entrega, distancia_km,
+    forma_pagamento,
   } = body
 
-  if (!cliente_nome || !cliente_telefone || !cep || !itens?.length) {
-    return NextResponse.json({
-      error: 'cliente_nome, cliente_telefone, cep e itens são obrigatórios.',
-    }, { status: 422 })
+  if (!nome?.trim() || !telefone || !cep) {
+    return NextResponse.json({ error: 'nome, telefone e cep são obrigatórios.' }, { status: 422 })
+  }
+  if (!forma_pagamento) {
+    return NextResponse.json({ error: 'Forma de pagamento é obrigatória.' }, { status: 422 })
   }
 
-  // Busca dados do CEP se não vieram preenchidos
-  const enderecoData = await buscarCEP(cep)
+  // Busca ou cria a mesa de delivery do tenant
+  let { data: mesaDelivery } = await supabase
+    .from('mesas')
+    .select('id, qr_token')
+    .eq('tenant_id', tenant.id)
+    .eq('tipo', 'delivery')
+    .limit(1)
+    .maybeSingle()
 
-  const bairro = bairroInput || enderecoData?.bairro || ''
-  const cidade = cidadeInput || enderecoData?.localidade || ''
-  const uf     = enderecoData?.uf || ''
+  if (!mesaDelivery) {
+    // Cria a mesa delivery automaticamente
+    const { data: nova, error: errMesa } = await supabase
+      .from('mesas')
+      .insert({
+        tenant_id: tenant.id,
+        numero:    0,        // número 0 = delivery
+        tipo:      'delivery',
+        ativa:     true,
+        status:    'livre',
+      })
+      .select('id, qr_token')
+      .single()
 
-  // Calcula subtotal e total
-  const subtotal: number = itens.reduce(
-    (acc: number, item: { preco: number; quantidade: number }) =>
-      acc + item.preco * item.quantidade,
-    0,
-  )
-  const taxaFinal  = taxa_entrega ?? config.taxa_padrao
-  const total      = subtotal + taxaFinal
-
-  // Verifica pedido mínimo
-  if (config.pedido_minimo > 0 && subtotal < config.pedido_minimo) {
-    return NextResponse.json({
-      error: `Pedido mínimo é R$ ${Number(config.pedido_minimo).toFixed(2).replace('.', ',')}.`,
-    }, { status: 422 })
+    if (errMesa || !nova) {
+      return NextResponse.json({ error: 'Erro ao criar mesa de delivery.' }, { status: 500 })
+    }
+    mesaDelivery = nova
   }
 
-  const { data: pedido, error } = await supabase
-    .from('delivery_pedidos')
+  // Cria a sessão com campos de delivery
+  const cepLimpo = cep.replace(/\D/g, '')
+  const enderecoData = await buscarCEP(cepLimpo)
+
+  const { data: sessao, error: errSessao } = await supabase
+    .from('sessoes_mesa')
     .insert({
-      tenant_id:        tenant.id,
-      cliente_nome,
-      cliente_telefone,
-      endereco:         enderecoData?.logradouro ?? '',
-      numero,
-      complemento,
-      bairro,
-      cidade,
-      uf,
-      cep,
-      lat:              latInput  ?? null,
-      lng:              lngInput  ?? null,
-      distancia_km:     distancia_km ?? null,
-      taxa_entrega:     taxaFinal,
-      subtotal,
-      total,
-      itens,
-      observacoes,
-      status:           'pendente',
+      mesa_id:                    mesaDelivery.id,
+      tenant_id:                  tenant.id,
+      cliente_nome:               nome.trim(),
+      cliente_whatsapp:           telefone.replace(/\D/g, ''),
+      ativa:                      true,
+      // campos delivery
+      is_delivery:                true,
+      delivery_nome:              nome.trim(),
+      delivery_telefone:          telefone.replace(/\D/g, ''),
+      delivery_cep:               cepLimpo,
+      delivery_endereco:          enderecoData?.logradouro ?? '',
+      delivery_numero:            numero ?? null,
+      delivery_complemento:       complemento ?? null,
+      delivery_bairro:            bairro || enderecoData?.bairro   || null,
+      delivery_cidade:            cidade || enderecoData?.localidade || null,
+      delivery_uf:                uf     || enderecoData?.uf        || null,
+      delivery_taxa:              taxa_entrega ?? config.taxa_padrao,
+      delivery_distancia_km:      distancia_km ?? null,
+      delivery_forma_pagamento:   forma_pagamento,
+      delivery_status:            'aguardando',
     })
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (errSessao || !sessao) {
+    return NextResponse.json({ error: 'Erro ao criar sessão de delivery.' }, { status: 500 })
+  }
 
-  return NextResponse.json({ ok: true, pedido }, { status: 201 })
+  return NextResponse.json({
+    token:        mesaDelivery.qr_token,
+    sessao_id:    sessao.id,
+    cliente_nome: nome.trim(),
+  })
 }

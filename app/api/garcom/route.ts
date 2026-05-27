@@ -12,6 +12,7 @@ export async function GET() {
     .from('pedido_itens')
     .select('id, pedido_id, item_nome, quantidade, observacao, estacao, pronto_em, tenant_id, pedidos(mesa_numero, cliente_nome, mesa_id)')
     .eq('status', 'pronto')
+    .eq('is_delivery', false)   // delivery vai pro painel /entrega, não pro garçom
     .order('pronto_em', { ascending: true })
 
   if (tenantId) q = (q as any).eq('tenant_id', tenantId)
