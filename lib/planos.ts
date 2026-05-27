@@ -13,6 +13,7 @@ export interface PlanoConfig {
   /** recursos premium por feature flag */
   saldo_pre_pago: boolean  // carteira pré-paga vinculada ao celular
   nome_mesa:      boolean  // nome personalizado por QR code (ex: "Arquibancada Quadra 1")
+  delivery:       boolean  // módulo de delivery com raio e taxas por zona
 }
 
 export const PLANOS: Record<PlanoId, PlanoConfig> = {
@@ -22,6 +23,7 @@ export const PLANOS: Record<PlanoId, PlanoConfig> = {
     bloqueado:      [],  // acesso total (teste/bônus)
     saldo_pre_pago: true,
     nome_mesa:      true,
+    delivery:       true,
   },
   starter: {
     mesas:          15,
@@ -29,6 +31,7 @@ export const PLANOS: Record<PlanoId, PlanoConfig> = {
     bloqueado:      ['/admin/tempo', '/admin/clientes', '/admin/faturamento'],
     saldo_pre_pago: false,
     nome_mesa:      false,
+    delivery:       false,
   },
   pro: {
     mesas:          30,
@@ -36,6 +39,7 @@ export const PLANOS: Record<PlanoId, PlanoConfig> = {
     bloqueado:      [],
     saldo_pre_pago: false,
     nome_mesa:      false,
+    delivery:       false,
   },
   business: {
     mesas:          60,
@@ -43,6 +47,7 @@ export const PLANOS: Record<PlanoId, PlanoConfig> = {
     bloqueado:      [],
     saldo_pre_pago: true,
     nome_mesa:      true,
+    delivery:       true,
   },
   enterprise: {
     mesas:          0,
@@ -50,6 +55,7 @@ export const PLANOS: Record<PlanoId, PlanoConfig> = {
     bloqueado:      [],  // negociado individualmente — acesso total
     saldo_pre_pago: true,
     nome_mesa:      true,
+    delivery:       true,
   },
 }
 
@@ -65,4 +71,5 @@ export const RECURSO_LABEL: Record<string, { titulo: string; planoMinimo: string
   '/admin/faturamento': { titulo: 'Relatórios Financeiros', planoMinimo: 'Pro'      },
   'saldo_pre_pago':     { titulo: 'Saldo Pré-pago',         planoMinimo: 'Business' },
   'nome_mesa':          { titulo: 'Nome personalizado de QR', planoMinimo: 'Business' },
+  'delivery':           { titulo: 'Módulo Delivery',          planoMinimo: 'Business' },
 }

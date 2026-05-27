@@ -6,19 +6,20 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Clock, DollarSign,
   BookOpen, QrCode, ConciergeBell, Users, ChevronDown, ChevronRight,
-  Settings, LogOut, Menu, X, UserCog, Building2, Check, Loader2, Lock
+  Settings, LogOut, Menu, X, UserCog, Building2, Check, Loader2, Lock, Truck
 } from 'lucide-react'
 import { getPlanoConfig } from '@/lib/planos'
 
 const NAV = [
-  { href: '/admin',                label: 'Visão ao Vivo', icon: LayoutDashboard, apenasAdmin: false },
-  { href: '/admin/clientes',       label: 'Clientes',      icon: Users,           apenasAdmin: true  },
-  { href: '/admin/tempo',          label: 'Performance',   icon: Clock,           apenasAdmin: true  },
-  { href: '/admin/faturamento',    label: 'Financeiro',    icon: DollarSign,      apenasAdmin: true  },
-  { href: '/admin/cardapio',       label: 'Cardápio',      icon: BookOpen,        apenasAdmin: true  },
-  { href: '/admin/mesas',          label: 'Mesas & QR',    icon: QrCode,          apenasAdmin: true  },
-  { href: '/admin/equipe',         label: 'Equipe',        icon: UserCog,         apenasAdmin: true  },
-  { href: '/admin/configuracoes',  label: 'Configurações', icon: Settings,        apenasAdmin: true  },
+  { href: '/admin',                label: 'Visão ao Vivo', icon: LayoutDashboard, apenasAdmin: false, flag: null        },
+  { href: '/admin/clientes',       label: 'Clientes',      icon: Users,           apenasAdmin: true,  flag: null        },
+  { href: '/admin/tempo',          label: 'Performance',   icon: Clock,           apenasAdmin: true,  flag: null        },
+  { href: '/admin/faturamento',    label: 'Financeiro',    icon: DollarSign,      apenasAdmin: true,  flag: null        },
+  { href: '/admin/cardapio',       label: 'Cardápio',      icon: BookOpen,        apenasAdmin: true,  flag: null        },
+  { href: '/admin/mesas',          label: 'Mesas & QR',    icon: QrCode,          apenasAdmin: true,  flag: null        },
+  { href: '/admin/delivery',       label: 'Delivery',      icon: Truck,           apenasAdmin: true,  flag: 'delivery'  },
+  { href: '/admin/equipe',         label: 'Equipe',        icon: UserCog,         apenasAdmin: true,  flag: null        },
+  { href: '/admin/configuracoes',  label: 'Configurações', icon: Settings,        apenasAdmin: true,  flag: null        },
 ]
 
 const OPERACOES = [
@@ -162,8 +163,17 @@ export function AdminSidebar({
 
   const navFiltrado = NAV.filter((n) => !n.apenasAdmin || cargo === 'admin')
 
+
   // Rotas bloqueadas pelo plano atual (só aplica quando plano_ativo=sim — verificado no middleware)
-  const bloqueado = getPlanoConfig(plano).bloqueado
+  const planoConfig = getPlanoConfig(plano)
+  const bloqueado   = planoConfig.bloqueado
+
+  // Feature flags — itens de nav que dependem de um flag de plano
+  function isBloqueadoPorFlag(flag: string | null): boolean {
+    if (!flag) return false
+    const val = (planoConfig as unknown as Record<string, unknown>)[flag]
+    return !val
+  }
 
   async function sair() {
     await fetch('/api/admin/auth', { method: 'DELETE' })
@@ -173,9 +183,11 @@ export function AdminSidebar({
 
   const navContent = (onLinkClick?: () => void) => (
     <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-      {navFiltrado.map(({ href, label, icon: Icon }) => {
-        const ativo    = pathname === href
-        const restrito = bloqueado.some((r) => href.startsWith(r))
+      {navFiltrado.map(({ href, label, icon: Icon, flag }) => {
+        const ativo        = pathname === href
+        const restrito     = bloqueado.some((r) => href.startsWith(r))
+        const flagBloqueado = isBloqueadoPorFlag(flag)
+        const qualquerBloqueio = restrito || flagBloqueado
         return (
           <Link
             key={href}
@@ -184,18 +196,18 @@ export function AdminSidebar({
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
               ativo
                 ? 'bg-teal-600 text-white font-medium'
-                : restrito
+                : qualquerBloqueio
                   ? 'text-slate-500 hover:bg-teal-800 hover:text-slate-300'
                   : 'text-slate-400 hover:bg-teal-800 hover:text-white'
             }`}
           >
             <Icon className="w-4 h-4" />
             <span className="flex-1">{label}</span>
-            {restrito && (
+            {qualquerBloqueio && (
               <span className="flex items-center gap-1">
                 <Lock className="w-3 h-3 text-slate-500" />
                 <span className="text-[9px] font-bold uppercase tracking-wide bg-amber-500/20 text-amber-400 px-1 py-0.5 rounded">
-                  Pro
+                  Business
                 </span>
               </span>
             )}
