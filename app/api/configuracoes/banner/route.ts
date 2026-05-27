@@ -51,14 +51,24 @@ export async function GET(req: Request) {
     return NextResponse.json({ banner: null, branding: DEFAULT_BRANDING })
   }
 
-  const { data } = await supabase
-    .from('configuracoes')
-    .select('banner_ativo, banner_titulo, banner_subtitulo, banner_emoji, banner_estilo, banner_imagem_url, banner_imagem_url_mobile, restaurante_nome, restaurante_logo_url, cor_primaria, pix_chave, saldo_habilitado')
-    .eq('tenant_id', tenantId)
-    .maybeSingle()
+  const [configRes, tenantRes] = await Promise.all([
+    supabase
+      .from('configuracoes')
+      .select('banner_ativo, banner_titulo, banner_subtitulo, banner_emoji, banner_estilo, banner_imagem_url, banner_imagem_url_mobile, restaurante_nome, restaurante_logo_url, cor_primaria, pix_chave, saldo_habilitado')
+      .eq('tenant_id', tenantId)
+      .maybeSingle(),
+    supabase
+      .from('tenants')
+      .select('slug')
+      .eq('id', tenantId)
+      .maybeSingle(),
+  ])
+
+  const data = configRes.data
+  const slug = tenantRes.data?.slug ?? null
 
   if (!data) {
-    return NextResponse.json({ banner: null, branding: DEFAULT_BRANDING })
+    return NextResponse.json({ banner: null, branding: { ...DEFAULT_BRANDING, slug } })
   }
 
   return NextResponse.json({
@@ -69,6 +79,7 @@ export async function GET(req: Request) {
       cor_primaria:         data.cor_primaria         ?? DEFAULT_BRANDING.cor_primaria,
       pix_chave:            data.pix_chave            ?? null,
       saldo_habilitado:     data.saldo_habilitado      ?? false,
+      slug,
     },
   })
 }

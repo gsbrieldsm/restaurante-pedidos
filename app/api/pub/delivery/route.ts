@@ -154,88 +154,131 @@ export async function POST(req: Request) {
     })
   }
 
-  /* ─── sessao ──────────────────────────────────────────────── */
-  const {
-    nome, telefone, cep, numero, complemento,
-    bairro, cidade, uf,
-    taxa_entrega, distancia_km,
-    forma_pagamento,
-  } = body
+  /* ─── sessao — cria sessão mínima (sem endereço ainda) ───── */
+  if (action === 'sessao') {
+    const { nome, telefone } = body
 
-  if (!nome?.trim() || !telefone || !cep) {
-    return NextResponse.json({ error: 'nome, telefone e cep são obrigatórios.' }, { status: 422 })
-  }
-  if (!forma_pagamento) {
-    return NextResponse.json({ error: 'Forma de pagamento é obrigatória.' }, { status: 422 })
-  }
+    if (!nome?.trim() || !telefone) {
+      return NextResponse.json({ error: 'nome e telefone são obrigatórios.' }, { status: 422 })
+    }
 
-  // Busca ou cria a mesa de delivery do tenant
-  let { data: mesaDelivery } = await supabase
-    .from('mesas')
-    .select('id, qr_token')
-    .eq('tenant_id', tenant.id)
-    .eq('tipo', 'delivery')
-    .limit(1)
-    .maybeSingle()
-
-  if (!mesaDelivery) {
-    // Cria a mesa delivery automaticamente
-    const { data: nova, error: errMesa } = await supabase
+    // Busca ou cria a mesa de delivery do tenant
+    let { data: mesaDelivery } = await supabase
       .from('mesas')
-      .insert({
-        tenant_id: tenant.id,
-        numero:    0,        // número 0 = delivery
-        tipo:      'delivery',
-        ativa:     true,
-        status:    'livre',
-      })
       .select('id, qr_token')
+      .eq('tenant_id', tenant.id)
+      .eq('tipo', 'delivery')
+      .limit(1)
+      .maybeSingle()
+
+    if (!mesaDelivery) {
+      const { data: nova, error: errMesa } = await supabase
+        .from('mesas')
+        .insert({ tenant_id: tenant.id, numero: 0, tipo: 'delivery', ativa: true, status: 'livre' })
+        .select('id, qr_token')
+        .single()
+      if (errMesa || !nova) {
+        return NextResponse.json({ error: 'Erro ao criar mesa de delivery.' }, { status: 500 })
+      }
+      mesaDelivery = nova
+    }
+
+    const { data: sessao, error: errSessao } = await supabase
+      .from('sessoes_mesa')
+      .insert({
+        mesa_id:          mesaDelivery.id,
+        tenant_id:        tenant.id,
+        cliente_nome:     nome.trim(),
+        cliente_whatsapp: telefone.replace(/\D/g, ''),
+        ativa:            true,
+        is_delivery:      true,
+        delivery_nome:    nome.trim(),
+        delivery_telefone: telefone.replace(/\D/g, ''),
+        delivery_status:  'aguardando',
+      })
+      .select()
       .single()
 
-    if (errMesa || !nova) {
-      return NextResponse.json({ error: 'Erro ao criar mesa de delivery.' }, { status: 500 })
+    if (errSessao || !sessao) {
+      return NextResponse.json({ error: 'Erro ao criar sessão de delivery.' }, { status: 500 })
     }
-    mesaDelivery = nova
-  }
 
-  // Cria a sessão com campos de delivery
-  const cepLimpo = cep.replace(/\D/g, '')
-  const enderecoData = await buscarCEP(cepLimpo)
-
-  const { data: sessao, error: errSessao } = await supabase
-    .from('sessoes_mesa')
-    .insert({
-      mesa_id:                    mesaDelivery.id,
-      tenant_id:                  tenant.id,
-      cliente_nome:               nome.trim(),
-      cliente_whatsapp:           telefone.replace(/\D/g, ''),
-      ativa:                      true,
-      // campos delivery
-      is_delivery:                true,
-      delivery_nome:              nome.trim(),
-      delivery_telefone:          telefone.replace(/\D/g, ''),
-      delivery_cep:               cepLimpo,
-      delivery_endereco:          enderecoData?.logradouro ?? '',
-      delivery_numero:            numero ?? null,
-      delivery_complemento:       complemento ?? null,
-      delivery_bairro:            bairro || enderecoData?.bairro   || null,
-      delivery_cidade:            cidade || enderecoData?.localidade || null,
-      delivery_uf:                uf     || enderecoData?.uf        || null,
-      delivery_taxa:              taxa_entrega ?? config.taxa_padrao,
-      delivery_distancia_km:      distancia_km ?? null,
-      delivery_forma_pagamento:   forma_pagamento,
-      delivery_status:            'aguardando',
+    return NextResponse.json({
+      token:        mesaDelivery.qr_token,
+      sessao_id:    sessao.id,
+      cliente_nome: nome.trim(),
     })
-    .select()
-    .single()
-
-  if (errSessao || !sessao) {
-    return NextResponse.json({ error: 'Erro ao criar sessão de delivery.' }, { status: 500 })
   }
 
-  return NextResponse.json({
-    token:        mesaDelivery.qr_token,
-    sessao_id:    sessao.id,
-    cliente_nome: nome.trim(),
-  })
+  /* ─── checkout — atualiza sessão com endereço + pagamento ── */
+  if (action === 'checkout') {
+    const { sessao_id, cep, numero, complemento, forma_pagamento } = body
+
+    if (!sessao_id || !cep || !forma_pagamento) {
+      return NextResponse.json({ error: 'sessao_id, cep e forma_pagamento são obrigatórios.' }, { status: 422 })
+    }
+
+    const cepLimpo = cep.replace(/\D/g, '')
+    const enderecoData = await buscarCEP(cepLimpo)
+    if (!enderecoData) {
+      return NextResponse.json({ error: 'CEP não encontrado.' }, { status: 422 })
+    }
+
+    // Calcula distância e taxa
+    const coordsCliente = await geocodificar(
+      enderecoData.logradouro, '', enderecoData.localidade, enderecoData.uf, cepLimpo,
+    )
+
+    let distanciaKm: number | null = null
+    let taxaFinal = config.taxa_padrao
+    let foraDoRaio = false
+
+    if (coordsCliente && config.lat && config.lng) {
+      distanciaKm = Math.round(haversine(config.lat, config.lng, coordsCliente.lat, coordsCliente.lng) * 10) / 10
+      if (distanciaKm > (config.raio_maximo ?? 15)) {
+        foraDoRaio = true
+        return NextResponse.json({
+          error: `Endereço fora do raio de entrega (${config.raio_maximo} km). Seu endereço fica a ${distanciaKm} km.`,
+          fora_do_raio: true,
+          distancia_km: distanciaKm,
+        }, { status: 422 })
+      }
+      const zonas = zonaRes.data ?? []
+      const zona  = zonas.find(
+        (z: { km_min: number; km_max: number }) => distanciaKm! >= z.km_min && distanciaKm! < z.km_max
+      ) ?? null
+      if (zona) taxaFinal = zona.taxa
+    }
+
+    const { error: errUpdate } = await supabase
+      .from('sessoes_mesa')
+      .update({
+        delivery_cep:               cepLimpo,
+        delivery_endereco:          enderecoData.logradouro ?? '',
+        delivery_numero:            numero ?? null,
+        delivery_complemento:       complemento ?? null,
+        delivery_bairro:            enderecoData.bairro ?? null,
+        delivery_cidade:            enderecoData.localidade ?? null,
+        delivery_uf:                enderecoData.uf ?? null,
+        delivery_taxa:              taxaFinal,
+        delivery_distancia_km:      distanciaKm,
+        delivery_forma_pagamento:   forma_pagamento,
+      })
+      .eq('id', sessao_id)
+      .eq('tenant_id', tenant.id)
+
+    if (errUpdate) {
+      return NextResponse.json({ error: 'Erro ao salvar endereço de entrega.' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      ok:           true,
+      taxa_entrega: taxaFinal,
+      distancia_km: distanciaKm,
+      endereco:     enderecoData,
+      fora_do_raio: foraDoRaio,
+    })
+  }
+
+  return NextResponse.json({ error: 'Action inválida.' }, { status: 400 })
 }

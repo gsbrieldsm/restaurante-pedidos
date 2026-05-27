@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   CheckCircle2, Clock, ChefHat, Loader2,
   ShoppingBag, QrCode, ConciergeBell, Plus,
-  Copy, Check, ChevronDown, ChevronUp, ArrowLeft
+  Copy, Check, ChevronDown, ChevronUp, ArrowLeft,
+  MapPin, Banknote, CreditCard, X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -78,6 +79,24 @@ export default function ContaPage() {
   const [deliveryForma,           setDeliveryForma]           = useState<string | null>(null)
   const [deliveryStatus,          setDeliveryStatus]          = useState<string>('aguardando')
 
+  // Modal checkout delivery
+  const [modalCheckout,    setModalCheckout]    = useState(false)
+  const [ckCep,            setCkCep]            = useState('')
+  const [ckNumero,         setCkNumero]         = useState('')
+  const [ckComplemento,    setCkComplemento]    = useState('')
+  const [ckForma,          setCkForma]          = useState('')
+  const [ckCalculo,        setCkCalculo]        = useState<{ taxa: number; distancia: number | null; bairro: string; cidade: string; logradouro: string } | null>(null)
+  const [ckCalculando,     setCkCalculando]     = useState(false)
+  const [ckErroCalculo,    setCkErroCalculo]    = useState('')
+  const [ckSalvando,       setCkSalvando]       = useState(false)
+  const [ckErro,           setCkErro]           = useState('')
+  const [slugDelivery,     setSlugDelivery]     = useState('')
+
+  function formatarCEPLocal(v: string) {
+    const n = v.replace(/\D/g, '').slice(0, 8)
+    return n.length > 5 ? `${n.slice(0, 5)}-${n.slice(5)}` : n
+  }
+
   // IDs de itens que já sabemos que estão "pronto" — para detectar novos
   const prontosSabidos = useRef<Set<string>>(new Set())
 
@@ -88,6 +107,7 @@ export default function ContaPage() {
       .then((d) => {
         setPixChave(d.branding?.pix_chave ?? null)
         setCorPrimaria(d.branding?.cor_primaria ?? '#1A9B8A')
+        if (d.branding?.slug) setSlugDelivery(d.branding.slug)
 
         const habilitado = d.branding?.saldo_habilitado ?? false
         setSaldoHabilitado(habilitado)
@@ -200,6 +220,83 @@ export default function ContaPage() {
     await navigator.clipboard.writeText(pixChave ?? '')
     setCopiado(true)
     setTimeout(() => setCopiado(false), 2500)
+  }
+
+  // slugDelivery é populado no useEffect do banner acima
+
+  // Calcula taxa ao completar CEP no checkout
+  useEffect(() => {
+    const cepLimpo = ckCep.replace(/\D/g, '')
+    if (cepLimpo.length !== 8) { setCkCalculo(null); setCkErroCalculo(''); return }
+    if (!slugDelivery) return
+
+    const timer = setTimeout(async () => {
+      setCkCalculando(true)
+      setCkErroCalculo('')
+      try {
+        const res  = await fetch(`/api/pub/delivery?slug=${slugDelivery}&action=calcular`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ cep: cepLimpo }),
+        })
+        const data = await res.json()
+        if (!res.ok || data.error || data.fora_do_raio) {
+          setCkErroCalculo(data.error ?? 'Fora do raio de entrega.')
+          setCkCalculo(null)
+        } else {
+          setCkCalculo({
+            taxa:       data.taxa_entrega,
+            distancia:  data.distancia_km,
+            bairro:     data.endereco?.bairro ?? '',
+            cidade:     data.endereco?.localidade ?? '',
+            logradouro: data.endereco?.logradouro ?? '',
+          })
+        }
+      } catch {
+        setCkErroCalculo('Erro ao calcular taxa.')
+      } finally {
+        setCkCalculando(false)
+      }
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [ckCep, slugDelivery])
+
+  async function confirmarCheckoutDelivery() {
+    const sessaoId = sessionStorage.getItem('sessao_id')
+    if (!sessaoId || !slugDelivery) return
+    if (!ckCep || !ckForma) { setCkErro('Preencha o CEP e a forma de pagamento.'); return }
+
+    setCkSalvando(true)
+    setCkErro('')
+    try {
+      const res = await fetch(`/api/pub/delivery?slug=${slugDelivery}&action=checkout`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          sessao_id:       sessaoId,
+          cep:             ckCep.replace(/\D/g, ''),
+          numero:          ckNumero || null,
+          complemento:     ckComplemento || null,
+          forma_pagamento: ckForma,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setCkErro(data.error ?? 'Erro ao salvar endereço.'); return }
+
+      // Atualiza estado local
+      setDeliveryEndereco(data.endereco?.logradouro ?? '')
+      setDeliveryNumero(ckNumero || null)
+      setDeliveryBairro(data.endereco?.bairro ?? null)
+      setDeliveryCidade(data.endereco?.localidade ?? null)
+      setDeliveryTaxa(data.taxa_entrega ?? 0)
+      setDeliveryForma(ckForma)
+      setModalCheckout(false)
+    } catch {
+      setCkErro('Erro de conexão.')
+    } finally {
+      setCkSalvando(false)
+    }
   }
 
   async function chamarGarcom(motivo: 'conta' | 'pix_pago') {
@@ -540,17 +637,180 @@ export default function ContaPage() {
 
       )}
 
-      {/* Botão delivery: adicionar mais itens */}
+      {/* Botões delivery */}
       {pedidos.length > 0 && isDelivery && deliveryStatus !== 'entregue' && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur border-t border-slate-100">
-          <div className="max-w-lg mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur border-t border-slate-100 space-y-2">
+          <div className="max-w-lg mx-auto space-y-2">
+            {/* Finalizar pedido — só aparece se ainda não confirmou o endereço */}
+            {!deliveryForma && (
+              <button
+                onClick={() => { setCkErro(''); setModalCheckout(true) }}
+                className="w-full h-12 font-bold text-base rounded-xl text-white shadow-lg"
+                style={{ background: corPrimaria }}
+              >
+                Finalizar pedido → informar endereço
+              </button>
+            )}
             <button
               onClick={() => router.push(`/mesa/${token}/cardapio`)}
               className="w-full h-12 font-bold text-base rounded-xl border-2"
               style={{ borderColor: corPrimaria, color: corPrimaria }}
             >
-              + Adicionar mais itens ao pedido
+              + Adicionar mais itens
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal checkout delivery */}
+      {modalCheckout && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setModalCheckout(false)} />
+          <div className="relative bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm mx-auto overflow-hidden max-h-[90vh] flex flex-col">
+
+            {/* Header */}
+            <div className="px-5 pt-5 pb-4 flex items-center justify-between shrink-0" style={{ background: corPrimaria }}>
+              <div>
+                <h2 className="text-lg font-black text-white">Endereço de entrega</h2>
+                <p className="text-white/70 text-xs mt-0.5">Informe onde entregar seu pedido</p>
+              </div>
+              <button onClick={() => setModalCheckout(false)} className="text-white/60 hover:text-white p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto p-5 space-y-4">
+
+              {/* CEP */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  <MapPin className="inline w-3 h-3 mr-1" />CEP *
+                </label>
+                <div className="relative">
+                  <input
+                    value={formatarCEPLocal(ckCep)}
+                    onChange={(e) => { setCkErroCalculo(''); setCkCep(e.target.value.replace(/\D/g, '')) }}
+                    placeholder="00000-000"
+                    inputMode="numeric"
+                    maxLength={9}
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-teal-400 transition-colors pr-10"
+                  />
+                  {ckCalculando && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-slate-400" />
+                  )}
+                </div>
+
+                {ckCalculo && (
+                  <div className="mt-2 rounded-xl px-3 py-2 text-xs space-y-0.5" style={{ background: `${corPrimaria}15`, border: `1px solid ${corPrimaria}30` }}>
+                    <p className="font-semibold" style={{ color: corPrimaria }}>
+                      {ckCalculo.bairro && `${ckCalculo.bairro} — `}{ckCalculo.cidade}
+                    </p>
+                    <p className="text-slate-600">
+                      {ckCalculo.distancia ? `📍 ${ckCalculo.distancia} km · ` : ''}
+                      Taxa: <strong>R$ {ckCalculo.taxa.toFixed(2).replace('.', ',')}</strong>
+                    </p>
+                  </div>
+                )}
+                {ckErroCalculo && <p className="mt-1.5 text-xs text-red-500">{ckErroCalculo}</p>}
+              </div>
+
+              {/* Logradouro preenchido automaticamente */}
+              {ckCalculo?.logradouro && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Logradouro</label>
+                  <input
+                    value={ckCalculo.logradouro}
+                    readOnly
+                    className="w-full border border-slate-100 bg-slate-50 rounded-xl px-4 py-3 text-sm text-slate-500"
+                  />
+                </div>
+              )}
+
+              {/* Número + Complemento */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Número</label>
+                  <input
+                    value={ckNumero}
+                    onChange={(e) => setCkNumero(e.target.value)}
+                    placeholder="42"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-teal-400 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Complemento</label>
+                  <input
+                    value={ckComplemento}
+                    onChange={(e) => setCkComplemento(e.target.value)}
+                    placeholder="Apto, bloco…"
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-teal-400 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Forma de pagamento */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Pagamento na entrega *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { v: 'dinheiro', l: 'Dinheiro', icon: Banknote  },
+                    { v: 'pix',      l: 'Pix',      icon: QrCode    },
+                    { v: 'debito',   l: 'Débito',   icon: CreditCard },
+                    { v: 'credito',  l: 'Crédito',  icon: CreditCard },
+                  ].map(({ v, l, icon: Icon }) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setCkForma(v)}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${
+                        ckForma === v
+                          ? 'border-teal-500 bg-teal-50 text-teal-700'
+                          : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />{l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {ckErro && (
+                <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{ckErro}</p>
+              )}
+
+              {/* Total com taxa */}
+              {ckCalculo && (
+                <div className="bg-slate-50 rounded-xl px-4 py-3 space-y-1 text-sm">
+                  <div className="flex justify-between text-slate-500">
+                    <span>Subtotal itens</span>
+                    <span>{formatarReal(totalGeral)}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-500">
+                    <span>Taxa de entrega</span>
+                    <span>R$ {ckCalculo.taxa.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-slate-800 pt-1 border-t border-slate-200 mt-1">
+                    <span>Total</span>
+                    <span>{formatarReal(totalGeral + ckCalculo.taxa)}</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={confirmarCheckoutDelivery}
+                disabled={ckSalvando || !ckCep || !ckForma || ckCalculando || !!ckErroCalculo}
+                className="w-full py-4 rounded-2xl font-bold text-white text-base flex items-center justify-center gap-2 disabled:opacity-40 transition-opacity"
+                style={{ background: corPrimaria }}
+              >
+                {ckSalvando
+                  ? <Loader2 className="w-5 h-5 animate-spin" />
+                  : '✅ Confirmar pedido'
+                }
+              </button>
+
+            </div>
           </div>
         </div>
       )}
