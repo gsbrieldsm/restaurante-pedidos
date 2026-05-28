@@ -52,12 +52,12 @@ export function PainelHero({
             {kpis.map(({ label, value, sublabel, alerta, destaque }) => (
               <div
                 key={label}
-                className="rounded-xl px-3 py-2.5 shrink-0 min-w-[90px]"
+                className="rounded-xl px-3 py-2.5 shrink-0 min-w-[88px]"
                 style={{ background: 'rgba(255,255,255,0.08)' }}
               >
                 <p
-                  className={`font-black leading-tight mb-1 ${
-                    String(value).length > 10 ? 'text-sm' : 'text-lg sm:text-xl'
+                  className={`font-black leading-tight mb-1 whitespace-nowrap ${
+                    String(value).length > 8 ? 'text-sm' : 'text-lg sm:text-xl'
                   }`}
                   style={{
                     color: alerta ? '#F05A4F' : destaque ? '#5eead4' : 'white',
@@ -65,9 +65,9 @@ export function PainelHero({
                 >
                   {value}
                 </p>
-                <p className="text-xs text-white/60 leading-tight">{label}</p>
+                <p className="text-[11px] text-white/60 leading-tight">{label}</p>
                 {sublabel && (
-                  <p className="text-xs text-white/35 leading-tight mt-0.5">{sublabel}</p>
+                  <p className="text-[11px] text-white/35 leading-tight mt-0.5">{sublabel}</p>
                 )}
               </div>
             ))}
