@@ -44,16 +44,27 @@ export default function IdentificacaoPage() {
       .then((d) => { if (d.branding) setBranding(d.branding) })
       .catch(() => {})
 
-    // Tenta recuperar sessão — sessionStorage primeiro (mesma aba), depois localStorage (sobrevive ao fechar/reabrir)
-    const sessaoId = sessionStorage.getItem('sessao_id') || localStorage.getItem(`menue_sess_${token}`)
-    const nomeGuardado = sessionStorage.getItem('cliente_nome') || localStorage.getItem(`menue_sess_nome_${token}`)
+    // Verifica sessão: sessionStorage (mesma aba) tem prioridade
+    const sessaoIdSession = sessionStorage.getItem('sessao_id')
+    const sessaoIdLocal   = localStorage.getItem(`menue_sess_${token}`)
+    const nomeSession     = sessionStorage.getItem('cliente_nome')
+    const nomeLocal       = localStorage.getItem(`menue_sess_nome_${token}`)
+
+    if (sessaoIdLocal && !sessaoIdSession) {
+      // Sessão salva para ESTA MESA no localStorage → cliente voltando para a mesma mesa.
+      // Não precisa "transferir" — vai direto para o cardápio sem mostrar a tela de transferência.
+      sessionStorage.setItem('sessao_id', sessaoIdLocal)
+      if (nomeLocal) sessionStorage.setItem('cliente_nome', nomeLocal)
+      router.push(`/mesa/${token}/cardapio`)
+      return
+    }
+
+    const sessaoId    = sessaoIdSession
+    const nomeGuardado = nomeSession
 
     if (sessaoId) {
-      // Sincroniza para sessionStorage caso veio do localStorage
-      sessionStorage.setItem('sessao_id', sessaoId)
-      if (nomeGuardado) sessionStorage.setItem('cliente_nome', nomeGuardado)
-
-      // Já tem comanda aberta — transfere para esta mesa
+      // Sessão no sessionStorage, possivelmente de outra mesa (cliente se moveu).
+      // Exibe a tela de "transferindo" e migra a comanda.
       setTransferindo(true)
       setClienteNome(nomeGuardado)
 
@@ -61,7 +72,6 @@ export default function IdentificacaoPage() {
         .then((r) => r.json())
         .then(({ mesa }) => {
           setMesa(mesa)
-          // Transfere a comanda para a nova mesa
           return fetch(`/api/mesas/${token}/sessao`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -71,7 +81,6 @@ export default function IdentificacaoPage() {
         .then((r) => r.json())
         .then((data) => {
           if (data.sessao) {
-            // Transferência OK — vai pro cardápio
             router.push(`/mesa/${token}/cardapio`)
           } else {
             // Comanda expirada — limpa e pede novo cadastro
