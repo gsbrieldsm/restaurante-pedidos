@@ -88,10 +88,15 @@ export default function CardapioPage() {
       setIsDelivery(true)
     }
 
-    const sessaoId = sessionStorage.getItem('sessao_id')
+    // Recupera sessão — sessionStorage primeiro; fallback para localStorage (sobrevive ao fechar/reabrir link QR)
+    const sessaoId = sessionStorage.getItem('sessao_id') || localStorage.getItem(`menue_sess_${token}`)
     if (!sessaoId) {
       router.push(`/mesa/${token}`)
       return
+    }
+    // Sincroniza para sessionStorage caso veio do localStorage
+    if (!sessionStorage.getItem('sessao_id')) {
+      sessionStorage.setItem('sessao_id', sessaoId)
     }
 
     Promise.all([
@@ -141,6 +146,9 @@ export default function CardapioPage() {
         if (data.ativa === false) {
           setContaFechada(true)
           clearInterval(pollTimer)
+          // Limpa sessão persistida — comanda encerrada
+          localStorage.removeItem(`menue_sess_${token}`)
+          localStorage.removeItem(`menue_sess_nome_${token}`)
         }
       } catch { /* ignora erros de rede */ }
     }
@@ -463,6 +471,9 @@ export default function CardapioPage() {
   function abrirNovaComanda() {
     sessionStorage.removeItem('sessao_id')
     sessionStorage.removeItem('ultimo_pedido_id')
+    sessionStorage.removeItem('cliente_nome')
+    localStorage.removeItem(`menue_sess_${token}`)
+    localStorage.removeItem(`menue_sess_nome_${token}`)
     router.push(`/mesa/${token}`)
   }
 

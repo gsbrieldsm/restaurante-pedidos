@@ -131,8 +131,10 @@ export default function ContaPage() {
   }, [token])
 
   const buscarConta = useCallback(async () => {
-    const sessaoId = sessionStorage.getItem('sessao_id')
+    const sessaoId = sessionStorage.getItem('sessao_id') || localStorage.getItem(`menue_sess_${token}`)
     if (!sessaoId) { router.push(`/mesa/${token}`); return }
+    // Sincroniza para sessionStorage caso veio do localStorage
+    if (!sessionStorage.getItem('sessao_id')) sessionStorage.setItem('sessao_id', sessaoId)
 
     const res = await fetch(`/api/mesa/${token}/conta?sessao_id=${sessaoId}`)
     if (!res.ok) { router.push(`/mesa/${token}`); return }
@@ -184,8 +186,9 @@ export default function ContaPage() {
   }, [token, router, loading])
 
   useEffect(() => {
-    const sessaoId = sessionStorage.getItem('sessao_id')
+    const sessaoId = sessionStorage.getItem('sessao_id') || localStorage.getItem(`menue_sess_${token}`)
     if (!sessaoId) return
+    if (!sessionStorage.getItem('sessao_id')) sessionStorage.setItem('sessao_id', sessaoId)
 
     buscarConta()
 
@@ -263,7 +266,7 @@ export default function ContaPage() {
   }, [ckCep, slugDelivery])
 
   async function confirmarCheckoutDelivery() {
-    const sessaoId = sessionStorage.getItem('sessao_id')
+    const sessaoId = sessionStorage.getItem('sessao_id') || localStorage.getItem(`menue_sess_${token}`)
     if (!sessaoId || !slugDelivery) return
     if (!ckCep || !ckForma) { setCkErro('Preencha o CEP e a forma de pagamento.'); return }
 
@@ -300,7 +303,7 @@ export default function ContaPage() {
   }
 
   async function chamarGarcom(motivo: 'conta' | 'pix_pago') {
-    const sessaoId = sessionStorage.getItem('sessao_id')
+    const sessaoId = sessionStorage.getItem('sessao_id') || localStorage.getItem(`menue_sess_${token}`)
     if (!sessaoId) return
     setChamandoGarcom(true)
     await fetch(`/api/mesa/${token}/chamar-garcom`, {

@@ -44,10 +44,15 @@ export default function IdentificacaoPage() {
       .then((d) => { if (d.branding) setBranding(d.branding) })
       .catch(() => {})
 
-    const sessaoId = sessionStorage.getItem('sessao_id')
-    const nomeGuardado = sessionStorage.getItem('cliente_nome')
+    // Tenta recuperar sessão — sessionStorage primeiro (mesma aba), depois localStorage (sobrevive ao fechar/reabrir)
+    const sessaoId = sessionStorage.getItem('sessao_id') || localStorage.getItem(`menue_sess_${token}`)
+    const nomeGuardado = sessionStorage.getItem('cliente_nome') || localStorage.getItem(`menue_sess_nome_${token}`)
 
     if (sessaoId) {
+      // Sincroniza para sessionStorage caso veio do localStorage
+      sessionStorage.setItem('sessao_id', sessaoId)
+      if (nomeGuardado) sessionStorage.setItem('cliente_nome', nomeGuardado)
+
       // Já tem comanda aberta — transfere para esta mesa
       setTransferindo(true)
       setClienteNome(nomeGuardado)
@@ -72,6 +77,8 @@ export default function IdentificacaoPage() {
             // Comanda expirada — limpa e pede novo cadastro
             sessionStorage.removeItem('sessao_id')
             sessionStorage.removeItem('cliente_nome')
+            localStorage.removeItem(`menue_sess_${token}`)
+            localStorage.removeItem(`menue_sess_nome_${token}`)
             setTransferindo(false)
             carregarMesa()
           }
@@ -121,6 +128,9 @@ export default function IdentificacaoPage() {
 
     sessionStorage.setItem('sessao_id', data.sessao.id)
     sessionStorage.setItem('cliente_nome', data.sessao.cliente_nome)
+    // Persiste sessão no localStorage para sobreviver ao fechar/reabrir o link QR
+    localStorage.setItem(`menue_sess_${token}`, data.sessao.id)
+    localStorage.setItem(`menue_sess_nome_${token}`, data.sessao.cliente_nome)
     // Salva para pré-preencher no próximo acesso
     localStorage.setItem('mmu_cliente_nome', nome.trim())
     if (whatsapp) localStorage.setItem('mmu_cliente_whatsapp', whatsapp)

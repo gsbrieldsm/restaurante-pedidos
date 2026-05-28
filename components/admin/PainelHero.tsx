@@ -23,14 +23,14 @@ export function PainelHero({
   return (
     <>
       {/* Topo: título + métrica principal */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
         <div>
           <p className="text-xs font-bold tracking-widest uppercase text-teal-600 mb-1">{secao}</p>
-          <h1 className="text-2xl font-bold text-slate-800">{titulo}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800">{titulo}</h1>
         </div>
-        <div className="text-right">
+        <div className="sm:text-right">
           <p className="text-xs text-slate-400 mb-0.5">{metricaLabel}</p>
-          <p className={`text-2xl font-black ${metricaDestaque ? 'text-teal-600' : 'text-slate-800'}`}>
+          <p className={`text-xl sm:text-2xl font-black ${metricaDestaque ? 'text-teal-600' : 'text-slate-800'}`}>
             {loading ? '—' : metricaValor}
           </p>
         </div>
@@ -38,7 +38,7 @@ export function PainelHero({
 
       {/* Painel hero com gradiente */}
       <div
-        className="rounded-2xl p-6"
+        className="rounded-2xl p-4 sm:p-6"
         style={{
           background: 'linear-gradient(135deg, #0a2420 0%, #0f3d35 40%, #1A9B8A 100%)',
         }}
@@ -48,16 +48,16 @@ export function PainelHero({
             <div className="w-6 h-6 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {kpis.map(({ label, value, sublabel, alerta, destaque }) => (
               <div
                 key={label}
-                className="rounded-xl px-3 py-2.5 shrink-0 flex-1 min-w-0"
+                className="rounded-xl px-3 py-2.5 shrink-0 min-w-[90px]"
                 style={{ background: 'rgba(255,255,255,0.08)' }}
               >
                 <p
-                  className={`font-black leading-tight mb-1 truncate ${
-                    String(value).length > 10 ? 'text-sm' : 'text-xl'
+                  className={`font-black leading-tight mb-1 ${
+                    String(value).length > 10 ? 'text-sm' : 'text-lg sm:text-xl'
                   }`}
                   style={{
                     color: alerta ? '#F05A4F' : destaque ? '#5eead4' : 'white',
@@ -65,7 +65,7 @@ export function PainelHero({
                 >
                   {value}
                 </p>
-                <p className="text-xs text-white/60 leading-tight truncate">{label}</p>
+                <p className="text-xs text-white/60 leading-tight">{label}</p>
                 {sublabel && (
                   <p className="text-xs text-white/35 leading-tight mt-0.5">{sublabel}</p>
                 )}
