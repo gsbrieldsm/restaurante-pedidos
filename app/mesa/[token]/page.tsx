@@ -50,21 +50,42 @@ export default function IdentificacaoPage() {
     const nomeSession     = sessionStorage.getItem('cliente_nome')
     const nomeLocal       = localStorage.getItem(`menue_sess_nome_${token}`)
 
-    if (sessaoIdLocal && !sessaoIdSession) {
-      // Sessão salva para ESTA MESA no localStorage → cliente voltando para a mesma mesa.
-      // Não precisa "transferir" — vai direto para o cardápio sem mostrar a tela de transferência.
+    if (sessaoIdLocal) {
+      // Sessão salva para ESTA MESA no localStorage → mesmo cliente, mesma mesa.
+      // Nunca mostra "Transferindo" — vai direto para o cardápio.
+      // (isso cobre tanto o retorno após fechar o browser quanto o redirect da confirmação)
       sessionStorage.setItem('sessao_id', sessaoIdLocal)
       if (nomeLocal) sessionStorage.setItem('cliente_nome', nomeLocal)
       router.push(`/mesa/${token}/cardapio`)
       return
     }
 
+    // Sem localStorage para este token: só tem sessão no sessionStorage.
+    // Pode ser: (a) cliente vindo de outra mesa, ou (b) sessão expirada no servidor.
+    // Valida a sessão antes de decidir mostrar "Transferindo".
     const sessaoId    = sessaoIdSession
     const nomeGuardado = nomeSession
 
     if (sessaoId) {
-      // Sessão no sessionStorage, possivelmente de outra mesa (cliente se moveu).
-      // Exibe a tela de "transferindo" e migra a comanda.
+      // Primeiro valida se a sessão ainda está ativa no servidor
+      // Se inativa, limpa tudo e mostra o formulário (não mostra "Transferindo" para sessão morta)
+      try {
+        const check = await fetch(`/api/sessao?id=${sessaoId}`)
+        const checkData = await check.json()
+        if (checkData.ativa === false) {
+          // Sessão expirada — limpa storages e mostra formulário
+          sessionStorage.removeItem('sessao_id')
+          sessionStorage.removeItem('cliente_nome')
+          sessionStorage.removeItem('is_delivery')
+          localStorage.removeItem(`menue_sess_${token}`)
+          localStorage.removeItem(`menue_sess_nome_${token}`)
+          localStorage.removeItem(`menue_delivery_${token}`)
+          carregarMesa()
+          return
+        }
+      } catch { /* em caso de erro de rede, segue o fluxo normal */ }
+
+      // Sessão ativa — pode ser mudança de mesa → mostrar "Transferindo".
       setTransferindo(true)
       setClienteNome(nomeGuardado)
 
@@ -86,8 +107,10 @@ export default function IdentificacaoPage() {
             // Comanda expirada — limpa e pede novo cadastro
             sessionStorage.removeItem('sessao_id')
             sessionStorage.removeItem('cliente_nome')
+            sessionStorage.removeItem('is_delivery')
             localStorage.removeItem(`menue_sess_${token}`)
             localStorage.removeItem(`menue_sess_nome_${token}`)
+            localStorage.removeItem(`menue_delivery_${token}`)
             setTransferindo(false)
             carregarMesa()
           }

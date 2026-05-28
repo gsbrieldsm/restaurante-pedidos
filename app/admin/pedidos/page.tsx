@@ -84,7 +84,7 @@ export default function PedidosPage() {
   })
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Pedidos do Dia</h1>
         <p className="text-slate-500 text-sm">{pedidos.length} pedidos hoje</p>

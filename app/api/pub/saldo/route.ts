@@ -91,77 +91,46 @@ export async function POST(req: NextRequest) {
     .eq('telefone', tel)
     .maybeSingle()
 
-  // Se já existe e está verificado → retorna direto
-  if (clienteExistente?.verificado) {
-    // Atualiza nome se fornecido e ainda não tem
+  // TODO: OTP via WhatsApp ainda não está ativo — entra direto pelo telefone.
+  // Quando o WhatsApp estiver configurado, reativar o fluxo de verificação.
+
+  if (clienteExistente) {
+    // Cliente existente — atualiza nome se necessário e retorna direto
+    const nomeAtualizado = nome?.trim() || clienteExistente.nome
     if (nome?.trim() && !clienteExistente.nome) {
       await supabase
         .from('clientes_saldo')
-        .update({ nome: nome.trim() })
+        .update({ nome: nomeAtualizado, verificado: true })
         .eq('id', clienteExistente.id)
     }
 
     return NextResponse.json({
       cliente: {
         ...clienteExistente,
-        nome: nome?.trim() || clienteExistente.nome,
+        nome: nomeAtualizado,
       }
     })
   }
 
-  // Novo cliente ou não verificado → gera OTP e envia WhatsApp
-  const otp       = gerarOTP()
-  const expiraEm  = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 min
+  // Novo cliente — cria já marcado como verificado (sem OTP por enquanto)
+  const { data: criado, error: errCriado } = await supabase
+    .from('clientes_saldo')
+    .upsert(
+      {
+        tenant_id:  tenantId,
+        telefone:   tel,
+        nome:       nome?.trim() || null,
+        verificado: true,
+      },
+      { onConflict: 'tenant_id,telefone', ignoreDuplicates: false }
+    )
+    .select('id, nome, telefone, saldo_disponivel')
+    .single()
 
-  let clienteId: string
-
-  if (clienteExistente) {
-    // Atualiza OTP do cliente existente
-    await supabase
-      .from('clientes_saldo')
-      .update({
-        otp_code:      otp,
-        otp_expira_em: expiraEm,
-        nome:          nome?.trim() || clienteExistente.nome,
-      })
-      .eq('id', clienteExistente.id)
-
-    clienteId = clienteExistente.id
-  } else {
-    // Cria novo cliente
-    const { data: criado, error: errCriado } = await supabase
-      .from('clientes_saldo')
-      .insert({
-        tenant_id:     tenantId,
-        telefone:      tel,
-        nome:          nome?.trim() || null,
-        verificado:    false,
-        otp_code:      otp,
-        otp_expira_em: expiraEm,
-      })
-      .select('id')
-      .single()
-
-    if (errCriado || !criado) {
-      console.error('[pub/saldo] erro ao criar cliente:', errCriado)
-      return NextResponse.json({ error: 'Erro ao cadastrar cliente.' }, { status: 500 })
-    }
-
-    clienteId = criado.id
+  if (errCriado || !criado) {
+    console.error('[pub/saldo] erro ao criar cliente:', errCriado)
+    return NextResponse.json({ error: 'Erro ao cadastrar cliente.' }, { status: 500 })
   }
 
-  // Envia OTP via WhatsApp
-  const restauranteNome = config.restaurante_nome ?? 'Restaurante'
-  const envio = await enviarOTPVerificacao(tel, otp, restauranteNome)
-
-  if (!envio.ok) {
-    // Log mas não bloqueia — pode ser erro temporário de API
-    console.error('[pub/saldo] falha ao enviar WhatsApp OTP:', envio.error)
-  }
-
-  return NextResponse.json({
-    precisa_verificar: true,
-    cliente_id:        clienteId,
-    whatsapp_enviado:  envio.ok,
-  })
+  return NextResponse.json({ cliente: criado })
 }

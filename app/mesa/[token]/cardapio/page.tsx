@@ -83,9 +83,14 @@ export default function CardapioPage() {
       sessionStorage.setItem('sessao_id', sessaoParam)
     }
 
-    // Detecta se é sessão de delivery
-    if (sessionStorage.getItem('is_delivery') === '1') {
+    // Detecta se é sessão de delivery (sessionStorage ou localStorage)
+    if (
+      sessionStorage.getItem('is_delivery') === '1' ||
+      localStorage.getItem(`menue_delivery_${token}`) === '1'
+    ) {
       setIsDelivery(true)
+      // Garante que sessionStorage também está marcado (para o resto da sessão)
+      sessionStorage.setItem('is_delivery', '1')
     }
 
     // Recupera sessão — sessionStorage primeiro; fallback para localStorage (sobrevive ao fechar/reabrir link QR)
@@ -149,6 +154,7 @@ export default function CardapioPage() {
           // Limpa sessão persistida — comanda encerrada
           localStorage.removeItem(`menue_sess_${token}`)
           localStorage.removeItem(`menue_sess_nome_${token}`)
+          localStorage.removeItem(`menue_delivery_${token}`)
         }
       } catch { /* ignora erros de rede */ }
     }
@@ -340,12 +346,13 @@ export default function CardapioPage() {
       return
     }
 
-    // Primeiro acesso → precisa verificar via WhatsApp OTP
-    if (data.precisa_verificar) {
-      setSaldoClienteId(data.cliente_id)
-      setSaldoEtapa('otp')
-      setSaldoOtp('')
-    }
+    // TODO: OTP via WhatsApp ainda não ativo — a API já retorna { cliente } direto.
+    // Quando reativado, descomentar o bloco abaixo:
+    // if (data.precisa_verificar) {
+    //   setSaldoClienteId(data.cliente_id)
+    //   setSaldoEtapa('otp')
+    //   setSaldoOtp('')
+    // }
   }
 
   async function verificarOTP() {
@@ -472,8 +479,10 @@ export default function CardapioPage() {
     sessionStorage.removeItem('sessao_id')
     sessionStorage.removeItem('ultimo_pedido_id')
     sessionStorage.removeItem('cliente_nome')
+    sessionStorage.removeItem('is_delivery')
     localStorage.removeItem(`menue_sess_${token}`)
     localStorage.removeItem(`menue_sess_nome_${token}`)
+    localStorage.removeItem(`menue_delivery_${token}`)
     router.push(`/mesa/${token}`)
   }
 

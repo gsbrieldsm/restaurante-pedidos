@@ -99,6 +99,9 @@ export default function AcessoPublicoPage() {
 
     sessionStorage.setItem('sessao_id',    data.sessao_id)
     sessionStorage.setItem('cliente_nome', data.cliente_nome)
+    // Persiste no localStorage para sobreviver ao fechar/reabrir o navegador
+    localStorage.setItem(`menue_sess_${data.token}`,      data.sessao_id)
+    localStorage.setItem(`menue_sess_nome_${data.token}`, data.cliente_nome)
 
     router.push(`/mesa/${data.token}/cardapio`)
   }

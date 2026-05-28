@@ -303,7 +303,7 @@ export default function ConfiguracoesPage() {
   const estiloAtual = BANNER_ESTILOS[banner.banner_estilo] ?? BANNER_ESTILOS.teal
 
   return (
-    <div className="p-6 space-y-8 max-w-3xl">
+    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 max-w-3xl">
 
       {/* ── Equipe & Controle de Acesso ── */}
       <Link

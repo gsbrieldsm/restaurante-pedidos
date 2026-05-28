@@ -148,7 +148,7 @@ export default function FaturamentoPage() {
   const periodoLabel = periodo === 'hoje' ? 'Hoje' : periodo === 'semana' ? 'Últimos 7 dias' : 'Este mês'
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       <PainelHero
         secao="FINANCEIRO"
         titulo={periodoLabel}
