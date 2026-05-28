@@ -47,22 +47,27 @@ export async function PATCH(
 }
 
 // GET /api/pedidos/[id] — buscar pedido completo com itens
+// Acessível sem auth (o UUID do pedido funciona como token de acesso seguro para o cliente)
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const tenantId = await getTenantId()
-  if (!tenantId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-
   const { id } = await params
   const supabase = createServiceClient()
 
-  const { data: pedido, error } = await supabase
+  // Se tiver cookie de admin, filtra pelo tenant — caso contrário, busca só pelo ID (acesso público do cliente)
+  const tenantId = await getTenantId()
+
+  const query = supabase
     .from('pedidos')
     .select('*, pedido_itens(*)')
     .eq('id', id)
-    .eq('tenant_id', tenantId)
-    .single()
+
+  if (tenantId) {
+    query.eq('tenant_id', tenantId)
+  }
+
+  const { data: pedido, error } = await query.single()
 
   if (error || !pedido) {
     return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 })
