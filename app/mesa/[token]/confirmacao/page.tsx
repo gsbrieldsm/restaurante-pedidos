@@ -45,7 +45,6 @@ export default function ConfirmacaoPage() {
 
   const [pedido, setPedido] = useState<Pedido & { pedido_itens: PedidoItem[] } | null>(null)
   const [loading, setLoading] = useState(true)
-  const [countdown, setCountdown] = useState(6)
   const [corPrimaria, setCorPrimaria] = useState('#1A9B8A')
   const statusAnterior = useRef<string | null>(null)
 
@@ -85,18 +84,7 @@ export default function ConfirmacaoPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_itens' }, buscarPedido)
       .subscribe()
 
-    // Redireciona para /conta após 6s
-    const tick = setInterval(() => {
-      setCountdown((n) => {
-        if (n <= 1) { clearInterval(tick); router.push(`/mesa/${token}/conta`) }
-        return n - 1
-      })
-    }, 1000)
-
-    return () => {
-      clearInterval(tick)
-      supabase.removeChannel(channel)
-    }
+    return () => { supabase.removeChannel(channel) }
   }, [token, router])
 
   const rgb      = hexToRgbParts(corPrimaria)
@@ -125,10 +113,6 @@ export default function ConfirmacaoPage() {
               <p className="text-sm font-medium" style={{ color: `rgba(${rgb}, 0.85)` }}>
                 Olá, <span className="text-white font-bold">{pedido?.cliente_nome}</span>!
               </p>
-            </div>
-            {/* Contador regressivo */}
-            <div className="shrink-0 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
-              <span className="text-white font-black text-sm">{countdown}</span>
             </div>
           </div>
         </div>
