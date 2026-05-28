@@ -67,40 +67,41 @@ export default function IdentificacaoPage() {
     const nomeGuardado = nomeSession
 
     if (sessaoId) {
-      // Primeiro valida se a sessão ainda está ativa no servidor
-      // Se inativa, limpa tudo e mostra o formulário (não mostra "Transferindo" para sessão morta)
-      try {
-        const check = await fetch(`/api/sessao?id=${sessaoId}`)
-        const checkData = await check.json()
-        if (checkData.ativa === false) {
-          // Sessão expirada — limpa storages e mostra formulário
-          sessionStorage.removeItem('sessao_id')
-          sessionStorage.removeItem('cliente_nome')
-          sessionStorage.removeItem('is_delivery')
-          localStorage.removeItem(`menue_sess_${token}`)
-          localStorage.removeItem(`menue_sess_nome_${token}`)
-          localStorage.removeItem(`menue_delivery_${token}`)
-          carregarMesa()
-          return
-        }
-      } catch { /* em caso de erro de rede, segue o fluxo normal */ }
+      // Bloco async em IIFE para poder usar await dentro do useEffect
+      ;(async () => {
+        // Valida se a sessão ainda está ativa no servidor antes de decidir mostrar "Transferindo"
+        try {
+          const check = await fetch(`/api/sessao?id=${sessaoId}`)
+          const checkData = await check.json()
+          if (checkData.ativa === false) {
+            // Sessão expirada — limpa storages e mostra formulário
+            sessionStorage.removeItem('sessao_id')
+            sessionStorage.removeItem('cliente_nome')
+            sessionStorage.removeItem('is_delivery')
+            localStorage.removeItem(`menue_sess_${token}`)
+            localStorage.removeItem(`menue_sess_nome_${token}`)
+            localStorage.removeItem(`menue_delivery_${token}`)
+            carregarMesa()
+            return
+          }
+        } catch { /* em caso de erro de rede, segue o fluxo normal */ }
 
-      // Sessão ativa — pode ser mudança de mesa → mostrar "Transferindo".
-      setTransferindo(true)
-      setClienteNome(nomeGuardado)
+        // Sessão ativa — pode ser mudança de mesa → mostrar "Transferindo".
+        setTransferindo(true)
+        setClienteNome(nomeGuardado)
 
-      fetch(`/api/mesas/${token}`)
-        .then((r) => r.json())
-        .then(({ mesa }) => {
+        try {
+          const r1 = await fetch(`/api/mesas/${token}`)
+          const { mesa } = await r1.json()
           setMesa(mesa)
-          return fetch(`/api/mesas/${token}/sessao`, {
+
+          const r2 = await fetch(`/api/mesas/${token}/sessao`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessao_id: sessaoId }),
           })
-        })
-        .then((r) => r.json())
-        .then((data) => {
+          const data = await r2.json()
+
           if (data.sessao) {
             router.push(`/mesa/${token}/cardapio`)
           } else {
@@ -114,11 +115,11 @@ export default function IdentificacaoPage() {
             setTransferindo(false)
             carregarMesa()
           }
-        })
-        .catch(() => {
+        } catch {
           setTransferindo(false)
           carregarMesa()
-        })
+        }
+      })()
     } else {
       carregarMesa()
     }
