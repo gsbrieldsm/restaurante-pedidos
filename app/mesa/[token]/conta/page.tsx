@@ -138,15 +138,18 @@ export default function ContaPage() {
 
     const res = await fetch(`/api/mesa/${token}/conta?sessao_id=${sessaoId}`)
     if (!res.ok) {
-      // Sessão inválida/expirada — limpa tudo antes de redirecionar
-      // para evitar a tela de "Transferindo mesa" na página de identificação
-      sessionStorage.removeItem('sessao_id')
-      sessionStorage.removeItem('cliente_nome')
-      sessionStorage.removeItem('is_delivery')
-      localStorage.removeItem(`menue_sess_${token}`)
-      localStorage.removeItem(`menue_sess_nome_${token}`)
-      localStorage.removeItem(`menue_delivery_${token}`)
-      router.push(`/mesa/${token}`)
+      if (res.status === 403) {
+        // Sessão realmente inativa/expirada — limpa tudo e volta para identificação
+        sessionStorage.removeItem('sessao_id')
+        sessionStorage.removeItem('cliente_nome')
+        sessionStorage.removeItem('is_delivery')
+        localStorage.removeItem(`menue_sess_${token}`)
+        localStorage.removeItem(`menue_sess_nome_${token}`)
+        localStorage.removeItem(`menue_delivery_${token}`)
+        router.push(`/mesa/${token}`)
+      }
+      // 500 ou outro erro de servidor: não limpa sessão, apenas para de carregar
+      setLoading(false)
       return
     }
     const data = await res.json()

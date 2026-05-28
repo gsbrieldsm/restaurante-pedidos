@@ -18,8 +18,8 @@ export async function GET(
 
   const supabase = createServiceClient()
 
-  // Valida que a sessão pertence a essa mesa
-  const { data: sessao } = await supabase
+  // Valida que a sessão existe e está ativa
+  const { data: sessao, error: sessaoError } = await supabase
     .from('sessoes_mesa')
     .select(`
       id, cliente_nome, mesas(numero, nome),
@@ -33,8 +33,14 @@ export async function GET(
     .eq('ativa', true)
     .single()
 
+  if (sessaoError) {
+    // Erro de banco (ex: coluna inexistente por migration não rodada) — não confundir com sessão inativa
+    console.error('[conta] Erro ao buscar sessão:', sessaoError.message)
+    return NextResponse.json({ error: 'Erro interno ao buscar sessão', detail: sessaoError.message }, { status: 500 })
+  }
+
   if (!sessao) {
-    return NextResponse.json({ error: 'Sessão inválida' }, { status: 403 })
+    return NextResponse.json({ error: 'Sessão inválida ou encerrada' }, { status: 403 })
   }
 
   // Busca todos os pedidos com itens
