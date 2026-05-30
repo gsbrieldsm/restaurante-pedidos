@@ -571,31 +571,6 @@ export default function LandingClient() {
             🎁 Todos os planos incluem 7 dias grátis · Sem cartão de crédito
           </div>
 
-          {/* Implementação */}
-          <div className="reveal max-w-sm mx-auto rounded-2xl p-7 mb-10 text-left"
-            style={{ background: 'rgba(26,155,138,0.06)', border: '1px solid rgba(26,155,138,0.2)' }}>
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#5EEAD4' }}>
-              Implementação · única vez
-            </p>
-            <p className="font-black text-white text-4xl mb-5">R$ 2.000</p>
-            <ul className="space-y-2 text-sm" style={{ color: 'rgba(226,250,247,0.6)' }}>
-              {[
-                'Configuração completa da plataforma',
-                'Cadastro dos produtos (sem fotos)',
-                'QR codes das mesas',
-                'Treinamento da equipe no sistema',
-                'Suporte no 1º mês',
-              ].map((i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span style={{ color: '#1A9B8A' }}>✓</span>{i}
-                </li>
-              ))}
-            </ul>
-            <p className="text-xs mt-4 pt-4" style={{ color: 'rgba(94,234,212,0.25)', borderTop: '1px solid rgba(26,155,138,0.15)' }}>
-              Cobrada apenas se continuar após o trial.
-            </p>
-          </div>
-
           {/* Planos */}
           <div className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
             {PLANOS.map((p, i) => (
@@ -631,6 +606,25 @@ export default function LandingClient() {
                 </ul>
               </div>
             ))}
+          </div>
+
+          {/* Configuração e treinamento — ancorado APÓS os planos */}
+          <div className="reveal max-w-4xl mx-auto rounded-2xl p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-5"
+            style={{ background: 'rgba(26,155,138,0.06)', border: '1px solid rgba(26,155,138,0.18)' }}>
+            <div className="shrink-0 flex flex-col items-center justify-center rounded-xl px-5 py-3 text-center"
+              style={{ background: 'rgba(26,155,138,0.12)', border: '1px solid rgba(26,155,138,0.25)', minWidth: '120px' }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(94,234,212,0.7)' }}>uma vez só</p>
+              <p className="text-white font-black text-2xl leading-none">R$ 2.000</p>
+            </div>
+            <div className="flex-1">
+              <p className="text-white font-black text-base mb-1">Configuração e treinamento</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(226,250,247,0.6)' }}>
+                A gente coloca seu restaurante pra rodar: plataforma configurada, produtos cadastrados, QR codes prontos e equipe treinada. Você não levanta um dedo.
+              </p>
+              <p className="text-xs mt-2 font-semibold" style={{ color: 'rgba(94,234,212,0.4)' }}>
+                ✓ Cobrado apenas se continuar após os 7 dias grátis
+              </p>
+            </div>
           </div>
 
           {/* Enterprise */}
