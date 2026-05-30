@@ -559,7 +559,7 @@ export default function LandingClient() {
             Investimento
           </p>
           <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white mb-4">
-            Preço fixo, <span className="gradient-text">sem surpresa</span> no mês
+            Preço fixo e <span className="gradient-text">sem surpresa</span> no mês!
           </h2>
           <p className="reveal reveal-delay-2 text-lg max-w-xl mx-auto mb-4"
             style={{ color: 'rgba(226,250,247,0.5)' }}>
