@@ -283,6 +283,74 @@ export default function LandingClient() {
       </section>
 
       {/* ═══════════════════════════════════════════════
+          DASHBOARD PREVIEW (desktop only)
+      ═══════════════════════════════════════════════ */}
+      <section className="hidden md:block py-20 px-6 relative overflow-hidden">
+        {/* Glow atrás */}
+        <div className="pointer-events-none absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(26,155,138,0.1) 0%, transparent 70%)' }} />
+
+        <div className="relative max-w-6xl mx-auto">
+          <div className="text-center mb-12 reveal">
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
+              Painel administrativo
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-black text-white">
+              Visão completa da sua operação,{' '}
+              <span className="gradient-text">em tempo real</span>
+            </h2>
+          </div>
+
+          {/* Browser mockup */}
+          <div className="reveal reveal-delay-1 relative mx-auto"
+            style={{ maxWidth: '1000px' }}>
+
+            {/* Glow externo */}
+            <div className="absolute -inset-1 rounded-2xl pointer-events-none"
+              style={{ boxShadow: '0 0 60px rgba(26,155,138,0.2), 0 0 120px rgba(26,155,138,0.08)' }} />
+
+            {/* Frame do browser */}
+            <div className="relative rounded-2xl overflow-hidden"
+              style={{ border: '1px solid rgba(26,155,138,0.25)', background: '#0d1a18' }}>
+
+              {/* Barra do browser */}
+              <div className="flex items-center gap-3 px-4 py-3"
+                style={{ background: '#0a1412', borderBottom: '1px solid rgba(26,155,138,0.12)' }}>
+                {/* Dots */}
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#ff5f57' }} />
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#febc2e' }} />
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#28c840' }} />
+                </div>
+                {/* URL bar */}
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs"
+                    style={{ background: 'rgba(26,155,138,0.08)', color: 'rgba(94,234,212,0.5)', border: '1px solid rgba(26,155,138,0.12)' }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    amostra.menue.com.br/admin
+                  </div>
+                </div>
+                <div className="w-16" />
+              </div>
+
+              {/* Screenshot */}
+              <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+                <Image
+                  src="/preview-admin.png"
+                  alt="Painel administrativo Menuê+"
+                  fill
+                  className="object-cover object-top"
+                  sizes="(max-width: 1200px) 100vw, 1000px"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════
           PARA QUEM
       ═══════════════════════════════════════════════ */}
       <section className="py-12 px-6" style={{ borderTop: '1px solid rgba(26,155,138,0.1)' }}>
