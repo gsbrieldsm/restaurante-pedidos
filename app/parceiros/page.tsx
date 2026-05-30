@@ -127,19 +127,40 @@ export default function ParceirosPage() {
         .gradient-text{background:linear-gradient(120deg,#0a7a6c 0%,#1A9B8A 40%,#0a7a6c 80%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite;}
         .gradient-text-dark{background:linear-gradient(120deg,#0d6b5e 0%,#1A9B8A 50%,#0d6b5e 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite;}
         .glow-btn:hover{box-shadow:0 0 24px #1A9B8A55;}
+        /* Grade sutil que só aparece onde o teal bate */
         .grid-bg-light{
           background-color:#ffffff;
           background-image:
-            linear-gradient(#e2eeec 1px, transparent 1px),
-            linear-gradient(90deg, #e2eeec 1px, transparent 1px);
-          background-size:48px 48px;
+            linear-gradient(rgba(26,155,138,.07) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(26,155,138,.07) 1px, transparent 1px);
+          background-size: 48px 48px;
         }
         .grid-bg-tint{
-          background-color:#f6faf9;
+          background-color:#f8fbfa;
           background-image:
-            linear-gradient(#ddeae8 1px, transparent 1px),
-            linear-gradient(90deg, #ddeae8 1px, transparent 1px);
-          background-size:48px 48px;
+            linear-gradient(rgba(26,155,138,.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(26,155,138,.06) 1px, transparent 1px);
+          background-size: 48px 48px;
+        }
+        /* Névoa teal em spots específicos */
+        .teal-mist-hero {
+          background-color: #ffffff;
+          background-image:
+            radial-gradient(ellipse 65% 70% at 90% 10%, rgba(26,155,138,0.13) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 60% at 5%  80%, rgba(26,155,138,0.09) 0%, transparent 55%),
+            radial-gradient(ellipse 40% 50% at 60% 90%, rgba(26,155,138,0.07) 0%, transparent 50%),
+            linear-gradient(rgba(26,155,138,.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(26,155,138,.06) 1px, transparent 1px);
+          background-size: auto, auto, auto, 48px 48px, 48px 48px;
+        }
+        .teal-mist-section {
+          background-color: #ffffff;
+          background-image:
+            radial-gradient(ellipse 70% 60% at 0% 50%,   rgba(26,155,138,0.1)  0%, transparent 60%),
+            radial-gradient(ellipse 50% 50% at 100% 50%, rgba(26,155,138,0.07) 0%, transparent 55%),
+            linear-gradient(rgba(26,155,138,.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(26,155,138,.05) 1px, transparent 1px);
+          background-size: auto, auto, 48px 48px, 48px 48px;
         }
         .light-card{background:#fff;border:1px solid rgba(26,155,138,0.15);box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(26,155,138,.06);transition:all .2s;}
         .light-card:hover{border-color:rgba(26,155,138,.35);box-shadow:0 4px 20px rgba(26,155,138,.14);transform:translateY(-1px);}
@@ -152,11 +173,7 @@ export default function ParceirosPage() {
       {/* ═══════════════════════════════════════════════
           HERO — branco + grid
       ═══════════════════════════════════════════════ */}
-      <section className="grid-bg-light relative overflow-hidden" style={{ minHeight: '95vh' }}>
-        {/* Glow radial teal sutil */}
-        <div className="pointer-events-none absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 70% 60% at 70% 40%, rgba(26,155,138,0.08) 0%, transparent 70%)',
-        }} />
+      <section className="teal-mist-hero relative overflow-hidden" style={{ minHeight: '95vh' }}>
 
         {/* Nav */}
         <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
@@ -309,7 +326,7 @@ export default function ParceirosPage() {
       {/* ═══════════════════════════════════════════════
           TABELA DE COMISSÕES — grid teal tint
       ═══════════════════════════════════════════════ */}
-      <section className="grid-bg-tint py-28 px-6 relative overflow-hidden">
+      <section className="teal-mist-section py-28 px-6 relative overflow-hidden">
         <div className="relative max-w-4xl mx-auto">
           <div className="text-center mb-20">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
@@ -541,7 +558,7 @@ export default function ParceirosPage() {
       {/* ═══════════════════════════════════════════════
           FORMULÁRIO — claro com grid
       ═══════════════════════════════════════════════ */}
-      <section id="cadastro" className="grid-bg-light py-28 px-6 relative overflow-hidden">
+      <section id="cadastro" className="teal-mist-hero py-28 px-6 relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0"
           style={{ background: 'radial-gradient(ellipse 50% 60% at 50% 50%, rgba(26,155,138,0.05) 0%, transparent 70%)' }} />
 
