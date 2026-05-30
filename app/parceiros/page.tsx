@@ -221,34 +221,34 @@ export default function ParceirosPage() {
             </div>
           </div>
 
-          {/* Card exemplo real */}
-          <div className="hidden lg:flex justify-end float">
-            <div className="w-80 rounded-3xl p-7 space-y-5"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(26,155,138,0.2)', boxShadow: '0 0 60px rgba(26,155,138,0.12)' }}>
-              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#5EEAD4' }}>Exemplo real</p>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(226,250,247,0.6)' }}>
-                Você indica <strong className="text-white">10 restaurantes</strong> ao longo de 3 meses.
+          {/* Card exemplo real — visível em todos os tamanhos */}
+          <div className="flex justify-center lg:justify-end float">
+            <div className="w-full max-w-sm rounded-3xl p-7 space-y-5"
+              style={{ background: 'rgba(15,40,35,0.85)', border: '1px solid rgba(26,155,138,0.35)', boxShadow: '0 0 60px rgba(26,155,138,0.15)', backdropFilter: 'blur(12px)' }}>
+              <p className="text-xs font-black uppercase tracking-widest" style={{ color: '#5EEAD4' }}>Exemplo real</p>
+              <p className="text-base leading-relaxed text-white">
+                Você indica <strong style={{ color: '#5EEAD4' }}>10 restaurantes</strong> ao longo de 3 meses.
               </p>
-              <div className="space-y-1">
+              <div className="space-y-0">
                 {[
                   { label: 'Comissão de implementação', val: fmt(10 * porImpl) },
                   { label: 'Recorrente/mês (20%)',      val: fmt(10 * MENSALIDADE_BASE * 0.20) },
                 ].map(({ label, val }) => (
-                  <div key={label} className="flex justify-between items-center py-3"
-                    style={{ borderBottom: '1px solid rgba(26,155,138,0.12)' }}>
-                    <span className="text-sm" style={{ color: 'rgba(226,250,247,0.5)' }}>{label}</span>
-                    <span className="text-white font-black">{val}</span>
+                  <div key={label} className="flex justify-between items-center py-4"
+                    style={{ borderBottom: '1px solid rgba(26,155,138,0.15)' }}>
+                    <span className="text-sm font-medium" style={{ color: 'rgba(226,250,247,0.75)' }}>{label}</span>
+                    <span className="text-white font-black text-base">{val}</span>
                   </div>
                 ))}
-                <div className="flex justify-between items-center pt-3">
-                  <span className="text-sm font-bold" style={{ color: '#5EEAD4' }}>Projeção 1º ano</span>
-                  <span className="font-black text-xl" style={{ color: '#5EEAD4' }}>
+                <div className="flex justify-between items-center pt-4">
+                  <span className="text-base font-black" style={{ color: '#5EEAD4' }}>Projeção 1º ano</span>
+                  <span className="font-black text-2xl" style={{ color: '#5EEAD4' }}>
                     {fmt(10 * porImpl + 10 * MENSALIDADE_BASE * 0.20 * 12)}
                   </span>
                 </div>
               </div>
-              <p className="text-xs" style={{ color: 'rgba(94,234,212,0.25)' }}>
-                * considerando mensalidade média de R$ 697/restaurante
+              <p className="text-xs" style={{ color: 'rgba(94,234,212,0.4)' }}>
+                * mensalidade média de R$ 697/restaurante (planos R$397–R$1.197)
               </p>
             </div>
           </div>
