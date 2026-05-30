@@ -518,73 +518,17 @@ export default function SuperAdminPage() {
 
   if (carregando) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#030d0b' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#f4f8f7' }}>
         <div className="text-center space-y-3">
           <div className="w-10 h-10 rounded-full border-2 border-teal-500 border-t-transparent animate-spin mx-auto" />
-          <p className="text-sm" style={{ color: 'rgba(94,234,212,0.5)' }}>Carregando painel...</p>
+          <p className="text-slate-400 text-sm">Carregando painel...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="dark-sa min-h-screen flex" style={{ background: '#030d0b' }}>
-      <style>{`
-        /* ── Dark theme para o painel superadmin ── */
-        .dark-sa { color-scheme: dark; }
-        .dark-sa .bg-slate-100 { background: #030d0b !important; }
-        .dark-sa .bg-slate-50  { background: #0d1f1c !important; }
-        .dark-sa .bg-white     { background: #0a1a17 !important; }
-        .dark-sa .text-slate-800 { color: #e2faf7 !important; }
-        .dark-sa .text-slate-700 { color: rgba(226,250,247,.85) !important; }
-        .dark-sa .text-slate-600 { color: rgba(226,250,247,.7)  !important; }
-        .dark-sa .text-slate-500 { color: rgba(226,250,247,.5)  !important; }
-        .dark-sa .text-slate-400 { color: rgba(226,250,247,.4)  !important; }
-        .dark-sa .text-slate-300 { color: rgba(226,250,247,.3)  !important; }
-        .dark-sa .border-slate-200 { border-color: rgba(26,155,138,.18) !important; }
-        .dark-sa .border-slate-100 { border-color: rgba(26,155,138,.1)  !important; }
-        .dark-sa .divide-slate-100 > * + * { border-color: rgba(26,155,138,.08) !important; }
-        .dark-sa .shadow-sm { box-shadow: 0 0 0 1px rgba(26,155,138,.12), 0 2px 8px rgba(0,0,0,.35) !important; }
-        .dark-sa .shadow-2xl{ box-shadow: 0 0 0 1px rgba(26,155,138,.2), 0 25px 50px rgba(0,0,0,.6)  !important; }
-        .dark-sa tr:hover td, .dark-sa .hover\\:bg-slate-50:hover { background: rgba(26,155,138,.06) !important; }
-        .dark-sa thead tr, .dark-sa .bg-slate-50 { background: #0d1f1c !important; }
-        .dark-sa input:not([type=range]):not([type=checkbox]),
-        .dark-sa select,
-        .dark-sa textarea {
-          background: rgba(255,255,255,.05) !important;
-          border-color: rgba(26,155,138,.25) !important;
-          color: #e2faf7 !important;
-        }
-        .dark-sa input::placeholder,
-        .dark-sa textarea::placeholder { color: rgba(226,250,247,.25) !important; }
-        .dark-sa option { background: #0a1a17; color: #e2faf7; }
-        .dark-sa .bg-teal-50  { background: rgba(26,155,138,.1) !important; }
-        .dark-sa .bg-red-50   { background: rgba(239,68,68,.1) !important; }
-        .dark-sa .bg-green-50 { background: rgba(22,163,74,.1) !important; }
-        .dark-sa .bg-amber-50 { background: rgba(217,119,6,.1) !important; }
-        .dark-sa .bg-blue-50  { background: rgba(37,99,235,.1) !important; }
-        .dark-sa .bg-purple-50{ background: rgba(124,58,237,.1) !important; }
-        .dark-sa .bg-F0FDF4,
-        .dark-sa [style*="background: #F0FDF4"],
-        .dark-sa [style*="background:#F0FDF4"]  { background: rgba(26,155,138,.08) !important; }
-        .dark-sa .text-teal-600 { color: #5EEAD4 !important; }
-        .dark-sa .border-teal-100 { border-color: rgba(26,155,138,.2) !important; }
-        .dark-sa .border-teal-200 { border-color: rgba(26,155,138,.3) !important; }
-        .dark-sa .border-red-100  { border-color: rgba(239,68,68,.2)  !important; }
-        .dark-sa .hover\\:bg-white:hover { background: rgba(26,155,138,.06) !important; }
-        .dark-sa .bg-slate-200 { background: rgba(26,155,138,.12) !important; }
-        /* Scrollbar */
-        .dark-sa ::-webkit-scrollbar { width: 6px; height: 6px; }
-        .dark-sa ::-webkit-scrollbar-track { background: #030d0b; }
-        .dark-sa ::-webkit-scrollbar-thumb { background: rgba(26,155,138,.3); border-radius: 3px; }
-        .dark-sa ::-webkit-scrollbar-thumb:hover { background: rgba(26,155,138,.5); }
-        /* Grid background no main content */
-        .dark-sa main {
-          background-image: linear-gradient(rgba(26,155,138,.04) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(26,155,138,.04) 1px, transparent 1px);
-          background-size: 48px 48px;
-        }
-      `}</style>
+    <div className="min-h-screen flex" style={{ background: '#f0f7f5' }}>
 
       {/* ── Overlay mobile ── */}
       {sidebarOpen && (
@@ -749,7 +693,7 @@ export default function SuperAdminPage() {
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Header mobile */}
-        <header className="md:hidden flex items-center justify-between px-4 py-4 sticky top-0 z-10" style={{ background: '#0a1a17', borderBottom: '1px solid rgba(26,155,138,0.15)' }}>
+        <header className="md:hidden flex items-center justify-between px-4 py-4 bg-white border-b border-slate-200 sticky top-0 z-10">
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100">
             <Menu className="w-5 h-5" />
           </button>
@@ -1901,16 +1845,12 @@ function MetricCard({ icon, label, value, sub, accent }: {
   icon: React.ReactNode; label: string; value: string; sub: string; accent: string
 }) {
   return (
-    <div className="rounded-2xl p-5" style={{
-      background: 'rgba(10,26,23,0.9)',
-      border: `1px solid ${accent}25`,
-      boxShadow: `0 0 0 1px ${accent}12, 0 4px 16px rgba(0,0,0,.3)`,
-    }}>
-      <div className="inline-flex p-2 rounded-xl mb-3" style={{ background: `${accent}18`, color: accent, border: `1px solid ${accent}30` }}>
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+      <div className="inline-flex p-2 rounded-xl mb-3" style={{ background: `${accent}15`, color: accent, border: `1px solid ${accent}25` }}>
         {icon}
       </div>
-      <p className="text-2xl font-black" style={{ color: '#e2faf7' }}>{value}</p>
-      <p className="text-sm mt-0.5" style={{ color: 'rgba(226,250,247,0.5)' }}>{label}</p>
+      <p className="text-2xl font-black text-slate-800">{value}</p>
+      <p className="text-slate-500 text-sm mt-0.5">{label}</p>
       <p className="text-xs mt-1 font-semibold" style={{ color: accent }}>{sub}</p>
     </div>
   )
@@ -1919,9 +1859,9 @@ function MetricCard({ icon, label, value, sub, accent }: {
 function RevenueItem({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
   return (
     <div>
-      <p className="text-sm mb-1 font-medium" style={{ color: 'rgba(226,250,247,0.5)' }}>{label}</p>
+      <p className="text-slate-500 text-sm mb-1 font-medium">{label}</p>
       <p className="text-2xl font-black" style={{ color }}>{value}</p>
-      <p className="text-xs mt-0.5" style={{ color: 'rgba(226,250,247,0.4)' }}>{sub}</p>
+      <p className="text-slate-400 text-xs mt-0.5">{sub}</p>
     </div>
   )
 }
