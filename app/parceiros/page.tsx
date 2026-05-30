@@ -115,7 +115,7 @@ export default function ParceirosPage() {
   }
 
   return (
-    <div className="min-h-screen font-sans" style={{ background: '#030d0b', color: '#e2faf7' }}>
+    <div className="min-h-screen font-sans" style={{ background: '#ffffff', color: '#0d1a18' }}>
 
       <style>{`
         .reveal { opacity:0; transform:translateY(32px); transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1); }
@@ -124,43 +124,56 @@ export default function ParceirosPage() {
         .reveal-delay-3{transition-delay:.3s} .reveal-delay-4{transition-delay:.4s}
         .reveal-delay-5{transition-delay:.5s} .reveal-delay-6{transition-delay:.6s}
         @keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
-        .gradient-text{background:linear-gradient(120deg,#5EEAD4 0%,#1A9B8A 40%,#5EEAD4 80%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite;}
+        .gradient-text{background:linear-gradient(120deg,#0a7a6c 0%,#1A9B8A 40%,#0a7a6c 80%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite;}
         .gradient-text-dark{background:linear-gradient(120deg,#0d6b5e 0%,#1A9B8A 50%,#0d6b5e 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite;}
-        .glow-btn:hover{box-shadow:0 0 24px #1A9B8A66;}
-        .grid-bg{background-image:linear-gradient(rgba(26,155,138,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(26,155,138,.06) 1px,transparent 1px);background-size:48px 48px;}
-        .light-card{background:#fff;border:1px solid rgba(26,155,138,0.12);box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(26,155,138,.06);transition:all .2s;}
-        .light-card:hover{border-color:rgba(26,155,138,.3);box-shadow:0 4px 20px rgba(26,155,138,.12);transform:translateY(-1px);}
+        .glow-btn:hover{box-shadow:0 0 24px #1A9B8A55;}
+        .grid-bg-light{
+          background-color:#ffffff;
+          background-image:
+            linear-gradient(#e2eeec 1px, transparent 1px),
+            linear-gradient(90deg, #e2eeec 1px, transparent 1px);
+          background-size:48px 48px;
+        }
+        .grid-bg-tint{
+          background-color:#f6faf9;
+          background-image:
+            linear-gradient(#ddeae8 1px, transparent 1px),
+            linear-gradient(90deg, #ddeae8 1px, transparent 1px);
+          background-size:48px 48px;
+        }
+        .light-card{background:#fff;border:1px solid rgba(26,155,138,0.15);box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(26,155,138,.06);transition:all .2s;}
+        .light-card:hover{border-color:rgba(26,155,138,.35);box-shadow:0 4px 20px rgba(26,155,138,.14);transform:translateY(-1px);}
         .dark-card{background:rgba(26,155,138,0.05);border:1px solid rgba(26,155,138,0.15);transition:all .2s;}
         .dark-card:hover{border-color:rgba(26,155,138,.35);box-shadow:0 0 24px rgba(26,155,138,.1);}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
         .float{animation:float 5s ease-in-out infinite;}
-        input:focus,select:focus{outline:none;ring:2px solid #1A9B8A;}
       `}</style>
 
       {/* ═══════════════════════════════════════════════
-          HERO — dark
+          HERO — branco + grid
       ═══════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden grid-bg" style={{ minHeight: '95vh' }}>
+      <section className="grid-bg-light relative overflow-hidden" style={{ minHeight: '95vh' }}>
+        {/* Glow radial teal sutil */}
         <div className="pointer-events-none absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 80% 60% at 65% 40%, rgba(26,155,138,0.18) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 70% 60% at 70% 40%, rgba(26,155,138,0.08) 0%, transparent 70%)',
         }} />
 
         {/* Nav */}
         <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: 'rgba(26,155,138,0.2)', border: '1px solid rgba(26,155,138,0.3)' }}>
-              <span className="font-black text-sm" style={{ color: '#5EEAD4' }}>M+</span>
+              style={{ background: '#1A9B8A' }}>
+              <span className="font-black text-sm text-white">M+</span>
             </div>
-            <span className="font-bold text-lg tracking-tight text-white">Menuê+</span>
+            <span className="font-bold text-lg tracking-tight" style={{ color: '#0d1a18' }}>Menuê+</span>
           </Link>
           <div className="hidden sm:flex items-center gap-2">
             <Link href="/" className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
-              style={{ color: 'rgba(255,255,255,0.5)' }}>
+              style={{ color: '#4a6e68' }}>
               Para restaurantes
             </Link>
             <Link href="/parceiros/login" className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
-              style={{ color: 'rgba(255,255,255,0.5)' }}>
+              style={{ color: '#4a6e68' }}>
               Já sou parceiro
             </Link>
             <a href="#cadastro"
@@ -175,20 +188,20 @@ export default function ParceirosPage() {
         <div className="relative z-10 max-w-6xl mx-auto px-6 pt-10 pb-28 grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest"
-              style={{ background: 'rgba(26,155,138,0.12)', color: '#5EEAD4', border: '1px solid rgba(26,155,138,0.25)' }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+              style={{ background: 'rgba(26,155,138,0.1)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.25)' }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#1A9B8A' }} />
               🤝 Programa de parceiros Menuê+
             </div>
 
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.02] tracking-tight text-white">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.02] tracking-tight" style={{ color: '#0d1a18' }}>
               Indique restaurantes.{' '}
               <span className="gradient-text">Ganhe todo mês.</span>
             </h1>
 
-            <p className="text-lg leading-relaxed max-w-lg" style={{ color: 'rgba(226,250,247,0.6)' }}>
+            <p className="text-lg leading-relaxed max-w-lg" style={{ color: '#4a6e68' }}>
               Você indica um restaurante para o Menuê+. Ele assina. Você recebe{' '}
-              <strong className="text-white">30% da implementação</strong> na hora e{' '}
-              <strong className="text-white">até 30% de recorrente</strong> todo mês enquanto ele for cliente.
+              <strong style={{ color: '#0d1a18' }}>30% da implementação</strong> na hora e{' '}
+              <strong style={{ color: '#0d1a18' }}>até 30% de recorrente</strong> todo mês enquanto ele for cliente.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
@@ -199,35 +212,34 @@ export default function ParceirosPage() {
               </a>
               <a href="#calculadora"
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-bold transition-all"
-                style={{ color: '#5EEAD4', border: '1px solid rgba(26,155,138,0.3)' }}>
+                style={{ color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.35)', background: 'rgba(26,155,138,0.04)' }}>
                 Calcular meus ganhos ↓
               </a>
             </div>
 
-            {/* Stats animados */}
+            {/* Stats */}
             <div className="flex items-center gap-8 pt-2">
               {[
                 { to: 30, suffix: '%', label: 'na implementação' },
                 { to: 30, suffix: '%', label: 'recorrente/mês' },
-                { to: 0,  suffix: ' limite', label: 'de clientes' },
+                { to: 0,  suffix: '',  label: 'sem limite de clientes' },
               ].map(({ to, suffix, label }, i) => (
                 <div key={label}>
-                  <p className="font-black text-2xl text-white">
+                  <p className="font-black text-2xl" style={{ color: '#1A9B8A' }}>
                     {i === 2 ? '∞' : <Counter to={to} suffix={suffix} />}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: 'rgba(94,234,212,0.4)' }}>{label}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#4a6e68' }}>{label}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Card exemplo real — visível em todos os tamanhos */}
+          {/* Card exemplo real */}
           <div className="flex justify-center lg:justify-end float">
-            <div className="w-full max-w-sm rounded-3xl p-7 space-y-5"
-              style={{ background: 'rgba(15,40,35,0.85)', border: '1px solid rgba(26,155,138,0.35)', boxShadow: '0 0 60px rgba(26,155,138,0.15)', backdropFilter: 'blur(12px)' }}>
-              <p className="text-xs font-black uppercase tracking-widest" style={{ color: '#5EEAD4' }}>Exemplo real</p>
-              <p className="text-base leading-relaxed text-white">
-                Você indica <strong style={{ color: '#5EEAD4' }}>10 restaurantes</strong> ao longo de 3 meses.
+            <div className="w-full max-w-sm rounded-3xl p-7 space-y-5 light-card">
+              <p className="text-xs font-black uppercase tracking-widest" style={{ color: '#1A9B8A' }}>Exemplo real</p>
+              <p className="text-base leading-relaxed" style={{ color: '#0d1a18' }}>
+                Você indica <strong style={{ color: '#1A9B8A' }}>10 restaurantes</strong> ao longo de 3 meses.
               </p>
               <div className="space-y-0">
                 {[
@@ -235,27 +247,24 @@ export default function ParceirosPage() {
                   { label: 'Recorrente/mês (20%)',      val: fmt(10 * MENSALIDADE_BASE * 0.20) },
                 ].map(({ label, val }) => (
                   <div key={label} className="flex justify-between items-center py-4"
-                    style={{ borderBottom: '1px solid rgba(26,155,138,0.15)' }}>
-                    <span className="text-sm font-medium" style={{ color: 'rgba(226,250,247,0.75)' }}>{label}</span>
-                    <span className="text-white font-black text-base">{val}</span>
+                    style={{ borderBottom: '1px solid rgba(26,155,138,0.12)' }}>
+                    <span className="text-sm font-medium" style={{ color: '#4a6e68' }}>{label}</span>
+                    <span className="font-black text-base" style={{ color: '#0d1a18' }}>{val}</span>
                   </div>
                 ))}
                 <div className="flex justify-between items-center pt-4">
-                  <span className="text-base font-black" style={{ color: '#5EEAD4' }}>Projeção 1º ano</span>
-                  <span className="font-black text-2xl" style={{ color: '#5EEAD4' }}>
+                  <span className="text-base font-black" style={{ color: '#1A9B8A' }}>Projeção 1º ano</span>
+                  <span className="font-black text-2xl" style={{ color: '#1A9B8A' }}>
                     {fmt(10 * porImpl + 10 * MENSALIDADE_BASE * 0.20 * 12)}
                   </span>
                 </div>
               </div>
-              <p className="text-xs" style={{ color: 'rgba(94,234,212,0.4)' }}>
+              <p className="text-xs" style={{ color: '#4a6e68' }}>
                 * mensalidade média de R$ 697/restaurante (planos R$397–R$1.197)
               </p>
             </div>
           </div>
         </div>
-
-        <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
-          style={{ background: 'linear-gradient(to bottom, transparent, #030d0b)' }} />
       </section>
 
       {/* ═══════════════════════════════════════════════
@@ -298,69 +307,64 @@ export default function ParceirosPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          TABELA DE COMISSÕES — dark
+          TABELA DE COMISSÕES — grid teal tint
       ═══════════════════════════════════════════════ */}
-      <section className="py-28 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 grid-bg opacity-40" />
-        <div className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(26,155,138,0.1) 0%, transparent 70%)' }} />
-
+      <section className="grid-bg-tint py-28 px-6 relative overflow-hidden">
         <div className="relative max-w-4xl mx-auto">
           <div className="text-center mb-20">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
               Comissões
             </p>
-            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white">
+            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black" style={{ color: '#0d1a18' }}>
               Quanto mais você indica,{' '}
-              <span className="gradient-text">mais você ganha</span>
+              <span className="gradient-text-dark">mais você ganha</span>
             </h2>
-            <p className="reveal reveal-delay-2 text-lg mt-4 max-w-xl mx-auto"
-              style={{ color: 'rgba(226,250,247,0.5)' }}>
+            <p className="reveal reveal-delay-2 text-lg mt-4 max-w-xl mx-auto" style={{ color: '#4a6e68' }}>
               A comissão recorrente cresce conforme sua carteira de clientes ativos aumenta.
             </p>
           </div>
 
           {/* Desktop — tabela */}
           <div className="reveal hidden sm:block overflow-hidden rounded-2xl"
-            style={{ border: '1px solid rgba(26,155,138,0.2)' }}>
+            style={{ border: '1px solid rgba(26,155,138,0.2)', boxShadow: '0 4px 24px rgba(26,155,138,0.08)' }}>
             <div className="grid grid-cols-4"
-              style={{ background: 'rgba(26,155,138,0.15)', borderBottom: '1px solid rgba(26,155,138,0.2)' }}>
+              style={{ background: '#1A9B8A' }}>
               {['Clientes ativos', 'Implementação', 'Recorrente/mês', 'Ganho mensal est.'].map((h) => (
                 <div key={h} className="px-5 py-4">
-                  <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#5EEAD4' }}>{h}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-white/90">{h}</p>
                 </div>
               ))}
             </div>
             {TIERS.map((t, i) => {
-              const mid       = t.max === Infinity ? t.min + 2 : Math.floor((t.min + t.max) / 2)
-              const ganho     = mid * MENSALIDADE_BASE * t.recorrente
-              const destaque  = t.min === 10
+              const mid      = t.max === Infinity ? t.min + 2 : Math.floor((t.min + t.max) / 2)
+              const ganho    = mid * MENSALIDADE_BASE * t.recorrente
+              const destaque = t.min === 10
               return (
                 <div key={t.label} className="grid grid-cols-4"
                   style={{
-                    background: destaque ? 'rgba(26,155,138,0.12)' : i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.01)',
+                    background: destaque ? 'rgba(26,155,138,0.08)' : i % 2 === 0 ? '#fff' : '#fafffe',
                     borderTop: '1px solid rgba(26,155,138,0.08)',
                   }}>
                   <div className="px-5 py-4 flex items-center gap-2">
-                    <span className="font-black text-white text-sm">{t.label}</span>
+                    <span className="font-black text-sm" style={{ color: '#0d1a18' }}>{t.label}</span>
                     {destaque && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                        style={{ background: 'rgba(26,155,138,0.3)', color: '#5EEAD4' }}>popular</span>
+                        style={{ background: 'rgba(26,155,138,0.15)', color: '#1A9B8A' }}>popular</span>
                     )}
                   </div>
                   <div className="px-5 py-4 flex items-center">
-                    <span className="text-sm" style={{ color: 'rgba(226,250,247,0.6)' }}>
-                      30% · <span style={{ color: 'rgba(226,250,247,0.35)' }}>{fmt(porImpl)}/cliente</span>
+                    <span className="text-sm" style={{ color: '#4a6e68' }}>
+                      30% · <span style={{ color: '#94a3b8' }}>{fmt(porImpl)}/cliente</span>
                     </span>
                   </div>
                   <div className="px-5 py-4 flex items-center">
-                    <span className="font-black text-2xl" style={{ color: '#5EEAD4' }}>
+                    <span className="font-black text-2xl" style={{ color: '#1A9B8A' }}>
                       {(t.recorrente * 100).toFixed(0)}%
                     </span>
                   </div>
                   <div className="px-5 py-4 flex items-center">
-                    <span className="font-black text-white text-sm">
-                      ~{fmt(ganho)}<span className="text-xs font-normal" style={{ color: 'rgba(226,250,247,0.35)' }}>/mês</span>
+                    <span className="font-black text-sm" style={{ color: '#0d1a18' }}>
+                      ~{fmt(ganho)}<span className="text-xs font-normal" style={{ color: '#94a3b8' }}>/mês</span>
                     </span>
                   </div>
                 </div>
@@ -371,32 +375,32 @@ export default function ParceirosPage() {
           {/* Mobile — cards */}
           <div className="sm:hidden space-y-3">
             {TIERS.map((t) => {
-              const mid     = t.max === Infinity ? t.min + 2 : Math.floor((t.min + t.max) / 2)
-              const ganho   = mid * MENSALIDADE_BASE * t.recorrente
+              const mid      = t.max === Infinity ? t.min + 2 : Math.floor((t.min + t.max) / 2)
+              const ganho    = mid * MENSALIDADE_BASE * t.recorrente
               const destaque = t.min === 10
               return (
-                <div key={t.label} className="dark-card rounded-2xl p-5"
-                  style={{ border: destaque ? '1px solid rgba(26,155,138,0.4)' : undefined }}>
+                <div key={t.label} className="light-card rounded-2xl p-5"
+                  style={{ border: destaque ? '1px solid rgba(26,155,138,0.35)' : undefined }}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-black text-white">{t.label}</span>
+                      <span className="font-black" style={{ color: '#0d1a18' }}>{t.label}</span>
                       {destaque && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                          style={{ background: 'rgba(26,155,138,0.3)', color: '#5EEAD4' }}>popular</span>
+                          style={{ background: 'rgba(26,155,138,0.12)', color: '#1A9B8A' }}>popular</span>
                       )}
                     </div>
-                    <span className="font-black text-3xl" style={{ color: '#5EEAD4' }}>
+                    <span className="font-black text-3xl" style={{ color: '#1A9B8A' }}>
                       {(t.recorrente * 100).toFixed(0)}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <div>
-                      <p className="text-xs" style={{ color: 'rgba(226,250,247,0.35)' }}>Implementação</p>
-                      <p className="font-semibold text-white">{fmt(porImpl)}/cliente</p>
+                      <p className="text-xs" style={{ color: '#94a3b8' }}>Implementação</p>
+                      <p className="font-semibold" style={{ color: '#0d1a18' }}>{fmt(porImpl)}/cliente</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs" style={{ color: 'rgba(226,250,247,0.35)' }}>Ganho recorrente est.</p>
-                      <p className="font-black text-white">~{fmt(ganho)}<span className="text-xs font-normal" style={{ color: 'rgba(226,250,247,0.35)' }}>/mês</span></p>
+                      <p className="text-xs" style={{ color: '#94a3b8' }}>Ganho recorrente est.</p>
+                      <p className="font-black" style={{ color: '#0d1a18' }}>~{fmt(ganho)}<span className="text-xs font-normal" style={{ color: '#94a3b8' }}>/mês</span></p>
                     </div>
                   </div>
                 </div>
@@ -404,7 +408,7 @@ export default function ParceirosPage() {
             })}
           </div>
 
-          <p className="reveal text-xs text-center mt-5" style={{ color: 'rgba(94,234,212,0.3)' }}>
+          <p className="reveal text-xs text-center mt-5" style={{ color: '#94a3b8' }}>
             * Ganho estimado com base na mensalidade média de R$ 697/restaurante.
           </p>
         </div>
@@ -535,80 +539,77 @@ export default function ParceirosPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          FORMULÁRIO — dark
+          FORMULÁRIO — claro com grid
       ═══════════════════════════════════════════════ */}
-      <section id="cadastro" className="py-28 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 grid-bg opacity-30" />
+      <section id="cadastro" className="grid-bg-light py-28 px-6 relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(26,155,138,0.1) 0%, transparent 70%)' }} />
+          style={{ background: 'radial-gradient(ellipse 50% 60% at 50% 50%, rgba(26,155,138,0.05) 0%, transparent 70%)' }} />
 
         <div className="relative max-w-xl mx-auto">
           <div className="text-center mb-12">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
               Cadastro de parceiro
             </p>
-            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white mb-4">
+            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black mb-4" style={{ color: '#0d1a18' }}>
               Comece a ganhar <span className="gradient-text">hoje</span>
             </h2>
-            <p className="reveal reveal-delay-2 text-lg" style={{ color: 'rgba(226,250,247,0.55)' }}>
+            <p className="reveal reveal-delay-2 text-lg" style={{ color: '#4a6e68' }}>
               Preencha o formulário. Em até 24h você recebe seu link de indicação e acesso ao painel.
             </p>
           </div>
 
           {enviado ? (
-            <div className="reveal rounded-3xl p-10 text-center space-y-4"
-              style={{ background: 'rgba(26,155,138,0.07)', border: '1px solid rgba(26,155,138,0.25)' }}>
+            <div className="reveal light-card rounded-3xl p-10 text-center space-y-4">
               <div className="text-6xl">🎉</div>
-              <h3 className="text-2xl font-black text-white">Cadastro recebido!</h3>
-              <p className="leading-relaxed" style={{ color: 'rgba(226,250,247,0.6)' }}>
+              <h3 className="text-2xl font-black" style={{ color: '#0d1a18' }}>Cadastro recebido!</h3>
+              <p className="leading-relaxed" style={{ color: '#4a6e68' }}>
                 Nossa equipe vai analisar e entrar em contato em até 24h pelo WhatsApp. Bem-vindo ao programa Menuê+!
               </p>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold mt-2"
-                style={{ background: 'rgba(26,155,138,0.2)', color: '#5EEAD4' }}>
+                style={{ background: 'rgba(26,155,138,0.1)', color: '#1A9B8A', border: '1px solid rgba(26,155,138,0.2)' }}>
                 ✓ Fique de olho no seu WhatsApp
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="reveal rounded-3xl p-8 space-y-5"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(26,155,138,0.2)' }}>
+            <form onSubmit={handleSubmit} className="reveal light-card rounded-3xl p-8 space-y-5">
               {[
-                { name: 'nome',     label: 'Seu nome completo *', type: 'text',  placeholder: 'Ex: João Silva',    required: true },
-                { name: 'email',    label: 'E-mail *',             type: 'email', placeholder: 'seu@email.com',     required: true },
-                { name: 'whatsapp', label: 'WhatsApp *',           type: 'text',  placeholder: '(00) 00000-0000',   required: true },
+                { name: 'nome',     label: 'Seu nome completo *', type: 'text',  placeholder: 'Ex: João Silva',     required: true },
+                { name: 'email',    label: 'E-mail *',             type: 'email', placeholder: 'seu@email.com',      required: true },
+                { name: 'whatsapp', label: 'WhatsApp *',           type: 'text',  placeholder: '(00) 00000-0000',    required: true },
                 { name: 'cidade',   label: 'Cidade (opcional)',     type: 'text',  placeholder: 'Ex: São Paulo - SP', required: false },
               ].map((f) => (
                 <div key={f.name} className="space-y-1.5">
-                  <label className="text-sm font-semibold" style={{ color: 'rgba(226,250,247,0.7)' }}>{f.label}</label>
+                  <label className="text-sm font-semibold" style={{ color: '#0d1a18' }}>{f.label}</label>
                   <input
                     name={f.name} type={f.type} required={f.required}
                     placeholder={f.placeholder}
                     value={form[f.name as keyof typeof form]}
                     onChange={handleChange}
-                    className="w-full h-12 px-4 rounded-xl text-sm text-white placeholder-white/25 transition-all"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(26,155,138,0.2)' }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(26,155,138,0.5)'}
+                    className="w-full h-12 px-4 rounded-xl text-sm transition-all"
+                    style={{ background: '#f8faf9', border: '1px solid rgba(26,155,138,0.2)', color: '#0d1a18' }}
+                    onFocus={e => e.target.style.borderColor = '#1A9B8A'}
                     onBlur={e => e.target.style.borderColor = 'rgba(26,155,138,0.2)'}
                   />
                 </div>
               ))}
 
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold" style={{ color: 'rgba(226,250,247,0.7)' }}>
-                  Como pretende indicar? <span style={{ color: 'rgba(94,234,212,0.3)' }}>(opcional)</span>
+                <label className="text-sm font-semibold" style={{ color: '#0d1a18' }}>
+                  Como pretende indicar? <span style={{ color: '#94a3b8' }}>(opcional)</span>
                 </label>
                 <select name="como" value={form.como} onChange={handleChange}
                   className="w-full h-12 px-4 rounded-xl text-sm transition-all"
                   style={{
-                    background: 'rgba(255,255,255,0.05)',
+                    background: '#f8faf9',
                     border: '1px solid rgba(26,155,138,0.2)',
-                    color: form.como ? '#fff' : 'rgba(255,255,255,0.25)',
+                    color: form.como ? '#0d1a18' : '#94a3b8',
                   }}>
-                  <option value="" disabled style={{ color: '#94a3b8', background: '#030d0b' }}>Selecione uma opção</option>
-                  <option value="rede_pessoal"  style={{ color: '#0f172a', background: '#fff' }}>Rede de contatos pessoal</option>
-                  <option value="redes_sociais" style={{ color: '#0f172a', background: '#fff' }}>Redes sociais / conteúdo</option>
-                  <option value="consultor"     style={{ color: '#0f172a', background: '#fff' }}>Sou consultor de restaurantes</option>
-                  <option value="agencia"       style={{ color: '#0f172a', background: '#fff' }}>Agência / marketing</option>
-                  <option value="outro"         style={{ color: '#0f172a', background: '#fff' }}>Outro</option>
+                  <option value="" disabled>Selecione uma opção</option>
+                  <option value="rede_pessoal">Rede de contatos pessoal</option>
+                  <option value="redes_sociais">Redes sociais / conteúdo</option>
+                  <option value="consultor">Sou consultor de restaurantes</option>
+                  <option value="agencia">Agência / marketing</option>
+                  <option value="outro">Outro</option>
                 </select>
               </div>
 
@@ -618,7 +619,7 @@ export default function ParceirosPage() {
                 style={{ background: '#1A9B8A' }}>
                 {enviando ? '⏳ Enviando...' : '🚀 Quero ser parceiro Menuê+'}
               </button>
-              <p className="text-xs text-center" style={{ color: 'rgba(94,234,212,0.3)' }}>
+              <p className="text-xs text-center" style={{ color: '#94a3b8' }}>
                 Sem taxas de adesão · Sem mensalidade · Você só ganha quando indica
               </p>
             </form>
@@ -627,22 +628,21 @@ export default function ParceirosPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          FOOTER — dark
+          FOOTER — teal sólido
       ═══════════════════════════════════════════════ */}
-      <footer className="py-10 px-6" style={{ borderTop: '1px solid rgba(26,155,138,0.1)' }}>
+      <footer className="py-10 px-6" style={{ background: '#1A9B8A' }}>
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: 'rgba(26,155,138,0.15)', border: '1px solid rgba(26,155,138,0.25)' }}>
-              <span className="font-black text-xs" style={{ color: '#5EEAD4' }}>M+</span>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/20">
+              <span className="font-black text-xs text-white">M+</span>
             </div>
             <span className="font-bold text-white">Menuê+</span>
           </div>
-          <div className="flex items-center gap-6 text-xs" style={{ color: 'rgba(94,234,212,0.35)' }}>
-            <Link href="/" className="hover:text-teal-300 transition-colors">Para restaurantes →</Link>
-            <Link href="/parceiros/login" className="hover:text-teal-300 transition-colors">Acessar painel</Link>
+          <div className="flex items-center gap-6 text-xs text-white/70">
+            <Link href="/" className="hover:text-white transition-colors">Para restaurantes →</Link>
+            <Link href="/parceiros/login" className="hover:text-white transition-colors">Acessar painel</Link>
           </div>
-          <p className="text-xs" style={{ color: 'rgba(94,234,212,0.2)' }}>
+          <p className="text-xs text-white/50">
             © {new Date().getFullYear()} Menuê+ · Programa de Parceiros
           </p>
         </div>
