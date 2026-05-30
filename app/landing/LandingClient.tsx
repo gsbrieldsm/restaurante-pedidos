@@ -198,7 +198,7 @@ export default function LandingClient() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest"
               style={{ background: 'rgba(26,155,138,0.12)', color: '#5EEAD4', border: '1px solid rgba(26,155,138,0.25)' }}>
               <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-              🛵 Novo: Módulo Delivery incluído
+              🚀 Sistema para Gastronomia — +Tecnologia e +Controle! 📊
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.02] tracking-tight text-white">
