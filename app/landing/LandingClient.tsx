@@ -136,12 +136,22 @@ export default function LandingClient() {
           background-clip: text;
           animation: shimmer 4s linear infinite;
         }
+        .gradient-text-dark {
+          background: linear-gradient(120deg, #0d6b5e 0%, #1A9B8A 50%, #0d6b5e 100%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: shimmer 4s linear infinite;
+        }
         .grid-bg {
           background-image:
             linear-gradient(rgba(26,155,138,.06) 1px, transparent 1px),
             linear-gradient(90deg, rgba(26,155,138,.06) 1px, transparent 1px);
           background-size: 48px 48px;
         }
+        .light-card { background: #fff; border: 1px solid rgba(26,155,138,0.12); box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(26,155,138,0.06); transition: all 0.2s; }
+        .light-card:hover { border-color: rgba(26,155,138,0.3); box-shadow: 0 4px 20px rgba(26,155,138,0.12); transform: translateY(-1px); }
         .step-connector { background: linear-gradient(90deg, #1A9B8A 0%, transparent 100%); }
       `}</style>
 
@@ -285,19 +295,17 @@ export default function LandingClient() {
       {/* ═══════════════════════════════════════════════
           DASHBOARD PREVIEW (desktop only)
       ═══════════════════════════════════════════════ */}
-      <section className="hidden md:block py-20 px-6 relative overflow-hidden">
-        {/* Glow atrás */}
-        <div className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(26,155,138,0.1) 0%, transparent 70%)' }} />
+      <section className="hidden md:block py-20 px-6 relative overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f0f7f5 100%)' }}>
 
         <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-12 reveal">
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
               Painel administrativo
             </p>
-            <h2 className="text-3xl sm:text-4xl font-black text-white">
+            <h2 className="text-3xl sm:text-4xl font-black" style={{ color: '#0d1a18' }}>
               Visão completa da sua operação,{' '}
-              <span className="gradient-text">em tempo real</span>
+              <span className="gradient-text-dark">em tempo real</span>
             </h2>
           </div>
 
@@ -353,10 +361,10 @@ export default function LandingClient() {
       {/* ═══════════════════════════════════════════════
           PARA QUEM
       ═══════════════════════════════════════════════ */}
-      <section className="py-12 px-6" style={{ borderTop: '1px solid rgba(26,155,138,0.1)' }}>
+      <section className="py-14 px-6" style={{ background: 'linear-gradient(180deg, #f0f7f5 0%, #ffffff 100%)', borderTop: '1px solid rgba(26,155,138,0.1)' }}>
         <div className="max-w-5xl mx-auto">
           <p className="text-center text-xs font-bold uppercase tracking-widest mb-8 reveal"
-            style={{ color: 'rgba(94,234,212,0.4)' }}>
+            style={{ color: '#1A9B8A' }}>
             Feito para qualquer operação de food service
           </p>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
@@ -369,13 +377,10 @@ export default function LandingClient() {
               { emoji: '🚚', label: 'Food Trucks' },
             ].map(({ emoji, label }, i) => (
               <div key={label}
-                className={`reveal reveal-delay-${i + 1} flex flex-col items-center gap-2 py-5 px-2 rounded-2xl transition-all cursor-default`}
-                style={{ background: 'rgba(26,155,138,0.04)', border: '1px solid rgba(26,155,138,0.08)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(26,155,138,0.1)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(26,155,138,0.25)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(26,155,138,0.04)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(26,155,138,0.08)' }}
+                className={`reveal reveal-delay-${i + 1} flex flex-col items-center gap-2 py-5 px-2 rounded-2xl transition-all cursor-default light-card`}
               >
                 <span className="text-4xl">{emoji}</span>
-                <span className="text-xs font-semibold text-center" style={{ color: 'rgba(226,250,247,0.6)' }}>{label}</span>
+                <span className="text-xs font-semibold text-center" style={{ color: '#4a6e68' }}>{label}</span>
               </div>
             ))}
           </div>
@@ -385,17 +390,17 @@ export default function LandingClient() {
       {/* ═══════════════════════════════════════════════
           COMO FUNCIONA
       ═══════════════════════════════════════════════ */}
-      <section id="como-funciona" className="py-28 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 grid-bg opacity-40" />
-        <div className="relative max-w-5xl mx-auto">
+      <section id="como-funciona" className="py-28 px-6"
+        style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f0f7f5 100%)' }}>
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-20">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3"
               style={{ color: '#1A9B8A' }}>Fluxo completo</p>
-            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white">
+            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black" style={{ color: '#0d1a18' }}>
               Do QR code ao prato na mesa
             </h2>
             <p className="reveal reveal-delay-2 text-lg mt-4 max-w-xl mx-auto"
-              style={{ color: 'rgba(226,250,247,0.5)' }}>
+              style={{ color: '#4a6e68' }}>
               Quatro passos que eliminam ruído, erro e tempo perdido na operação.
             </p>
           </div>
@@ -403,15 +408,14 @@ export default function LandingClient() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {STEPS.map((step, i) => (
               <div key={step.n}
-                className={`reveal reveal-delay-${i + 1} glow-card relative rounded-2xl p-6 flex flex-col gap-4 transition-all`}
-                style={{ background: 'rgba(26,155,138,0.05)', border: '1px solid rgba(26,155,138,0.15)' }}>
+                className={`reveal reveal-delay-${i + 1} light-card relative rounded-2xl p-6 flex flex-col gap-4`}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ background: 'rgba(26,155,138,0.15)', border: '1px solid rgba(26,155,138,0.25)' }}>
-                  <span className="font-black text-sm" style={{ color: '#5EEAD4' }}>{step.n}</span>
+                  style={{ background: '#1A9B8A' }}>
+                  <span className="font-black text-sm text-white">{step.n}</span>
                 </div>
                 <div>
-                  <p className="font-black text-white text-base">{step.title}</p>
-                  <p className="text-sm mt-1.5 leading-relaxed" style={{ color: 'rgba(226,250,247,0.5)' }}>{step.desc}</p>
+                  <p className="font-black text-base" style={{ color: '#0d1a18' }}>{step.title}</p>
+                  <p className="text-sm mt-1.5 leading-relaxed" style={{ color: '#4a6e68' }}>{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -422,12 +426,13 @@ export default function LandingClient() {
       {/* ═══════════════════════════════════════════════
           FUNCIONALIDADES
       ═══════════════════════════════════════════════ */}
-      <section className="py-28 px-6" style={{ borderTop: '1px solid rgba(26,155,138,0.08)' }}>
+      <section className="py-28 px-6"
+        style={{ background: 'linear-gradient(180deg, #f0f7f5 0%, #ffffff 100%)' }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-20">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3"
               style={{ color: '#1A9B8A' }}>Plataforma completa</p>
-            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white">
+            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black" style={{ color: '#0d1a18' }}>
               Tudo que seu restaurante precisa
             </h2>
           </div>
@@ -435,8 +440,7 @@ export default function LandingClient() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {FEATURES.map((f, i) => (
               <div key={f.title}
-                className={`reveal reveal-delay-${(i % 4) + 1} glow-card relative rounded-2xl p-5 flex flex-col gap-3 transition-all`}
-                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(26,155,138,0.1)' }}>
+                className={`reveal reveal-delay-${(i % 4) + 1} light-card relative rounded-2xl p-5 flex flex-col gap-3`}>
                 {f.badge && (
                   <span className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full"
                     style={{ background: '#1A9B8A', color: '#fff' }}>
@@ -448,8 +452,8 @@ export default function LandingClient() {
                   {f.icon}
                 </div>
                 <div>
-                  <p className="font-black text-white text-sm">{f.title}</p>
-                  <p className="text-xs mt-1.5 leading-relaxed" style={{ color: 'rgba(226,250,247,0.45)' }}>{f.desc}</p>
+                  <p className="font-black text-sm" style={{ color: '#0d1a18' }}>{f.title}</p>
+                  <p className="text-xs mt-1.5 leading-relaxed" style={{ color: '#4a6e68' }}>{f.desc}</p>
                 </div>
               </div>
             ))}
@@ -508,17 +512,17 @@ export default function LandingClient() {
       {/* ═══════════════════════════════════════════════
           ESTAÇÕES
       ═══════════════════════════════════════════════ */}
-      <section className="py-28 px-6" style={{ borderTop: '1px solid rgba(26,155,138,0.08)' }}>
+      <section className="py-28 px-6"
+        style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f0f7f5 100%)' }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-20">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
               Operação em tempo real
             </p>
-            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white">
+            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black" style={{ color: '#0d1a18' }}>
               Cada estação no seu ritmo
             </h2>
-            <p className="reveal reveal-delay-2 text-lg mt-4 max-w-xl mx-auto"
-              style={{ color: 'rgba(226,250,247,0.5)' }}>
+            <p className="reveal reveal-delay-2 text-lg mt-4 max-w-xl mx-auto" style={{ color: '#4a6e68' }}>
               Cozinha, bar, drinks e chopeira recebem somente os pedidos que são deles.
             </p>
           </div>
@@ -531,11 +535,10 @@ export default function LandingClient() {
               { emoji: '🍻', label: 'Chopeira', desc: 'Controle dedicado para chope'              },
             ].map((e, i) => (
               <div key={e.label}
-                className={`reveal reveal-delay-${i + 1} glow-card rounded-2xl p-7 text-center transition-all`}
-                style={{ background: 'rgba(26,155,138,0.04)', border: '1px solid rgba(26,155,138,0.12)' }}>
+                className={`reveal reveal-delay-${i + 1} light-card rounded-2xl p-7 text-center`}>
                 <span className="text-5xl">{e.emoji}</span>
-                <p className="font-black text-white text-lg mt-4">{e.label}</p>
-                <p className="text-xs mt-1.5" style={{ color: 'rgba(226,250,247,0.4)' }}>{e.desc}</p>
+                <p className="font-black text-lg mt-4" style={{ color: '#0d1a18' }}>{e.label}</p>
+                <p className="text-xs mt-1.5" style={{ color: '#4a6e68' }}>{e.desc}</p>
               </div>
             ))}
           </div>
