@@ -295,7 +295,7 @@ export default function LandingClient() {
       {/* ═══════════════════════════════════════════════
           DASHBOARD PREVIEW (desktop only)
       ═══════════════════════════════════════════════ */}
-      <section className="hidden md:block py-20 px-6 relative overflow-hidden"
+      <section className="py-20 px-6 relative overflow-hidden"
         style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f0f7f5 100%)' }}>
 
         <div className="relative max-w-6xl mx-auto">
@@ -530,7 +530,7 @@ export default function LandingClient() {
             </div>
 
             {/* Screenshot do painel — desktop only */}
-            <div className="reveal reveal-delay-2 hidden lg:block">
+            <div className="reveal reveal-delay-2">
               <div className="relative rounded-2xl overflow-hidden"
                 style={{ border: '1px solid rgba(26,155,138,0.25)', boxShadow: '0 0 60px rgba(26,155,138,0.15)' }}>
                 {/* Barra browser */}
