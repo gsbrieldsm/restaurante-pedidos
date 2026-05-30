@@ -541,7 +541,7 @@ export default function SuperAdminPage() {
         'w-56 shrink-0',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
       ].join(' ')}
-        style={{ background: 'linear-gradient(160deg, #0a2420 0%, #0f3d35 100%)' }}
+        style={{ background: 'linear-gradient(160deg, #0d6b5e 0%, #1A9B8A 60%, #22b5a2 100%)' }}
       >
         {/* Logo */}
         <div className="px-5 py-6 border-b border-white/10">
@@ -568,8 +568,8 @@ export default function SuperAdminPage() {
                 className={[
                   'w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all text-left',
                   ativo
-                    ? 'bg-white/15 text-white'
-                    : 'text-white/50 hover:bg-white/08 hover:text-white/80',
+                    ? 'bg-black/20 text-white'
+                    : 'text-white/70 hover:bg-black/15 hover:text-white',
                 ].join(' ')}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -587,12 +587,12 @@ export default function SuperAdminPage() {
         {/* Footer sidebar */}
         <div className="px-3 py-4 border-t border-white/10 space-y-1">
           <button onClick={carregar}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-white hover:bg-white/08 transition-all">
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/70 hover:text-white hover:bg-black/15 transition-all">
             <RefreshCw className="w-4 h-4" />
             <span>Atualizar dados</span>
           </button>
           <button onClick={sair}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-all">
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/70 hover:text-white hover:bg-black/20 transition-all">
             <LogOut className="w-4 h-4" />
             <span>Sair</span>
           </button>
