@@ -462,6 +462,120 @@ export default function LandingClient() {
       </section>
 
       {/* ═══════════════════════════════════════════════
+          PAINEL DE GESTÃO
+      ═══════════════════════════════════════════════ */}
+      <section className="py-28 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 grid-bg opacity-30" />
+        <div className="pointer-events-none absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse 50% 60% at 80% 50%, rgba(26,155,138,0.08) 0%, transparent 70%)' }} />
+
+        <div className="relative max-w-6xl mx-auto">
+
+          {/* Header */}
+          <div className="text-center mb-16">
+            <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
+              Painel de gestão
+            </p>
+            <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white">
+              Você no controle da operação inteira —{' '}
+              <span className="gradient-text">em tempo real</span>
+            </h2>
+            <p className="reveal reveal-delay-2 text-lg mt-4 max-w-2xl mx-auto" style={{ color: 'rgba(226,250,247,0.55)' }}>
+              Enquanto o cliente pede pelo celular, você acompanha tudo de um lugar só: o que está vendendo, se a cozinha está no prazo e quanto entrou no caixa. Sem planilha, sem achismo.
+            </p>
+          </div>
+
+          {/* Grid 2 colunas: cards + screenshot do painel */}
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
+
+            {/* Cards 2x2 */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                {
+                  icon: '👁️',
+                  title: 'Visão ao vivo do salão',
+                  desc: 'Comandas abertas, pedidos em preparo e prontos pra entrega numa tela só, atualizada na hora. Bate o olho e sabe exatamente como está a casa agora.',
+                },
+                {
+                  icon: '⏱️',
+                  title: 'Sua cozinha está no prazo?',
+                  desc: 'O Menuê+ compara o tempo real de preparo com o estimado de cada prato. Descubra quais itens atrasam — e por quê — antes do cliente reclamar.',
+                },
+                {
+                  icon: '📈',
+                  title: 'Custo, margem e o que mais vende',
+                  desc: 'Veja a margem de cada item, o ranking dos mais vendidos e o ticket médio. Saiba o que dá lucro de verdade e o que só ocupa o cardápio.',
+                },
+                {
+                  icon: '💰',
+                  title: 'Financeiro sem planilha',
+                  desc: 'Faturamento por hora, por estação e por forma de pagamento. Feche o dia sabendo quanto entrou e de onde veio — em segundos.',
+                },
+              ].map((card, i) => (
+                <div key={card.title}
+                  className={`reveal reveal-delay-${i + 1} rounded-2xl p-6 flex flex-col gap-3 transition-all`}
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(26,155,138,0.18)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(26,155,138,0.08)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(26,155,138,0.35)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(26,155,138,0.18)' }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                    style={{ background: 'rgba(26,155,138,0.12)' }}>
+                    {card.icon}
+                  </div>
+                  <div>
+                    <p className="font-black text-white text-sm">{card.title}</p>
+                    <p className="text-xs mt-1.5 leading-relaxed" style={{ color: 'rgba(226,250,247,0.5)' }}>{card.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Screenshot do painel — desktop only */}
+            <div className="reveal reveal-delay-2 hidden lg:block">
+              <div className="relative rounded-2xl overflow-hidden"
+                style={{ border: '1px solid rgba(26,155,138,0.25)', boxShadow: '0 0 60px rgba(26,155,138,0.15)' }}>
+                {/* Barra browser */}
+                <div className="flex items-center gap-2 px-4 py-2.5"
+                  style={{ background: '#0a1412', borderBottom: '1px solid rgba(26,155,138,0.12)' }}>
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+                  </div>
+                  <div className="flex-1 flex justify-center">
+                    <div className="text-xs px-3 py-1 rounded-md"
+                      style={{ background: 'rgba(26,155,138,0.08)', color: 'rgba(94,234,212,0.5)' }}>
+                      seu-restaurante.menue.com.br/admin
+                    </div>
+                  </div>
+                </div>
+                <div className="relative" style={{ aspectRatio: '16/10', background: '#0a1a17' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/preview-admin.png"
+                    alt="Painel administrativo Menuê+"
+                    className="w-full h-full object-cover object-top"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Fecho + CTA */}
+          <div className="reveal mt-12 text-center space-y-5">
+            <p className="text-sm" style={{ color: 'rgba(226,250,247,0.45)' }}>
+              Tudo isso no computador ou no celular, acessível pra cada funcionário só no que ele precisa ver.
+            </p>
+            <Link href="/registro"
+              className="glow-btn inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-black text-white transition-all"
+              style={{ background: '#1A9B8A' }}>
+              🚀 Iniciar meu teste grátis
+            </Link>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════
           DIFERENCIAIS
       ═══════════════════════════════════════════════ */}
       <section className="py-28 px-6 relative overflow-hidden">
