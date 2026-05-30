@@ -146,20 +146,20 @@ export default function ParceirosPage() {
         .teal-mist-hero {
           background-color: #ffffff;
           background-image:
-            radial-gradient(ellipse 65% 70% at 90% 10%, rgba(26,155,138,0.13) 0%, transparent 60%),
-            radial-gradient(ellipse 50% 60% at 5%  80%, rgba(26,155,138,0.09) 0%, transparent 55%),
-            radial-gradient(ellipse 40% 50% at 60% 90%, rgba(26,155,138,0.07) 0%, transparent 50%),
-            linear-gradient(rgba(26,155,138,.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(26,155,138,.06) 1px, transparent 1px);
+            radial-gradient(ellipse 65% 70% at 90% 10%, rgba(26,155,138,0.16) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 60% at 5%  80%, rgba(26,155,138,0.11) 0%, transparent 55%),
+            radial-gradient(ellipse 40% 50% at 60% 90%, rgba(26,155,138,0.09) 0%, transparent 50%),
+            linear-gradient(rgba(26,155,138,.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(26,155,138,.08) 1px, transparent 1px);
           background-size: auto, auto, auto, 48px 48px, 48px 48px;
         }
         .teal-mist-section {
           background-color: #ffffff;
           background-image:
-            radial-gradient(ellipse 70% 60% at 0% 50%,   rgba(26,155,138,0.1)  0%, transparent 60%),
-            radial-gradient(ellipse 50% 50% at 100% 50%, rgba(26,155,138,0.07) 0%, transparent 55%),
-            linear-gradient(rgba(26,155,138,.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(26,155,138,.05) 1px, transparent 1px);
+            radial-gradient(ellipse 70% 60% at 0% 50%,   rgba(26,155,138,0.12) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 50% at 100% 50%, rgba(26,155,138,0.09) 0%, transparent 55%),
+            linear-gradient(rgba(26,155,138,.07) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(26,155,138,.07) 1px, transparent 1px);
           background-size: auto, auto, 48px 48px, 48px 48px;
         }
         .light-card{background:#fff;border:1px solid rgba(26,155,138,0.15);box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(26,155,138,.06);transition:all .2s;}
