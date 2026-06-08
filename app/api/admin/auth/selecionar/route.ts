@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
+import { criarSessaoAdmin, validarSessaoAdmin, revogarSessaoAdmin } from '@/lib/auth-session'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,17 +44,16 @@ export async function POST(req: Request) {
   }
 
   // Segurança: garante que o usuario_id pertence ao mesmo e-mail da sessão atual
-  const cookieStore = await cookies()
-  const authCookie  = cookieStore.get('admin_auth')?.value
+  // (a sessão é validada no banco — não confiamos em IDs vindos do cookie/cliente)
+  const cookieStore  = await cookies()
+  const authCookie   = cookieStore.get('admin_auth')?.value
+  const sessaoAtual  = await validarSessaoAdmin(authCookie)
 
-  if (authCookie && authCookie.startsWith('mmu:')) {
-    const currentId = authCookie.replace('mmu:', '')
-
-    // Busca e-mail do usuário atual (pode estar em usuarios ou tenants)
+  if (sessaoAtual?.usuarioId) {
     const { data: usuarioAtual } = await supabase
       .from('usuarios')
       .select('email')
-      .eq('id', currentId)
+      .eq('id', sessaoAtual.usuarioId)
       .single()
 
     const emailAtual = usuarioAtual?.email
@@ -74,8 +74,19 @@ export async function POST(req: Request) {
     tenantSlug = tenant?.slug ?? null
   }
 
+  // Revoga a sessão anterior (troca de restaurante = nova sessão dedicada)
+  await revogarSessaoAdmin(authCookie)
+
+  const novoToken = await criarSessaoAdmin({
+    usuarioId: usuario.id,
+    tenantId: usuario.tenant_id,
+    cargo: usuario.cargo,
+    userAgent: req.headers.get('user-agent'),
+    ip: req.headers.get('x-forwarded-for'),
+  })
+
   const resp = NextResponse.json({ ok: true, cargo: usuario.cargo, nome: usuario.nome })
-  resp.cookies.set('admin_auth', `mmu:${usuario.id}`, COOKIE_OPTS)
+  resp.cookies.set('admin_auth', novoToken, COOKIE_OPTS)
   resp.cookies.set('mmu_cargo',  usuario.cargo, CARGO_OPTS)
   if (usuario.tenant_id) {
     resp.cookies.set('tenant_id', usuario.tenant_id, COOKIE_OPTS)

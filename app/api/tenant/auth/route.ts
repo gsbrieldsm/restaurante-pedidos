@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { randomBytes } from 'crypto'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hashSenha, verificarSenha } from '@/lib/auth-utils'
 import { Resend } from 'resend'
 import { emailBoasVindas } from '@/lib/email/boas-vindas'
 import { emailVerificacao } from '@/lib/email/verificacao'
+import { criarSessaoAdmin, revogarSessaoAdmin } from '@/lib/auth-session'
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -196,14 +198,24 @@ export async function POST(req: Request) {
       path:     '/',
     }
 
+    const sessaoToken = await criarSessaoAdmin({
+      usuarioId: null,
+      tenantId: tenant.id,
+      cargo: 'admin',
+      userAgent: req.headers.get('user-agent'),
+      ip: req.headers.get('x-forwarded-for'),
+    })
+
     const resp = NextResponse.json({
       ok: true,
       tenant: { id: tenant.id, slug: tenant.slug, nome: tenant.nome, status: tenant.status, plano_aceito_em: tenant.plano_aceito_em },
     })
     // tenant_id: não-httpOnly para permitir filtro Realtime no cliente (UUID, não é segredo)
+    // OBS: este cookie é só conveniência de UI — a autorização sempre valida
+    // a sessão (admin_auth, token opaco) contra o banco antes de confiar no tenant.
     resp.cookies.set('tenant_id',   tenant.id,   { ...COOKIE_OPTS, httpOnly: false })
     resp.cookies.set('tenant_slug', tenant.slug, { ...COOKIE_OPTS, httpOnly: false })
-    resp.cookies.set('admin_auth',  `mmu:${tenant.id}`, COOKIE_OPTS)
+    resp.cookies.set('admin_auth',  sessaoToken, COOKIE_OPTS)
     resp.cookies.set('mmu_cargo',    'admin',              { ...COOKIE_OPTS, httpOnly: false })
     resp.cookies.set('tenant_plano', tenant.plano ?? 'starter', { ...COOKIE_OPTS, httpOnly: false })
 
@@ -223,6 +235,9 @@ export async function POST(req: Request) {
 
   // ── LOGOUT ──
   if (acao === 'logout') {
+    const cookieStore = await cookies()
+    await revogarSessaoAdmin(cookieStore.get('admin_auth')?.value)
+
     const resp = NextResponse.json({ ok: true })
     resp.cookies.delete('tenant_id')
     resp.cookies.delete('tenant_slug')

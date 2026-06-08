@@ -4,22 +4,16 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getPlanoConfig } from '@/lib/planos'
+import { obterSessaoAtual } from '@/lib/auth-session'
 
-// Valida autenticação — aceita mmu:{uuid} e o token legado
+// Valida autenticação contra o banco (sessão opaca) — nunca confia em cookies
+// de cliente para determinar o tenant. Sessões de staff sem tenant vinculado
+// (login legado via ADMIN_PASSWORD) retornam o sentinela '__legado__'.
 async function getTenantIdAutenticado(): Promise<string | null> {
-  const cookieStore = await cookies()
-  const authCookie  = cookieStore.get('admin_auth')?.value
-  if (!authCookie) return null
-
-  // Token legado (sem tenant) — retorna sentinela
-  if (authCookie === 'mmu-admin-v1') return '__legado__'
-
-  // Token moderno: mmu:{uuid}
-  if (authCookie.startsWith('mmu:')) {
-    return cookieStore.get('tenant_id')?.value ?? null
-  }
-
-  return null
+  const sessao = await obterSessaoAtual()
+  if (!sessao) return null
+  if (!sessao.tenantId) return '__legado__'
+  return sessao.tenantId
 }
 
 // ── GET /api/admin/configuracoes ─────────────────────────────────────────────

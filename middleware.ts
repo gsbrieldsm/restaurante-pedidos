@@ -2,8 +2,39 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getPlanoConfig } from '@/lib/planos'
 
-// ─── Constantes de auth de staff (admin interno do restaurante) ───────────────
-const SESSION_TOKEN = 'mmu-admin-v1'
+// ─── Auth de staff (admin interno do restaurante) ─────────────────────────────
+// O cookie `admin_auth` guarda um token OPACO (256 bits, aleatório — não derivado
+// de nenhum ID) que é validado contra a tabela `sessoes_admin` no Supabase a cada
+// requisição. Isso impede forjar sessões setando cookies manualmente — o token
+// precisa existir, estar ativo e não-expirado no banco.
+//
+// Consulta via REST do Supabase com a service role key (edge-compatible, sem SDK).
+async function validarSessaoStaff(token: string | undefined): Promise<boolean> {
+  if (!token) return false
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return false
+
+  try {
+    const resp = await fetch(
+      `${url}/rest/v1/sessoes_admin?token=eq.${encodeURIComponent(token)}&revogada_em=is.null&select=expira_em`,
+      {
+        headers: { apikey: key, Authorization: `Bearer ${key}` },
+        // Evita cache entre requisições de usuários diferentes
+        cache: 'no-store',
+      }
+    )
+    if (!resp.ok) return false
+
+    const rows = (await resp.json()) as Array<{ expira_em: string }>
+    if (!rows.length) return false
+
+    return new Date(rows[0].expira_em) > new Date()
+  } catch {
+    return false
+  }
+}
 
 const STAFF_PUBLIC = [
   '/admin/login',    // mantido como redirect para /operador/login
@@ -57,7 +88,7 @@ function extrairSubdominio(host: string): string | null {
   return sub
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get('host') ?? ''
 
@@ -151,9 +182,10 @@ export function middleware(request: NextRequest) {
 
   const token = request.cookies.get('admin_auth')?.value
 
-  const valido =
-    token === SESSION_TOKEN ||
-    (!!token && /^mmu:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(token))
+  // Validação real contra o banco — o token é opaco (256 bits aleatórios) e
+  // precisa existir, estar ativo e não-expirado em `sessoes_admin`.
+  // Isso impede que alguém forje acesso apenas setando cookies manualmente.
+  const valido = await validarSessaoStaff(token)
 
   if (!valido) {
     if (pathname.startsWith('/api/')) {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
 import { emailBoasVindas } from '@/lib/email/boas-vindas'
+import { criarSessaoAdmin } from '@/lib/auth-session'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,10 +37,17 @@ export async function GET(req: Request) {
 
   if (tenant.email_verificado) {
     // Já verificado — faz login direto
+    const sessaoToken = await criarSessaoAdmin({
+      usuarioId: null,
+      tenantId: tenant.id,
+      cargo: 'admin',
+      userAgent: req.headers.get('user-agent'),
+      ip: req.headers.get('x-forwarded-for'),
+    })
     const resp = NextResponse.json({ ok: true, ja_verificado: true })
     resp.cookies.set('tenant_id',   tenant.id,   COOKIE_OPTS)
     resp.cookies.set('tenant_slug', tenant.slug, { ...COOKIE_OPTS, httpOnly: false })
-    resp.cookies.set('admin_auth', `mmu:${tenant.id}`, COOKIE_OPTS)
+    resp.cookies.set('admin_auth', sessaoToken, COOKIE_OPTS)
     resp.cookies.set('mmu_cargo',  'admin', { ...COOKIE_OPTS, httpOnly: false })
     return resp
   }
@@ -83,13 +91,20 @@ export async function GET(req: Request) {
   }
 
   // Faz login automático após verificação
+  const sessaoToken = await criarSessaoAdmin({
+    usuarioId: null,
+    tenantId: tenant.id,
+    cargo: 'admin',
+    userAgent: req.headers.get('user-agent'),
+    ip: req.headers.get('x-forwarded-for'),
+  })
   const resp = NextResponse.json({
     ok: true,
     precisa_plano: !tenant.plano_aceito_em,
   })
   resp.cookies.set('tenant_id',   tenant.id,   COOKIE_OPTS)
   resp.cookies.set('tenant_slug', tenant.slug, { ...COOKIE_OPTS, httpOnly: false })
-  resp.cookies.set('admin_auth', `mmu:${tenant.id}`, COOKIE_OPTS)
+  resp.cookies.set('admin_auth', sessaoToken, COOKIE_OPTS)
   resp.cookies.set('mmu_cargo',  'admin', { ...COOKIE_OPTS, httpOnly: false })
   return resp
 }

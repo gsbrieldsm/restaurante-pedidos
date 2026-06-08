@@ -3,30 +3,16 @@
 // POST /api/garcom/saldo (estorno)   — estorna pedido
 
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
+import { obterSessaoAtual } from '@/lib/auth-session'
 
 export const dynamic = 'force-dynamic'
 
-// ── Auth: valida cookie admin_auth e retorna tenant_id + usuario_id ──────────
+// ── Auth: valida sessão (token opaco) contra o banco e retorna tenant_id + usuario_id ──
 async function autenticar(): Promise<{ tenantId: string; usuarioId: string | null } | null> {
-  const cookieStore = await cookies()
-  const token       = cookieStore.get('admin_auth')?.value
-  const tenantId    = cookieStore.get('tenant_id')?.value
-
-  if (!token || !tenantId) return null
-
-  const valido =
-    token === 'mmu-admin-v1' ||
-    /^mmu:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(token)
-
-  if (!valido) return null
-
-  // Extrai usuarioId do token se for mmu:<uuid>
-  const match = token.match(/^mmu:(.+)$/)
-  const usuarioId = match ? match[1] : null
-
-  return { tenantId, usuarioId }
+  const sessao = await obterSessaoAtual()
+  if (!sessao || !sessao.tenantId) return null
+  return { tenantId: sessao.tenantId, usuarioId: sessao.usuarioId }
 }
 
 function normalizarTelefone(tel: string): string {

@@ -9,8 +9,8 @@
 export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
+import { obterTenantIdAutenticado } from '@/lib/auth-session'
 
 // ── GET — verifica se o gateway está configurado (sem auth) ───────────────────
 export async function GET() {
@@ -32,14 +32,7 @@ const PLANOS_NOME: Record<string, string> = {
 }
 
 export async function POST(req: Request) {
-  const cookieStore = await cookies()
-  const authCookie  = cookieStore.get('admin_auth')?.value
-
-  if (!authCookie?.startsWith('mmu:')) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-  }
-
-  const tenantId = cookieStore.get('tenant_id')?.value
+  const tenantId = await obterTenantIdAutenticado()
   if (!tenantId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   const supabase = createServiceClient()

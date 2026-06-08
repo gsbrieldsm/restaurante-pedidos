@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verificarSenha } from '@/lib/auth-utils'
+import { criarSessaoAdmin, revogarSessaoAdmin } from '@/lib/auth-session'
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -18,11 +20,19 @@ const CARGO_OPTS = {
   path:     '/',
 }
 
-function setLoginCookies(
+async function setLoginCookies(
   resp: NextResponse,
-  usuario: { id: string; cargo: string; tenant_id: string | null; tenant_slug?: string | null }
+  usuario: { id: string; cargo: string; tenant_id: string | null; tenant_slug?: string | null },
+  req: Request
 ) {
-  resp.cookies.set('admin_auth', `mmu:${usuario.id}`, COOKIE_OPTS)
+  const token = await criarSessaoAdmin({
+    usuarioId: usuario.id,
+    tenantId: usuario.tenant_id,
+    cargo: usuario.cargo,
+    userAgent: req.headers.get('user-agent'),
+    ip: req.headers.get('x-forwarded-for'),
+  })
+  resp.cookies.set('admin_auth', token, COOKIE_OPTS)
   resp.cookies.set('mmu_cargo', usuario.cargo, CARGO_OPTS)
   if (usuario.tenant_id) {
     resp.cookies.set('tenant_id', usuario.tenant_id, COOKIE_OPTS)
@@ -78,7 +88,7 @@ export async function POST(req: Request) {
     if (validos.length === 1) {
       const u = validos[0]
       const resp = NextResponse.json({ ok: true, nome: u.nome, cargo: u.cargo })
-      setLoginCookies(resp, { ...u, tenant_slug: u.tenant_id ? tenantSlugMap[u.tenant_id] : null })
+      await setLoginCookies(resp, { ...u, tenant_slug: u.tenant_id ? tenantSlugMap[u.tenant_id] : null }, req)
       return resp
     }
 
@@ -109,14 +119,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Senha incorreta' }, { status: 401 })
   }
 
+  const token = await criarSessaoAdmin({
+    usuarioId: null,
+    tenantId: null,
+    cargo: 'admin',
+    userAgent: req.headers.get('user-agent'),
+    ip: req.headers.get('x-forwarded-for'),
+  })
   const resp = NextResponse.json({ ok: true, nome: 'Admin', cargo: 'admin' })
-  resp.cookies.set('admin_auth', 'mmu-admin-v1', COOKIE_OPTS)
+  resp.cookies.set('admin_auth', token, COOKIE_OPTS)
   resp.cookies.set('mmu_cargo', 'admin', CARGO_OPTS)
   return resp
 }
 
 // ── DELETE /api/admin/auth — logout ─────────────────────────────────────────
 export async function DELETE() {
+  const store = await cookies()
+  const token = store.get('admin_auth')?.value
+  await revogarSessaoAdmin(token)
+
   const resp = NextResponse.json({ ok: true })
   resp.cookies.delete('admin_auth')
   resp.cookies.delete('mmu_cargo')

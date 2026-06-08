@@ -5,18 +5,11 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
+import { obterTenantIdAutenticado } from '@/lib/auth-session'
 
 async function autenticar(): Promise<string | null> {
-  const cookieStore = await cookies()
-  const token    = cookieStore.get('admin_auth')?.value
-  const tenantId = cookieStore.get('tenant_id')?.value
-  if (!token || !tenantId) return null
-  const valido =
-    token === 'mmu-admin-v1' ||
-    /^mmu:[0-9a-f-]{36}$/.test(token)
-  return valido ? tenantId : null
+  return obterTenantIdAutenticado()
 }
 
 // ── GET ──────────────────────────────────────────────────────────────────────

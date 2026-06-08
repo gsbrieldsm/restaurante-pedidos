@@ -1,20 +1,19 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
+import { obterSessaoAtual } from '@/lib/auth-session'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/admin/meus-restaurantes
 // Retorna todos os restaurantes em que o usuário logado tem acesso
 export async function GET() {
-  const cookieStore = await cookies()
-  const authCookie  = cookieStore.get('admin_auth')?.value
+  const sessao = await obterSessaoAtual()
 
-  if (!authCookie || !authCookie.startsWith('mmu:')) {
+  if (!sessao || !sessao.usuarioId) {
     return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
   }
 
-  const currentId = authCookie.replace('mmu:', '')
+  const currentId = sessao.usuarioId
   const supabase  = createServiceClient()
 
   // Busca e-mail do usuário atual
@@ -50,8 +49,8 @@ export async function GET() {
 
   const tenantMap = Object.fromEntries(tenants?.map((t) => [t.id, t.nome_restaurante]) ?? [])
 
-  // Tenant ativo no momento
-  const tenantAtual = cookieStore.get('tenant_id')?.value
+  // Tenant ativo no momento (vem da sessão validada no banco, não do cookie)
+  const tenantAtual = sessao.tenantId
 
   const restaurantes = registros.map((r) => ({
     usuario_id:      r.id,
