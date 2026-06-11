@@ -208,7 +208,7 @@ export async function POST(req: Request) {
 
     const resp = NextResponse.json({
       ok: true,
-      tenant: { id: tenant.id, slug: tenant.slug, nome: tenant.nome, status: tenant.status, plano_aceito_em: tenant.plano_aceito_em },
+      tenant: { id: tenant.id, slug: tenant.slug, nome: tenant.nome, status: tenant.status, plano_aceito_em: tenant.plano_aceito_em, plano: tenant.plano },
     })
     // tenant_id: não-httpOnly para permitir filtro Realtime no cliente (UUID, não é segredo)
     // OBS: este cookie é só conveniência de UI — a autorização sempre valida

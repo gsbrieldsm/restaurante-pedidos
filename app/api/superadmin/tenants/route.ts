@@ -98,7 +98,7 @@ export async function PATCH(req: Request) {
 
   // ── Ação: trocar plano — atualiza plano e sincroniza mesas ──
   if (acao === 'trocar_plano') {
-    const planosValidos = ['free', 'starter', 'pro', 'business', 'enterprise']
+    const planosValidos = ['free', 'starter', 'pro', 'business', 'enterprise', 'controle_chope', 'business_chope']
     if (!plano || !planosValidos.includes(plano)) {
       return NextResponse.json({ error: 'Plano inválido.' }, { status: 400 })
     }

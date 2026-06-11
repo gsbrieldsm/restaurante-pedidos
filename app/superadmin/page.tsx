@@ -100,11 +100,13 @@ const MENSALIDADE   = 550
 const IMPLEMENTACAO = 2000
 
 const PLANOS_DISPONIVEIS = [
-  { id: 'free',       nome: '🎁 Free',    preco: 0   },   // só visível no superadmin
-  { id: 'starter',    nome: 'Starter',    preco: 397  },
-  { id: 'pro',        nome: 'Pro',        preco: 697  },
-  { id: 'business',   nome: 'Business',   preco: 1197 },
-  { id: 'enterprise', nome: 'Enterprise', preco: 0   },   // negociado individualmente
+  { id: 'free',           nome: '🎁 Free',                  preco: 0    },   // só visível no superadmin
+  { id: 'starter',        nome: 'Starter',                  preco: 397  },
+  { id: 'pro',            nome: 'Pro',                      preco: 697  },
+  { id: 'business',       nome: 'Business',                 preco: 1197 },
+  { id: 'enterprise',     nome: 'Enterprise',               preco: 0    },   // negociado individualmente
+  { id: 'controle_chope', nome: '🍺 Controle de Chope',     preco: 197  },
+  { id: 'business_chope', nome: 'Business + Controle de Chope', preco: 1397 },
 ]
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL   ?? 'https://menue.com.br'
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'menue.com.br'
@@ -488,7 +490,7 @@ export default function SuperAdminPage() {
     router.push('/superadmin/login')
   }
 
-  const PLANOS_PRECO_MAP: Record<string, number> = { free: 0, starter: 397, pro: 697, business: 1197, enterprise: 0 }
+  const PLANOS_PRECO_MAP: Record<string, number> = { free: 0, starter: 397, pro: 697, business: 1197, enterprise: 0, controle_chope: 197, business_chope: 1397 }
 
   const ativos       = tenants.filter((t) => t.status === 'ativo' && t.plano_aceito_em)
   // MRR: só planos pagos (não free nem trial ativo)

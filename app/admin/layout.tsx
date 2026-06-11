@@ -21,25 +21,31 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const cargo    = (cookieStore.get('mmu_cargo')?.value ?? 'admin') as 'admin' | 'operador'
   const tenantId = cookieStore.get('tenant_id')?.value
 
-  // Busca nome do restaurante e plano para exibir na sidebar
+  // Busca nome do restaurante, plano e logo para exibir na sidebar
   let nomeRestaurante: string | undefined
   let plano: string | undefined
+  let logoUrl: string | null | undefined
   if (tenantId) {
     try {
       const supabase = createServiceClient()
-      const { data } = await supabase
-        .from('tenants')
-        .select('nome_restaurante, plano')
-        .eq('id', tenantId)
-        .single()
-      nomeRestaurante = data?.nome_restaurante
-      plano           = data?.plano ?? 'starter'
+      const [{ data: tenant }, { data: config }] = await Promise.all([
+        supabase.from('tenants').select('nome_restaurante, plano').eq('id', tenantId).single(),
+        supabase.from('configuracoes').select('restaurante_logo_url').eq('tenant_id', tenantId).single(),
+      ])
+      nomeRestaurante = tenant?.nome_restaurante
+      plano           = tenant?.plano ?? 'starter'
+      logoUrl         = config?.restaurante_logo_url
     } catch { /* ignora */ }
   }
 
   return (
     <div className="flex min-h-screen bg-slate-100">
-      <AdminSidebar cargo={cargo} nomeRestaurante={nomeRestaurante} plano={plano} />
+      <AdminSidebar
+        cargo={cargo}
+        nomeRestaurante={nomeRestaurante}
+        plano={plano}
+        logoUrl={logoUrl}
+      />
       <main className="flex-1 overflow-auto pt-14 md:pt-0">
         <TrialBanner />
         {children}

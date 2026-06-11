@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f3d35"/>
+      <stop offset="100%" stop-color="#1A9B8A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ícone quadrado arredondado -->
+  <rect x="0" y="10" width="80" height="80" rx="18" fill="url(#bgGrad)"/>
+  <text x="40" y="57" text-anchor="middle" dominant-baseline="central"
+    font-family="Arial Black, sans-serif" font-weight="900" font-size="32"
+    fill="white" letter-spacing="-1">M+</text>
+
+  <!-- Wordmark: Menuê+ -->
+  <text x="102" y="58" dominant-baseline="central"
+    font-family="Arial Black, sans-serif" font-weight="900" font-size="42"
+    fill="#0d1a18" letter-spacing="-1">Menuê+</text>
+</svg>

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2, LogIn, ChefHat, Mail } from 'lucide-react'
 import Link from 'next/link'
+import { getPlanoConfig } from '@/lib/planos'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -46,6 +47,12 @@ export default function LoginPage() {
     // Se ainda não aceitou o plano → vai para planos
     if (!tenant.plano_aceito_em) {
       router.push('/planos')
+      return
+    }
+
+    // Contas restritas ao módulo de Chopes vão direto para a tela de Chopes
+    if (getPlanoConfig(tenant.plano).apenasChopes) {
+      router.push('/admin/chopes')
       return
     }
 

@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Clock, DollarSign,
   BookOpen, QrCode, ConciergeBell, Users, ChevronDown, ChevronRight,
-  Settings, LogOut, Menu, X, UserCog, Building2, Check, Loader2, Lock, Truck
+  Settings, LogOut, Menu, X, UserCog, Building2, Check, Loader2, Lock, Truck, Beer
 } from 'lucide-react'
 import { getPlanoConfig } from '@/lib/planos'
 
@@ -17,6 +17,7 @@ const NAV = [
   { href: '/admin/faturamento',    label: 'Financeiro',    icon: DollarSign,      apenasAdmin: true,  flag: null        },
   { href: '/admin/cardapio',       label: 'Cardápio',      icon: BookOpen,        apenasAdmin: true,  flag: null        },
   { href: '/admin/mesas',          label: 'Mesas & QR',    icon: QrCode,          apenasAdmin: true,  flag: null        },
+  { href: '/admin/chopes',         label: 'Chopes',        icon: Beer,            apenasAdmin: true,  flag: 'chopes'    },
   { href: '/admin/delivery',       label: 'Delivery',      icon: Truck,           apenasAdmin: true,  flag: 'delivery'  },
   { href: '/admin/equipe',         label: 'Equipe',        icon: UserCog,         apenasAdmin: true,  flag: null        },
   { href: '/admin/configuracoes',  label: 'Configurações', icon: Settings,        apenasAdmin: true,  flag: null        },
@@ -151,10 +152,12 @@ export function AdminSidebar({
   cargo,
   nomeRestaurante,
   plano,
+  logoUrl,
 }: {
   cargo: 'admin' | 'operador'
   nomeRestaurante?: string
   plano?: string
+  logoUrl?: string | null
 }) {
   const pathname = usePathname()
   const router   = useRouter()
@@ -162,12 +165,15 @@ export function AdminSidebar({
   const [drawerAberto,    setDrawerAberto]    = useState(false)
   const [switcherAberto,  setSwitcherAberto]  = useState(false)
 
-  const navFiltrado = NAV.filter((n) => !n.apenasAdmin || cargo === 'admin')
-
-
   // Rotas bloqueadas pelo plano atual (só aplica quando plano_ativo=sim — verificado no middleware)
   const planoConfig = getPlanoConfig(plano)
   const bloqueado   = planoConfig.bloqueado
+
+  let navFiltrado = NAV.filter((n) => !n.apenasAdmin || cargo === 'admin')
+
+  if (planoConfig.apenasChopes) {
+    navFiltrado = navFiltrado.filter((n) => n.href === '/admin/chopes')
+  }
 
   // Feature flags — itens de nav que dependem de um flag de plano
   function isBloqueadoPorFlag(flag: string | null): boolean {
@@ -216,7 +222,7 @@ export function AdminSidebar({
         )
       })}
 
-      <div className="pt-2">
+      {!planoConfig.apenasChopes && <div className="pt-2">
         <button
           onClick={() => setOperacoesAberto((v) => !v)}
           className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold text-teal-300 hover:bg-teal-800 hover:text-white transition-colors"
@@ -245,7 +251,7 @@ export function AdminSidebar({
             ))}
           </div>
         )}
-      </div>
+      </div>}
     </nav>
   )
 
@@ -253,9 +259,13 @@ export function AdminSidebar({
   const header = (
     <div className="px-5 py-6 border-b border-white/10">
       <div className="flex items-center gap-3">
-        {/* Ícone M+ */}
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 border border-white/20 shrink-0">
-          <span className="text-base font-black text-white">M+</span>
+        {/* Ícone M+ ou logo do tenant */}
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 border border-white/20 shrink-0 overflow-hidden">
+          {logoUrl ? (
+            <img src={logoUrl} alt={nomeRestaurante ?? 'Logo'} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-base font-black text-white">M+</span>
+          )}
         </div>
         {/* Nome */}
         <div className="relative flex-1 min-w-0">
@@ -294,8 +304,12 @@ export function AdminSidebar({
       {/* ── Mobile: top bar ── */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-teal-900 flex items-center justify-between px-4 py-3 shadow-md">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 border border-white/20 shrink-0">
-            <span className="text-sm font-black text-white">M+</span>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 border border-white/20 shrink-0 overflow-hidden">
+            {logoUrl ? (
+              <img src={logoUrl} alt={nomeRestaurante ?? 'Logo'} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-sm font-black text-white">M+</span>
+            )}
           </div>
           <div>
             <p className="font-black tracking-widest text-xs uppercase text-teal-300 leading-none">Menuê+</p>
@@ -322,8 +336,12 @@ export function AdminSidebar({
           >
             <div className="px-4 py-4 border-b border-teal-700 flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 border border-white/20 shrink-0">
-                  <span className="text-sm font-black text-white">M+</span>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 border border-white/20 shrink-0 overflow-hidden">
+                  {logoUrl ? (
+                    <img src={logoUrl} alt={nomeRestaurante ?? 'Logo'} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-black text-white">M+</span>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="font-black tracking-widest text-xs uppercase text-teal-300 leading-none">Menuê+</p>
