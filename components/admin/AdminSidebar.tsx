@@ -17,7 +17,7 @@ const NAV = [
   { href: '/admin/faturamento',    label: 'Financeiro',    icon: DollarSign,      apenasAdmin: true,  flag: null        },
   { href: '/admin/cardapio',       label: 'Cardápio',      icon: BookOpen,        apenasAdmin: true,  flag: null        },
   { href: '/admin/mesas',          label: 'Mesas & QR',    icon: QrCode,          apenasAdmin: true,  flag: null        },
-  { href: '/admin/chopes',         label: 'Chopes',        icon: Beer,            apenasAdmin: true,  flag: 'chopes'    },
+  // { href: '/admin/chopes',         label: 'Chopes',        icon: Beer,            apenasAdmin: true,  flag: 'chopes'    },
   { href: '/admin/delivery',       label: 'Delivery',      icon: Truck,           apenasAdmin: true,  flag: 'delivery'  },
   { href: '/admin/equipe',         label: 'Equipe',        icon: UserCog,         apenasAdmin: true,  flag: null        },
   { href: '/admin/marketing',      label: 'Marketing',     icon: Megaphone,       apenasAdmin: true,  flag: null        },
