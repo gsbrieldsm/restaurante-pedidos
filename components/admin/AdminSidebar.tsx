@@ -30,7 +30,7 @@ const OPERACOES = [
   { href: '/estacao/cozinha', emoji: '🍳', label: 'Cozinha'          },
   { href: '/estacao/bar',     emoji: '🍺', label: 'Bar'              },
   { href: '/estacao/drinks',  emoji: '🍹', label: 'Drinks'           },
-  { href: '/estacao/chopeira',emoji: '🍻', label: 'Chopeira'         },
+  // { href: '/estacao/chopeira',emoji: '🍻', label: 'Chopeira'         },
 ]
 
 // ─── Hook: carrega restaurantes disponíveis para o usuário logado ─────────────

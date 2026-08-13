@@ -272,51 +272,6 @@ export default function IdentificacaoPage() {
           <p className="text-white/50 text-sm mt-2">Informe seu nome para abrir sua comanda</p>
         </div>
         <CardContent className="pt-6">
-          {/* Toggle cliente / funcionário */}
-          <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-5">
-            <button type="button" onClick={() => setModoFuncionario(false)}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${!modoFuncionario ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>
-              Cliente
-            </button>
-            <button type="button" onClick={() => setModoFuncionario(true)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${modoFuncionario ? 'bg-white shadow-sm' : 'text-slate-400'}`}
-              style={modoFuncionario ? { color: cor } : {}}>
-              <ChefHat className="w-3.5 h-3.5" />Funcionário
-            </button>
-          </div>
-
-          {/* Formulário funcionário */}
-          {modoFuncionario ? (
-            <form onSubmit={handleFuncionario} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="func-email">E-mail</Label>
-                <Input id="func-email" type="email" placeholder="seu@email.com"
-                  value={funcEmail} onChange={(e) => setFuncEmail(e.target.value)}
-                  autoFocus className="h-12 text-base" required />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="func-senha">Senha</Label>
-                <div className="relative">
-                  <Input id="func-senha" type={funcSenhaVisivel ? 'text' : 'password'}
-                    placeholder="••••••" value={funcSenha}
-                    onChange={(e) => setFuncSenha(e.target.value)}
-                    className="h-12 text-base pr-11" required />
-                  <button type="button" onClick={() => setFuncSenhaVisivel(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                    {funcSenhaVisivel ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              {funcErro && <p className="text-sm text-red-500">{funcErro}</p>}
-              <Button type="submit" disabled={funcSalvando || !funcEmail || !funcSenha}
-                className="w-full h-12 text-base font-bold text-white hover:opacity-90"
-                style={{ background: cor }}>
-                {funcSalvando
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Autenticando...</>
-                  : <><ChefHat className="w-4 h-4 mr-2" />Entrar como funcionário</>}
-              </Button>
-            </form>
-          ) : (
           <>
           {nome && localStorage.getItem('mmu_cliente_nome') === nome && (
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 mb-4">
@@ -363,7 +318,6 @@ export default function IdentificacaoPage() {
             </Button>
           </form>
           </>
-          )}
         </CardContent>
       </Card>
     </div>
