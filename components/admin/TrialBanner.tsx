@@ -5,8 +5,8 @@ import { Clock, MessageCircle, X } from 'lucide-react'
 
 const PLANOS_PRECO: Record<string, number> = {
   starter:    397,
-  pro:        597,
-  business:   799,
+  pro:        697,
+  business:   1197,
   enterprise: 0,
 }
 
