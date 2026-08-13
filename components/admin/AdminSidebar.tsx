@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Clock, DollarSign,
   BookOpen, QrCode, ConciergeBell, Users, ChevronDown, ChevronRight,
-  Settings, LogOut, Menu, X, UserCog, Building2, Check, Loader2, Lock, Truck, Beer
+  Settings, LogOut, Menu, X, UserCog, Building2, Check, Loader2, Lock, Truck, Beer, Megaphone
 } from 'lucide-react'
 import { getPlanoConfig } from '@/lib/planos'
 
@@ -20,6 +20,7 @@ const NAV = [
   { href: '/admin/chopes',         label: 'Chopes',        icon: Beer,            apenasAdmin: true,  flag: 'chopes'    },
   { href: '/admin/delivery',       label: 'Delivery',      icon: Truck,           apenasAdmin: true,  flag: 'delivery'  },
   { href: '/admin/equipe',         label: 'Equipe',        icon: UserCog,         apenasAdmin: true,  flag: null        },
+  { href: '/admin/marketing',      label: 'Marketing',     icon: Megaphone,       apenasAdmin: true,  flag: null        },
   { href: '/admin/configuracoes',  label: 'Configurações', icon: Settings,        apenasAdmin: true,  flag: null        },
 ]
 

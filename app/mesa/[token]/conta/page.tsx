@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
-  CheckCircle2, Clock, ChefHat, Loader2,
-  ShoppingBag, QrCode, ConciergeBell, Plus,
+  CheckCircle2, Clock, ChefHat, Loader2, ConciergeBell,
+  ShoppingBag, QrCode, Plus,
   Copy, Check, ChevronDown, ChevronUp, ArrowLeft,
   MapPin, Banknote, CreditCard, X,
 } from 'lucide-react'
@@ -61,9 +61,21 @@ export default function ContaPage() {
   const [copiado, setCopiado] = useState(false)
   const [chamandoGarcom, setChamandoGarcom] = useState(false)
   const [garcomChamado, setGarcomChamado] = useState(false)
+  const [funcionarioId, setFuncionarioId] = useState<string | null>(null)
+  const [descontoFuncionario, setDescontoFuncionario] = useState(0)
+  const [lancandoComanda, setLancandoComanda] = useState(false)
+  const [comandaLancada, setComandaLancada] = useState(false)
   const [garcomPix, setGarcomPix] = useState(false)
   const [pixChave, setPixChave] = useState<string | null>(null)
   const [corPrimaria, setCorPrimaria] = useState('#1A9B8A')
+
+  // Cupom
+  const [cupomCodigo, setCupomCodigo] = useState('')
+  const [cupomAplicado, setCupomAplicado] = useState<{
+    id: string; nome: string; desconto_tipo: string; desconto_valor: number
+  } | null>(null)
+  const [cupomErro, setCupomErro] = useState('')
+  const [cupomCarregando, setCupomCarregando] = useState(false)
   const [saldoHabilitado, setSaldoHabilitado] = useState(false)
   const [saldoCliente, setSaldoCliente] = useState<{
     id: string; nome: string | null; telefone: string; saldo_disponivel: number
@@ -99,6 +111,16 @@ export default function ContaPage() {
 
   // IDs de itens que já sabemos que estão "pronto" — para detectar novos
   const prontosSabidos = useRef<Set<string>>(new Set())
+
+  // Detecta sessão de funcionário
+  useEffect(() => {
+    const fid = sessionStorage.getItem('funcionario_id')
+    const desc = sessionStorage.getItem('desconto_funcionario')
+    if (fid) {
+      setFuncionarioId(fid)
+      setDescontoFuncionario(Number(desc ?? 0))
+    }
+  }, [])
 
   // Carrega chave PIX, cor primária e saldo do restaurante
   useEffect(() => {
@@ -221,6 +243,13 @@ export default function ContaPage() {
   const totalGeral = pedidos.flatMap((p) => p.pedido_itens)
     .reduce((acc, i) => acc + i.item_preco * i.quantidade, 0)
 
+  const descontoCupom = cupomAplicado
+    ? cupomAplicado.desconto_tipo === 'percentual'
+      ? totalGeral * (cupomAplicado.desconto_valor / 100)
+      : Math.min(cupomAplicado.desconto_valor, totalGeral)
+    : 0
+  const totalComCupom = totalGeral - descontoCupom
+
   const todosEntregues = pedidos.length > 0 &&
     pedidos.every((p) => p.pedido_itens.every((i) => i.status === 'entregue'))
 
@@ -231,6 +260,22 @@ export default function ContaPage() {
       else next.add(id)
       return next
     })
+  }
+
+  async function aplicarCupom() {
+    if (!cupomCodigo.trim()) return
+    setCupomCarregando(true)
+    setCupomErro('')
+    const res = await fetch(`/api/mesa/${token}/aplicar-cupom`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codigo: cupomCodigo }),
+    })
+    const data = await res.json()
+    setCupomCarregando(false)
+    if (!res.ok) { setCupomErro(data.error ?? 'Cupom inválido'); return }
+    setCupomAplicado(data.cupom)
+    setCupomCodigo('')
   }
 
   async function copiarPix() {
@@ -313,6 +358,27 @@ export default function ContaPage() {
       setCkErro('Erro de conexão.')
     } finally {
       setCkSalvando(false)
+    }
+  }
+
+  async function lancarNaComanda() {
+    const sessaoId = sessionStorage.getItem('sessao_id') || localStorage.getItem(`menue_sess_${token}`)
+    if (!sessaoId) return
+    setLancandoComanda(true)
+    const res = await fetch(`/api/mesa/${token}/lancar-comanda`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessao_id: sessaoId }),
+    })
+    setLancandoComanda(false)
+    if (res.ok) {
+      setComandaLancada(true)
+      sessionStorage.removeItem('sessao_id')
+      sessionStorage.removeItem('cliente_nome')
+      sessionStorage.removeItem('funcionario_id')
+      sessionStorage.removeItem('desconto_funcionario')
+      localStorage.removeItem(`menue_sess_${token}`)
+      localStorage.removeItem(`menue_sess_nome_${token}`)
     }
   }
 
@@ -613,45 +679,131 @@ export default function ContaPage() {
         )}
       </div>
 
-      {/* Botões fixos na base */}
-      {pedidos.length > 0 && !garcomChamado && !garcomPix && !(saldoHabilitado && saldoCliente) && !isDelivery && (
+      {/* Tela de confirmação pós-lançamento na comanda */}
+      {comandaLancada && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: '#F0FAFA' }}>
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center space-y-4">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: `${corPrimaria}20` }}>
+              <CheckCircle2 className="w-8 h-8" style={{ color: corPrimaria }} />
+            </div>
+            <h2 className="text-xl font-black text-slate-800">Lançado na comanda!</h2>
+            <p className="text-slate-500 text-sm">
+              {descontoFuncionario > 0
+                ? `Desconto de ${descontoFuncionario}% aplicado. O valor será descontado do seu salário no fechamento do mês.`
+                : 'Os itens foram lançados na sua comanda mensal.'}
+            </p>
+            <button onClick={() => router.push(`/mesa/${token}`)}
+              className="w-full py-3 rounded-2xl font-bold text-white text-sm"
+              style={{ background: corPrimaria }}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Botões fixos na base — funcionário */}
+      {pedidos.length > 0 && funcionarioId && !comandaLancada && (
         <div className="fixed bottom-0 left-0 right-0 p-4 space-y-2 bg-white/80 backdrop-blur border-t border-slate-100">
           <div className="max-w-lg mx-auto space-y-2">
-            {/* Pagar via PIX — só aparece se o restaurante configurou a chave */}
-            {pixChave && (
-              <Button
-                onClick={() => setModalPix(true)}
-                className="w-full h-12 text-black font-bold text-base"
-                style={{ background: corPrimaria }}
-              >
-                <QrCode className="w-5 h-5 mr-2" />
-                Pagar via Pix — {formatarReal(totalGeral)}
-              </Button>
+            <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 text-center">
+              <p className="text-xs font-semibold text-orange-700">
+                {descontoFuncionario > 0
+                  ? `Funcionário · ${descontoFuncionario}% de desconto aplicado — total: ${formatarReal(totalGeral * (1 - descontoFuncionario / 100))}`
+                  : 'Funcionário · sem desconto configurado'}
+              </p>
+            </div>
+            <Button onClick={lancarNaComanda} disabled={lancandoComanda}
+              className="w-full h-12 text-white font-bold text-base"
+              style={{ background: '#f97316' }}>
+              {lancandoComanda
+                ? <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                : <ChefHat className="w-5 h-5 mr-2" />}
+              Lançar na minha comanda — {formatarReal(totalGeral * (1 - descontoFuncionario / 100))}
+            </Button>
+            <button onClick={() => router.push(`/mesa/${token}/cardapio`)}
+              className="w-full text-center text-xs text-slate-400 py-1">
+              + Adicionar mais itens
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Botões fixos na base — cliente normal */}
+      {pedidos.length > 0 && !funcionarioId && !garcomChamado && !garcomPix && !(saldoHabilitado && saldoCliente) && !isDelivery && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur border-t border-slate-100">
+          <div className="max-w-lg mx-auto p-4 space-y-2">
+
+            {/* Campo de cupom */}
+            {!cupomAplicado ? (
+              <div className="space-y-1">
+                <div className="flex gap-2">
+                  <input
+                    value={cupomCodigo}
+                    onChange={e => { setCupomCodigo(e.target.value.toUpperCase()); setCupomErro('') }}
+                    onKeyDown={e => e.key === 'Enter' && aplicarCupom()}
+                    placeholder="Tem cupom? Digite aqui"
+                    className="flex-1 h-10 rounded-xl border border-slate-200 px-3 text-sm font-mono tracking-widest focus:outline-none focus:border-teal-400"
+                  />
+                  <button
+                    onClick={aplicarCupom}
+                    disabled={cupomCarregando || !cupomCodigo.trim()}
+                    className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold disabled:opacity-40 transition-colors flex items-center gap-1.5"
+                  >
+                    {cupomCarregando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Aplicar'}
+                  </button>
+                </div>
+                {cupomErro && <p className="text-xs text-red-500 pl-1">{cupomErro}</p>}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-600 text-sm">🎫</span>
+                  <div>
+                    <p className="text-xs font-bold text-green-800">{cupomAplicado.nome}</p>
+                    <p className="text-xs text-green-600">
+                      −{cupomAplicado.desconto_tipo === 'percentual'
+                        ? `${cupomAplicado.desconto_valor}%`
+                        : formatarReal(cupomAplicado.desconto_valor)
+                      } = economizou {formatarReal(descontoCupom)}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setCupomAplicado(null)} className="text-slate-400 hover:text-slate-600">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             )}
 
-            {/* Chamar garçom */}
-            <Button
-              onClick={() => chamarGarcom('conta')}
-              disabled={chamandoGarcom}
-              variant="outline"
-              className="w-full h-12 font-bold text-base"
-              style={{ borderColor: corPrimaria, color: corPrimaria }}
-            >
+            {/* Resumo com desconto */}
+            {cupomAplicado && (
+              <div className="flex justify-between text-sm px-1">
+                <span className="text-slate-400 line-through">{formatarReal(totalGeral)}</span>
+                <span className="font-black text-slate-800">{formatarReal(totalComCupom)}</span>
+              </div>
+            )}
+
+            {pixChave && (
+              <Button onClick={() => setModalPix(true)}
+                className="w-full h-12 text-black font-bold text-base"
+                style={{ background: corPrimaria }}>
+                <QrCode className="w-5 h-5 mr-2" />
+                Pagar via Pix — {formatarReal(totalComCupom)}
+              </Button>
+            )}
+            <Button onClick={() => chamarGarcom('conta')} disabled={chamandoGarcom}
+              variant="outline" className="w-full h-12 font-bold text-base"
+              style={{ borderColor: corPrimaria, color: corPrimaria }}>
               {chamandoGarcom
                 ? <Loader2 className="w-5 h-5 animate-spin mr-2" />
                 : <ConciergeBell className="w-5 h-5 mr-2" />}
               Chamar garçom para pagar
             </Button>
-
-            <button
-              onClick={() => router.push(`/mesa/${token}/cardapio`)}
-              className="w-full text-center text-xs text-slate-400 py-1"
-            >
+            <button onClick={() => router.push(`/mesa/${token}/cardapio`)}
+              className="w-full text-center text-xs text-slate-400 py-1">
               + Adicionar mais itens
             </button>
           </div>
         </div>
-
       )}
 
       {/* Botões delivery */}

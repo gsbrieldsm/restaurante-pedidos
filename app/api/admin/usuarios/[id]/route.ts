@@ -21,14 +21,16 @@ export async function PATCH(
   const supabase = createServiceClient()
   const tenantId = await getTenantId()
 
-  const { cargo, ativo } = await req.json() as {
+  const { cargo, ativo, desconto_funcionario } = await req.json() as {
     cargo?: 'admin' | 'operador'
     ativo?: boolean
+    desconto_funcionario?: number
   }
 
   const updates: Record<string, unknown> = {}
   if (cargo !== undefined) updates.cargo = cargo
   if (ativo !== undefined) updates.ativo = ativo
+  if (desconto_funcionario !== undefined) updates.desconto_funcionario = Math.min(100, Math.max(0, desconto_funcionario))
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Nada para atualizar.' }, { status: 400 })
@@ -58,7 +60,7 @@ export async function PATCH(
     .update(updates)
     .eq('id', id)
     .eq('tenant_id', tenantId ?? '')
-    .select('id, nome, email, cargo, ativo, convite_aceito, criado_em')
+    .select('id, nome, email, cargo, ativo, convite_aceito, criado_em, desconto_funcionario')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
-import { Loader2, ArrowRight, BookUser } from 'lucide-react'
+import { Loader2, ArrowRight, BookUser, ChefHat, Eye, EyeOff } from 'lucide-react'
 import { darkenHex, hexToRgbParts } from '@/lib/cor'
 
 export default function IdentificacaoPage() {
@@ -19,6 +19,12 @@ export default function IdentificacaoPage() {
   const [loading, setLoading] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [transferindo, setTransferindo] = useState(false)
+  const [modoFuncionario, setModoFuncionario] = useState(false)
+  const [funcEmail, setFuncEmail] = useState('')
+  const [funcSenha, setFuncSenha] = useState('')
+  const [funcSenhaVisivel, setFuncSenhaVisivel] = useState(false)
+  const [funcErro, setFuncErro] = useState('')
+  const [funcSalvando, setFuncSalvando] = useState(false)
   const [clienteNome, setClienteNome] = useState<string | null>(null)
   const [erro, setErro] = useState('')
   const [branding, setBranding] = useState<{
@@ -170,6 +176,31 @@ export default function IdentificacaoPage() {
     router.push(`/mesa/${token}/cardapio`)
   }
 
+  async function handleFuncionario(e: React.FormEvent) {
+    e.preventDefault()
+    setFuncErro('')
+    setFuncSalvando(true)
+
+    const res = await fetch(`/api/mesas/${token}/sessao/funcionario`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: funcEmail, senha: funcSenha }),
+    })
+
+    const data = await res.json()
+    setFuncSalvando(false)
+
+    if (!res.ok) { setFuncErro(data.error ?? 'Erro ao autenticar.'); return }
+
+    sessionStorage.setItem('sessao_id', data.sessao.id)
+    sessionStorage.setItem('cliente_nome', data.funcionario.nome)
+    sessionStorage.setItem('funcionario_id', data.funcionario.id)
+    sessionStorage.setItem('desconto_funcionario', String(data.funcionario.desconto_funcionario))
+    localStorage.setItem(`menue_sess_${token}`, data.sessao.id)
+    localStorage.setItem(`menue_sess_nome_${token}`, data.funcionario.nome)
+    router.push(`/mesa/${token}/cardapio`)
+  }
+
   // ── Transferindo comanda ──
   if (transferindo) {
     return (
@@ -241,6 +272,52 @@ export default function IdentificacaoPage() {
           <p className="text-white/50 text-sm mt-2">Informe seu nome para abrir sua comanda</p>
         </div>
         <CardContent className="pt-6">
+          {/* Toggle cliente / funcionário */}
+          <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-5">
+            <button type="button" onClick={() => setModoFuncionario(false)}
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${!modoFuncionario ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>
+              Cliente
+            </button>
+            <button type="button" onClick={() => setModoFuncionario(true)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${modoFuncionario ? 'bg-white shadow-sm' : 'text-slate-400'}`}
+              style={modoFuncionario ? { color: cor } : {}}>
+              <ChefHat className="w-3.5 h-3.5" />Funcionário
+            </button>
+          </div>
+
+          {/* Formulário funcionário */}
+          {modoFuncionario ? (
+            <form onSubmit={handleFuncionario} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="func-email">E-mail</Label>
+                <Input id="func-email" type="email" placeholder="seu@email.com"
+                  value={funcEmail} onChange={(e) => setFuncEmail(e.target.value)}
+                  autoFocus className="h-12 text-base" required />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="func-senha">Senha</Label>
+                <div className="relative">
+                  <Input id="func-senha" type={funcSenhaVisivel ? 'text' : 'password'}
+                    placeholder="••••••" value={funcSenha}
+                    onChange={(e) => setFuncSenha(e.target.value)}
+                    className="h-12 text-base pr-11" required />
+                  <button type="button" onClick={() => setFuncSenhaVisivel(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    {funcSenhaVisivel ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              {funcErro && <p className="text-sm text-red-500">{funcErro}</p>}
+              <Button type="submit" disabled={funcSalvando || !funcEmail || !funcSenha}
+                className="w-full h-12 text-base font-bold text-white hover:opacity-90"
+                style={{ background: cor }}>
+                {funcSalvando
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Autenticando...</>
+                  : <><ChefHat className="w-4 h-4 mr-2" />Entrar como funcionário</>}
+              </Button>
+            </form>
+          ) : (
+          <>
           {nome && localStorage.getItem('mmu_cliente_nome') === nome && (
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 mb-4">
               <BookUser className="w-4 h-4 shrink-0" style={{ color: cor }} />
@@ -285,6 +362,8 @@ export default function IdentificacaoPage() {
                 : <><ArrowRight className="w-4 h-4 mr-2" /> Abrir minha comanda</>}
             </Button>
           </form>
+          </>
+          )}
         </CardContent>
       </Card>
     </div>

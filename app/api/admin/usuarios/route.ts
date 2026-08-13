@@ -19,7 +19,7 @@ export async function GET() {
 
   let q = supabase
     .from('usuarios')
-    .select('id, nome, email, cargo, ativo, convite_aceito, convite_expira_em, criado_em')
+    .select('id, nome, email, cargo, ativo, convite_aceito, convite_expira_em, criado_em, desconto_funcionario')
     .order('criado_em', { ascending: true })
 
   if (tenantId) q = (q as any).eq('tenant_id', tenantId)

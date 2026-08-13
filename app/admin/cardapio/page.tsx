@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, Loader2, ImagePlus, X, Settings2, Check } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, ImagePlus, X, Settings2, Check, FlaskConical, BookOpen, Save } from 'lucide-react'
 import type { CardapioItem, EstacaoTipo, GrupoOpcao } from '@/lib/supabase/types'
 
 const ESTACOES: EstacaoTipo[] = ['cozinha', 'bar', 'drinks', 'chopeira']
@@ -30,6 +30,84 @@ export default function CardapioAdminPage() {
   const [filtroEstacao, setFiltroEstacao] = useState<string>('todas')
   const [togglendoId, setTogglendoId] = useState<string | null>(null)
   const [erroForm, setErroForm] = useState<string | null>(null)
+
+  // — Ficha Técnica —
+  const [modalFichaItem, setModalFichaItem] = useState<CardapioItem | null>(null)
+  const [fichaInsumos, setFichaInsumos] = useState<{
+    id: string; quantidade: number;
+    insumos: { id: string; nome: string; unidade: string; custo_unit: number }
+  }[]>([])
+  const [loadingFicha, setLoadingFicha] = useState(false)
+  const [fichaForm, setFichaForm] = useState({ nome: '', unidade: 'un', custo_unit: '', quantidade: '' })
+  const [fichaErro, setFichaErro] = useState<string | null>(null)
+  const [salvandoFicha, setSalvandoFicha] = useState(false)
+  const [catalogoInsumos, setCatalogoInsumos] = useState<{ id: string; nome: string; unidade: string; custo_unit: number }[]>([])
+  const [fichaFiltro, setFichaFiltro] = useState('')
+
+  async function abrirFicha(item: CardapioItem) {
+    setModalFichaItem(item)
+    setFichaErro(null)
+    setFichaForm({ nome: '', unidade: 'un', custo_unit: '', quantidade: '' })
+    setFichaFiltro('')
+    setLoadingFicha(true)
+    const [fichaRes, catRes] = await Promise.all([
+      fetch(`/api/admin/cardapio/${item.id}/insumos`),
+      fetch('/api/admin/insumos'),
+    ])
+    const [fichaData, catData] = await Promise.all([fichaRes.json(), catRes.json()])
+    setFichaInsumos(fichaData.insumos ?? [])
+    setCatalogoInsumos(catData.insumos ?? [])
+    setLoadingFicha(false)
+  }
+
+  async function salvarFichaInsumo() {
+    if (!modalFichaItem) return
+    if (!fichaForm.nome.trim()) { setFichaErro('Nome do insumo obrigatório'); return }
+    if (!fichaForm.quantidade || Number(fichaForm.quantidade) <= 0) { setFichaErro('Quantidade inválida'); return }
+    setSalvandoFicha(true)
+    setFichaErro(null)
+    const res = await fetch(`/api/admin/cardapio/${modalFichaItem.id}/insumos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: fichaForm.nome.trim(),
+        unidade: fichaForm.unidade,
+        custo_unit: Number(fichaForm.custo_unit) || 0,
+        quantidade: Number(fichaForm.quantidade),
+      }),
+    })
+    if (res.ok) {
+      setFichaForm({ nome: '', unidade: 'un', custo_unit: '', quantidade: '' })
+      setFichaFiltro('')
+      const [fichaData, catData] = await Promise.all([
+        fetch(`/api/admin/cardapio/${modalFichaItem.id}/insumos`).then(r => r.json()),
+        fetch('/api/admin/insumos').then(r => r.json()),
+      ])
+      setFichaInsumos(fichaData.insumos ?? [])
+      setCatalogoInsumos(catData.insumos ?? [])
+      buscarItens()
+    } else {
+      const d = await res.json()
+      setFichaErro(d.error ?? 'Erro ao salvar')
+    }
+    setSalvandoFicha(false)
+  }
+
+  async function removerFichaInsumo(fichaId: string) {
+    if (!modalFichaItem) return
+    await fetch(`/api/admin/cardapio/${modalFichaItem.id}/insumos`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ficha_id: fichaId }),
+    })
+    const [fichaData] = await Promise.all([
+      fetch(`/api/admin/cardapio/${modalFichaItem.id}/insumos`).then(r => r.json()),
+    ])
+    setFichaInsumos(fichaData.insumos ?? [])
+    buscarItens()
+  }
+
+  const fichaTotal = fichaInsumos.reduce((acc, r) => acc + r.quantidade * r.insumos.custo_unit, 0)
 
   // — Opcionais —
   const [modalOpcionaisItem, setModalOpcionaisItem] = useState<CardapioItem | null>(null)
@@ -286,6 +364,69 @@ export default function CardapioAdminPage() {
     await recarregarGrupos(item.id)
   }
 
+  // — Aba do cardápio —
+  const [abaCardapio, setAbaCardapio] = useState<'itens' | 'insumos'>('itens')
+
+  // — Catálogo de insumos (sub-aba) —
+  const [catalogoLista, setCatalogoLista] = useState<{ id: string; nome: string; unidade: string; custo_unit: number }[]>([])
+  const [loadingCatalogo, setLoadingCatalogo] = useState(false)
+  const [editandoInsumo, setEditandoInsumo] = useState<string | null>(null)
+  const [editInsumoForm, setEditInsumoForm] = useState({ nome: '', unidade: 'un', custo_unit: '' })
+  const [salvandoInsumo, setSalvandoInsumo] = useState(false)
+  const [novoInsumoForm, setNovoInsumoForm] = useState({ nome: '', unidade: 'un', custo_unit: '' })
+  const [adicionandoInsumo, setAdicionandoInsumo] = useState(false)
+  const [novoInsumoAberto, setNovoInsumoAberto] = useState(false)
+
+  async function carregarCatalogo() {
+    setLoadingCatalogo(true)
+    const res = await fetch('/api/admin/insumos')
+    const data = await res.json()
+    setCatalogoLista(data.insumos ?? [])
+    setLoadingCatalogo(false)
+  }
+
+  function abrirAbaInsumos() {
+    setAbaCardapio('insumos')
+    carregarCatalogo()
+  }
+
+  async function salvarEdicaoInsumo(id: string) {
+    setSalvandoInsumo(true)
+    await fetch('/api/admin/insumos', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, nome: editInsumoForm.nome, unidade: editInsumoForm.unidade, custo_unit: Number(editInsumoForm.custo_unit) || 0 }),
+    })
+    setEditandoInsumo(null)
+    setSalvandoInsumo(false)
+    carregarCatalogo()
+    buscarItens()
+  }
+
+  async function deletarInsumo(id: string) {
+    if (!confirm('Remover este insumo do catálogo? Ele será desvinculado de todos os itens.')) return
+    await fetch('/api/admin/insumos', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    carregarCatalogo()
+  }
+
+  async function criarNovoInsumo() {
+    if (!novoInsumoForm.nome.trim()) return
+    setAdicionandoInsumo(true)
+    await fetch('/api/admin/insumos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome: novoInsumoForm.nome.trim(), unidade: novoInsumoForm.unidade, custo_unit: Number(novoInsumoForm.custo_unit) || 0 }),
+    })
+    setNovoInsumoForm({ nome: '', unidade: 'un', custo_unit: '' })
+    setNovoInsumoAberto(false)
+    setAdicionandoInsumo(false)
+    carregarCatalogo()
+  }
+
   const itensFiltrados = filtroEstacao === 'todas'
     ? itens
     : itens.filter((i) => i.estacao === filtroEstacao)
@@ -299,14 +440,136 @@ export default function CardapioAdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Cardápio</h1>
-          <p className="text-slate-500 text-sm">{itens.length} itens cadastrados</p>
+          <p className="text-slate-500 text-sm">
+            {abaCardapio === 'itens' ? `${itens.length} itens cadastrados` : `${catalogoLista.length} insumos no catálogo`}
+          </p>
         </div>
-        <Button onClick={abrirNovo} className="bg-teal-600 hover:bg-teal-700 gap-2">
-          <Plus className="w-4 h-4" />
-          Novo Item
-        </Button>
+        {abaCardapio === 'itens' ? (
+          <Button onClick={abrirNovo} className="bg-teal-600 hover:bg-teal-700 gap-2">
+            <Plus className="w-4 h-4" />Novo Item
+          </Button>
+        ) : (
+          <Button onClick={() => setNovoInsumoAberto(true)} className="bg-orange-500 hover:bg-orange-600 gap-2">
+            <Plus className="w-4 h-4" />Novo Insumo
+          </Button>
+        )}
       </div>
 
+      {/* Sub-abas */}
+      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setAbaCardapio('itens')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${abaCardapio === 'itens' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          <BookOpen className="w-4 h-4" />Itens
+        </button>
+        <button
+          onClick={abrirAbaInsumos}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${abaCardapio === 'insumos' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          <FlaskConical className="w-4 h-4" />Insumos
+        </button>
+      </div>
+
+      {/* ── Aba Insumos ── */}
+      {abaCardapio === 'insumos' && (
+        <div className="space-y-3">
+          {/* Formulário novo insumo */}
+          {novoInsumoAberto && (
+            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 space-y-3">
+              <p className="text-sm font-bold text-orange-700">Novo insumo</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-1 space-y-1">
+                  <label className="text-xs font-semibold text-slate-600">Nome</label>
+                  <Input value={novoInsumoForm.nome} onChange={(e) => setNovoInsumoForm(f => ({ ...f, nome: e.target.value }))} placeholder="Ex: Carne bovina" className="text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600">Unidade</label>
+                  <select value={novoInsumoForm.unidade} onChange={(e) => setNovoInsumoForm(f => ({ ...f, unidade: e.target.value }))} className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm outline-none focus:border-orange-400">
+                    {['un','kg','g','l','ml','cx','pç','dz'].map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600">Custo/unid (R$)</label>
+                  <Input type="number" step="0.0001" value={novoInsumoForm.custo_unit} onChange={(e) => setNovoInsumoForm(f => ({ ...f, custo_unit: e.target.value }))} placeholder="0.00" className="text-sm" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setNovoInsumoAberto(false)} className="px-4 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600">Cancelar</button>
+                <button onClick={criarNovoInsumo} disabled={adicionandoInsumo || !novoInsumoForm.nome.trim()} className="px-4 py-2 text-sm rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-semibold disabled:opacity-50 flex items-center gap-2">
+                  {adicionandoInsumo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}Salvar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Lista do catálogo */}
+          {loadingCatalogo ? (
+            <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
+          ) : catalogoLista.length === 0 ? (
+            <div className="text-center py-16 text-slate-400">
+              <FlaskConical className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Nenhum insumo cadastrado ainda.</p>
+              <p className="text-xs mt-1">Adicione ingredientes pela ficha técnica de cada item ou pelo botão acima.</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              {/* Header da tabela */}
+              <div className="grid grid-cols-12 gap-2 px-5 py-3 bg-slate-50 text-xs font-bold text-slate-400 uppercase tracking-wide border-b border-slate-100">
+                <div className="col-span-5">Nome</div>
+                <div className="col-span-2">Unidade</div>
+                <div className="col-span-3">Custo/unid</div>
+                <div className="col-span-2 text-right">Ações</div>
+              </div>
+              {catalogoLista.map((insumo, idx) => (
+                <div key={insumo.id} className={`grid grid-cols-12 gap-2 px-5 py-3 items-center ${idx < catalogoLista.length - 1 ? 'border-b border-slate-50' : ''} hover:bg-slate-50/60 transition-colors`}>
+                  {editandoInsumo === insumo.id ? (
+                    <>
+                      <div className="col-span-5">
+                        <Input value={editInsumoForm.nome} onChange={(e) => setEditInsumoForm(f => ({ ...f, nome: e.target.value }))} className="text-sm h-8" autoFocus />
+                      </div>
+                      <div className="col-span-2">
+                        <select value={editInsumoForm.unidade} onChange={(e) => setEditInsumoForm(f => ({ ...f, unidade: e.target.value }))} className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-orange-400">
+                          {['un','kg','g','l','ml','cx','pç','dz'].map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                      </div>
+                      <div className="col-span-3">
+                        <Input type="number" step="0.0001" value={editInsumoForm.custo_unit} onChange={(e) => setEditInsumoForm(f => ({ ...f, custo_unit: e.target.value }))} className="text-sm h-8" />
+                      </div>
+                      <div className="col-span-2 flex justify-end gap-1">
+                        <button onClick={() => salvarEdicaoInsumo(insumo.id)} disabled={salvandoInsumo} className="p-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-colors">
+                          {salvandoInsumo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                        </button>
+                        <button onClick={() => setEditandoInsumo(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                          <X className="w-3.5 h-3.5 text-slate-400" />
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="col-span-5 text-sm font-medium text-slate-700">{insumo.nome}</div>
+                      <div className="col-span-2 text-sm text-slate-500">{insumo.unidade}</div>
+                      <div className="col-span-3 text-sm font-semibold text-slate-700">R$ {Number(insumo.custo_unit).toFixed(4)}</div>
+                      <div className="col-span-2 flex justify-end gap-1">
+                        <button onClick={() => { setEditandoInsumo(insumo.id); setEditInsumoForm({ nome: insumo.nome, unidade: insumo.unidade, custo_unit: String(insumo.custo_unit) }) }} className="p-1.5 rounded hover:bg-slate-100 transition-colors">
+                          <Pencil className="w-3.5 h-3.5 text-slate-400" />
+                        </button>
+                        <button onClick={() => deletarInsumo(insumo.id)} className="p-1.5 rounded hover:bg-red-50 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Filtro por estação — só na aba Itens */}
+      {abaCardapio === 'itens' && (
+      <>
       {/* Filtro por estação */}
       <div className="flex gap-2 flex-wrap">
         <button
@@ -426,6 +689,13 @@ export default function CardapioAdminPage() {
                         </button>
 
                         <button
+                          onClick={() => abrirFicha(item)}
+                          title="Ficha Técnica"
+                          className="p-1.5 rounded hover:bg-orange-50 relative"
+                        >
+                          <FlaskConical className="w-4 h-4 text-orange-400" />
+                        </button>
+                        <button
                           onClick={() => abrirOpcionais(item)}
                           title="Opcionais"
                           className="p-1.5 rounded hover:bg-teal-50 relative"
@@ -445,6 +715,143 @@ export default function CardapioAdminPage() {
             </div>
           </div>
         ))
+      )}
+
+      {/* ── Painel lateral de Ficha Técnica ── */}
+      {!!modalFichaItem && (
+        <div className="fixed inset-0 z-50 flex bg-black/40" onClick={() => setModalFichaItem(null)}>
+          <div className="relative ml-auto w-full max-w-lg bg-white flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {/* Cabeçalho */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-orange-50 shrink-0">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="w-4 h-4 text-orange-500" />
+                <div>
+                  <p className="font-bold text-slate-800 text-sm">Ficha Técnica</p>
+                  <p className="text-xs text-slate-500 truncate max-w-[280px]">{modalFichaItem.nome}</p>
+                </div>
+              </div>
+              <button onClick={() => setModalFichaItem(null)} className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center transition-colors">
+                <X className="w-4 h-4 text-slate-600" />
+              </button>
+            </div>
+
+            {loadingFicha ? (
+              <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-5 space-y-5">
+
+                {/* Custo total calculado */}
+                <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: fichaTotal > 0 ? '#fff7ed' : '#f8fafc', border: '1px solid', borderColor: fichaTotal > 0 ? '#fed7aa' : '#e2e8f0' }}>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Custo total (CMV)</p>
+                    <p className="text-2xl font-black" style={{ color: fichaTotal > 0 ? '#ea580c' : '#cbd5e1' }}>
+                      {fichaTotal > 0 ? `R$ ${fichaTotal.toFixed(2).replace('.', ',')}` : '—'}
+                    </p>
+                  </div>
+                  {modalFichaItem.preco > 0 && fichaTotal > 0 && (
+                    <div className="text-right">
+                      <p className="text-xs text-slate-400">Margem</p>
+                      <p className={`text-lg font-black ${((modalFichaItem.preco - fichaTotal) / modalFichaItem.preco * 100) >= 60 ? 'text-emerald-600' : ((modalFichaItem.preco - fichaTotal) / modalFichaItem.preco * 100) >= 35 ? 'text-amber-500' : 'text-red-500'}`}>
+                        {(((modalFichaItem.preco - fichaTotal) / modalFichaItem.preco) * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Lista de insumos */}
+                {fichaInsumos.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Ingredientes</p>
+                    {fichaInsumos.map((row) => (
+                      <div key={row.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-700 truncate">{row.insumos.nome}</p>
+                          <p className="text-xs text-slate-400">
+                            {row.quantidade} {row.insumos.unidade} × R$ {row.insumos.custo_unit.toFixed(4)} = <span className="font-semibold text-slate-600">R$ {(row.quantidade * row.insumos.custo_unit).toFixed(2)}</span>
+                          </p>
+                        </div>
+                        <button onClick={() => removerFichaInsumo(row.id)} className="p-1.5 rounded hover:bg-red-50 shrink-0">
+                          <X className="w-3.5 h-3.5 text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Formulário para adicionar insumo */}
+                <div className="space-y-3 border border-slate-200 rounded-xl p-4">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Adicionar ingrediente</p>
+
+                  {/* Autocomplete do catálogo */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-600">Nome</label>
+                    <div className="relative">
+                      <Input
+                        value={fichaForm.nome}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setFichaForm(f => ({ ...f, nome: v }))
+                          setFichaFiltro(v)
+                          const match = catalogoInsumos.find(i => i.nome.toLowerCase() === v.toLowerCase())
+                          if (match) setFichaForm(f => ({ ...f, nome: match.nome, unidade: match.unidade, custo_unit: String(match.custo_unit) }))
+                        }}
+                        placeholder="Ex: Carne bovina"
+                        className="text-sm"
+                      />
+                      {fichaFiltro.length > 0 && catalogoInsumos.filter(i => i.nome.toLowerCase().includes(fichaFiltro.toLowerCase()) && i.nome.toLowerCase() !== fichaFiltro.toLowerCase()).length > 0 && (
+                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 max-h-40 overflow-y-auto">
+                          {catalogoInsumos.filter(i => i.nome.toLowerCase().includes(fichaFiltro.toLowerCase())).map(i => (
+                            <button key={i.id} className="w-full text-left px-4 py-2.5 text-sm hover:bg-teal-50 transition-colors"
+                              onClick={() => {
+                                setFichaForm(f => ({ ...f, nome: i.nome, unidade: i.unidade, custo_unit: String(i.custo_unit) }))
+                                setFichaFiltro('')
+                              }}>
+                              <span className="font-medium">{i.nome}</span>
+                              <span className="text-xs text-slate-400 ml-2">{i.unidade} · R$ {i.custo_unit}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-600">Unidade</label>
+                      <select
+                        value={fichaForm.unidade}
+                        onChange={(e) => setFichaForm(f => ({ ...f, unidade: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-sm outline-none focus:border-teal-400"
+                      >
+                        {['un','kg','g','l','ml','cx','pç','dz'].map(u => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-600">Custo/unid (R$)</label>
+                      <Input type="number" step="0.0001" value={fichaForm.custo_unit} onChange={(e) => setFichaForm(f => ({ ...f, custo_unit: e.target.value }))} placeholder="0.00" className="text-sm" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-600">Quantidade</label>
+                      <Input type="number" step="0.001" value={fichaForm.quantidade} onChange={(e) => setFichaForm(f => ({ ...f, quantidade: e.target.value }))} placeholder="1" className="text-sm" />
+                    </div>
+                  </div>
+
+                  {fichaErro && <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠️ {fichaErro}</p>}
+
+                  <button
+                    onClick={salvarFichaInsumo}
+                    disabled={salvandoFicha}
+                    className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm rounded-xl py-2.5 transition-colors disabled:opacity-50"
+                  >
+                    {salvandoFicha ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    Adicionar ingrediente
+                  </button>
+                </div>
+
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* ── Painel lateral de Opcionais (overlay custom, sem Dialog) ── */}
@@ -635,6 +1042,9 @@ export default function CardapioAdminPage() {
             )}
           </div>
         </div>
+      )}
+
+      </>
       )}
 
       {/* Modal novo/editar */}
