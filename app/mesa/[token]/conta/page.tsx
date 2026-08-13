@@ -68,6 +68,7 @@ export default function ContaPage() {
   const [garcomPix, setGarcomPix] = useState(false)
   const [pixChave, setPixChave] = useState<string | null>(null)
   const [corPrimaria, setCorPrimaria] = useState('#1A9B8A')
+  const [nomeRestaurante, setNomeRestaurante] = useState('Menuê+')
 
   // Cupom
   const [cupomCodigo, setCupomCodigo] = useState('')
@@ -129,6 +130,7 @@ export default function ContaPage() {
       .then((d) => {
         setPixChave(d.branding?.pix_chave ?? null)
         setCorPrimaria(d.branding?.cor_primaria ?? '#1A9B8A')
+        if (d.branding?.restaurante_nome) setNomeRestaurante(d.branding.restaurante_nome)
         if (d.branding?.slug) setSlugDelivery(d.branding.slug)
 
         const habilitado = d.branding?.saldo_habilitado ?? false
@@ -427,7 +429,7 @@ export default function ContaPage() {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold tracking-widest uppercase leading-none" style={{ color: `rgba(${rgb}, 0.75)` }}>Menuê+</p>
+            <p className="text-xs font-bold tracking-widest uppercase leading-none" style={{ color: `rgba(${rgb}, 0.75)` }}>{nomeRestaurante}</p>
             <h1 className="text-white font-black text-2xl leading-tight">
               {isDelivery ? '🚚 Delivery' : (mesaNome ?? `Mesa ${mesaNumero}`)}
             </h1>
@@ -1020,7 +1022,8 @@ export default function ContaPage() {
                   {copiado ? <><Check className="w-3.5 h-3.5" /> Copiado!</> : <><Copy className="w-3.5 h-3.5" /> Copiar</>}
                 </button>
               </div>
-              <p className="text-xs text-slate-400 text-center">{RESTAURANT_NAME}</p>
+              <p className="text-xs text-slate-400 text-center">{nomeRestaurante}</p>
+              <p className="text-xs text-slate-300 text-center mt-1">Desenvolvido por Menuê+ Sistemas de Gestão</p>
             </div>
 
             {/* Já paguei */}
