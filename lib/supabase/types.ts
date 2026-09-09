@@ -76,6 +76,7 @@ export interface CardapioItem {
   disponivel: boolean
   imagem_url: string | null
   ordem: number
+  tags: string[]
   criado_em: string
 }
 

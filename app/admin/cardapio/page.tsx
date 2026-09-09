@@ -15,9 +15,17 @@ const ESTACAO_EMOJI: Record<string, string> = {
   cozinha: '🍳', bar: '🍺', drinks: '🍹', chopeira: '🍻',
 }
 
+const DIETA_OPCOES = [
+  { key: 'vegetariano', label: 'Vegetariano', emoji: '🥦' },
+  { key: 'vegano',      label: 'Vegano',       emoji: '🌱' },
+  { key: 'sem_lactose', label: 'Sem Lactose',  emoji: '🥛' },
+  { key: 'sem_gluten',  label: 'Sem Glúten',   emoji: '🌾' },
+]
+
 const FORM_VAZIO = {
   nome: '', descricao: '', preco: '', custo: '', categoria: '',
   estacao: 'cozinha' as EstacaoTipo, tempo_preparo_estimado: '10',
+  tags: [] as string[],
 }
 
 export default function CardapioAdminPage() {
@@ -181,6 +189,7 @@ export default function CardapioAdminPage() {
       categoria: item.categoria,
       estacao: item.estacao,
       tempo_preparo_estimado: item.tempo_preparo_estimado.toString(),
+      tags: item.tags ?? [],
     })
     setImagemAtual(item.imagem_url)
     setImagemPreview(null)
@@ -231,6 +240,7 @@ export default function CardapioAdminPage() {
       estacao: form.estacao,
       tempo_preparo_estimado: parseInt(form.tempo_preparo_estimado) || 10,
       imagem_url: imagemUrl,
+      tags: form.tags,
     }
 
     if (editando) {
@@ -659,12 +669,20 @@ export default function CardapioAdminPage() {
                         {item.descricao && (
                           <p className="text-xs text-slate-400 truncate">{item.descricao}</p>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5 flex-wrap">
                           <span className="font-semibold text-teal-700">
                             R$ {item.preco.toFixed(2).replace('.', ',')}
                           </span>
                           <span>·</span>
                           <span>~{item.tempo_preparo_estimado}min</span>
+                          {(item.tags ?? []).map(t => {
+                            const op = DIETA_OPCOES.find(o => o.key === t)
+                            return op ? (
+                              <span key={t} className="px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-600 font-medium">
+                                {op.emoji} {op.label}
+                              </span>
+                            ) : null
+                          })}
                         </div>
                       </div>
 
@@ -1169,6 +1187,34 @@ export default function CardapioAdminPage() {
                 </Select>
               </div>
             </div>
+            {/* Perfil dietético */}
+            <div className="space-y-1.5">
+              <Label>Perfil dietético</Label>
+              <div className="flex flex-wrap gap-2">
+                {DIETA_OPCOES.map(({ key, label, emoji }) => {
+                  const ativo = form.tags.includes(key)
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setForm(f => ({
+                        ...f,
+                        tags: ativo ? f.tags.filter(t => t !== key) : [...f.tags, key],
+                      }))}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                        ativo
+                          ? 'border-teal-500 bg-teal-50 text-teal-700'
+                          : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                      }`}
+                    >
+                      <span>{emoji}</span> {label}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-slate-400">Sem seleção = produto "livre" (sem restrição especial)</p>
+            </div>
+
             {erroForm && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                 ⚠️ {erroForm}

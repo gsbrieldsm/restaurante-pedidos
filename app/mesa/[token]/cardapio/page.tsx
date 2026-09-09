@@ -31,6 +31,7 @@ export default function CardapioPage() {
   const [categoriaAtiva, setCategoriaAtiva] = useState<string>('')
   const [carrinhoAberto, setCarrinhoAberto] = useState(false)
   const [busca, setBusca] = useState('')
+  const [filtroDieta, setFiltroDieta] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [observacoes, setObservacoes] = useState<Record<string, string>>({})
@@ -176,11 +177,14 @@ export default function CardapioPage() {
           i.nome.toLowerCase().includes(busca.toLowerCase()) ||
           i.descricao?.toLowerCase().includes(busca.toLowerCase())
       )
-    } else {
+    } else if (!filtroDieta) {
       lista = lista.filter((i) => i.categoria === categoriaAtiva)
     }
+    if (filtroDieta) {
+      lista = lista.filter((i) => (i.tags ?? []).includes(filtroDieta))
+    }
     return lista
-  }, [itens, categoriaAtiva, busca])
+  }, [itens, categoriaAtiva, busca, filtroDieta])
 
   const totalCarrinho = carrinho.reduce((acc, i) => acc + i.preco_unitario * i.quantidade, 0)
   const qtdCarrinho = carrinho.reduce((acc, i) => acc + i.quantidade, 0)
@@ -644,8 +648,32 @@ export default function CardapioPage() {
           </div>
         </div>
 
+        {/* Filtros dietéticos */}
+        <div className="flex gap-2 px-4 pb-1 overflow-x-auto no-scrollbar">
+          {[
+            { key: 'vegetariano', label: 'Vegetariano', emoji: '🥦' },
+            { key: 'vegano',      label: 'Vegano',       emoji: '🌱' },
+            { key: 'sem_lactose', label: 'Sem Lactose',  emoji: '🥛' },
+            { key: 'sem_gluten',  label: 'Sem Glúten',   emoji: '🌾' },
+          ].map(({ key, label, emoji }) => {
+            const ativo = filtroDieta === key
+            return (
+              <button
+                key={key}
+                onClick={() => { setFiltroDieta(ativo ? null : key); setBusca('') }}
+                className={`shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                  ativo ? 'bg-white shadow' : 'bg-white/10 text-white/80 hover:bg-white/20'
+                }`}
+                style={ativo ? { color: cor } : undefined}
+              >
+                {emoji} {label}
+              </button>
+            )
+          })}
+        </div>
+
         {/* Categorias */}
-        {!busca && (
+        {!busca && !filtroDieta && (
           <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
             {categorias.map((cat) => (
               <button
@@ -840,7 +868,7 @@ export default function CardapioPage() {
                       {item.descricao}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <span className="font-black text-base" style={{ color: cor }}>
                       R$ {item.preco.toFixed(2).replace('.', ',')}
                     </span>
@@ -848,6 +876,15 @@ export default function CardapioPage() {
                       <Clock className="w-3.5 h-3.5" />
                       ~{item.tempo_preparo_estimado}min
                     </span>
+                    {(['vegetariano','vegano','sem_lactose','sem_gluten'] as const).map(t => {
+                      if (!(item.tags ?? []).includes(t)) return null
+                      const labels: Record<string, string> = { vegetariano:'🥦', vegano:'🌱', sem_lactose:'🥛', sem_gluten:'🌾' }
+                      return (
+                        <span key={t} className="text-xs px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-600 font-medium">
+                          {labels[t]}
+                        </span>
+                      )
+                    })}
                   </div>
                 </div>
 
