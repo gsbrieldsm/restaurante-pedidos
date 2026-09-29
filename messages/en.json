@@ -1,0 +1,163 @@
+{
+  "nav": {
+    "partner": "Become a partner",
+    "login": "Sign in",
+    "trial": "Try for free →"
+  },
+  "hero": {
+    "badge": "New: Marketing, Coupons & Team Control",
+    "title1": "Take your restaurant",
+    "title2": "to the next level",
+    "subtitle": "Digital menu via QR code, real-time orders, waiter panel and much more. No app required.",
+    "cta_trial": "Start free trial",
+    "cta_demo": "Watch demo",
+    "social_proof": "Over 50 restaurants already using it",
+    "stat_orders": "orders/month",
+    "stat_time": "setup",
+    "stat_app": "No app"
+  },
+  "features": {
+    "title": "Everything your restaurant needs",
+    "subtitle": "A complete platform, from menu to financials.",
+    "items": {
+      "qr": { "title": "Digital QR menu", "desc": "Customers scan the QR at their table, view the menu and order directly from their phone. No app needed." },
+      "realtime": { "title": "Real-time orders", "desc": "Each order arrives instantly at the right station — kitchen, bar or drinks. Zero paper, zero noise." },
+      "delivery": { "title": "Delivery module", "desc": "Your own delivery link, zone-based fee calculation, delivery panel. No marketplace fees.", "badge": "Business+" },
+      "waiter": { "title": "Waiter panel", "desc": "Waiters see everything ready to deliver and receive calls in real time, without having to walk around." },
+      "balance": { "title": "Prepaid balance", "desc": "Frequent customers load credit in advance. Pix, cash or card — all recorded in the financials." },
+      "dashboard": { "title": "Live dashboard", "desc": "Full view of open tables, active tabs and the status of each order — no page refresh needed." },
+      "access": { "title": "Access control", "desc": "Create logins per employee with roles. Each person accesses only what they need." },
+      "financial": { "title": "Financial management", "desc": "Revenue, average ticket and top customers. Real data from your restaurant, no spreadsheet needed." }
+    }
+  },
+  "steps": {
+    "title": "How it works",
+    "subtitle": "In 4 simple steps, your restaurant is already running with Menuê+.",
+    "items": {
+      "s1": { "title": "QR code at the table", "desc": "Print and stick it. The customer scans it and is already on your restaurant's menu." },
+      "s2": { "title": "Customer places the order", "desc": "Chooses items, adds notes and confirms. As simple as sending a message." },
+      "s3": { "title": "Kitchen receives it instantly", "desc": "The order appears on the correct station screen in seconds. No shouting, no confusion." },
+      "s4": { "title": "Waiter delivers", "desc": "Automatic notification when an item is ready. One click to confirm delivery." }
+    }
+  },
+  "differentials": {
+    "title": "Why Menuê+?",
+    "items": [
+      "No app to download",
+      "Setup in less than 1 day",
+      "Works on any phone",
+      "Sound notification when ready",
+      "Multiple independent stations",
+      "Waiter call by customer",
+      "Customer requests bill from phone",
+      "Automatic customer ranking",
+      "Delivery without per-order commission",
+      "Prepaid balance for loyalty"
+    ]
+  },
+  "plans": {
+    "title": "Simple pricing, no surprises",
+    "subtitle": "14 days free on any plan. Cancel anytime.",
+    "per_month": "/month",
+    "up_to": "Up to",
+    "tables": "tables",
+    "includes": "Includes",
+    "not_includes": "Does not include",
+    "cta": "Get started",
+    "implementation": "One-time setup fee of R$ 2,000 (charged only if you continue after the trial)",
+    "starter": {
+      "tables": "Up to 15 tables",
+      "includes": ["Digital QR menu", "2 stations", "Waiter panel"],
+      "not_includes": ["Delivery", "Financials", "Customers"]
+    },
+    "pro": {
+      "tables": "Up to 30 tables",
+      "includes": ["Everything in Starter", "Unlimited stations", "Financials", "Customers & balance"],
+      "not_includes": ["Delivery"]
+    },
+    "business": {
+      "tables": "Up to 60 tables",
+      "includes": ["Everything in Pro", "Delivery module 🛵", "Advanced performance"],
+      "not_includes": []
+    }
+  },
+  "cta_section": {
+    "title": "Ready to transform your restaurant?",
+    "subtitle": "14 days free. No credit card required.",
+    "btn": "Get started — it's free"
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "terms": "Terms",
+    "support": "Support"
+  },
+  "partner": {
+    "hero_title": "Earn commission by referring Menuê+",
+    "hero_subtitle": "You refer, we close, you get paid. Simple as that.",
+    "hero_cta": "Become a partner",
+    "how_title": "How it works",
+    "step1_title": "You refer",
+    "step1_desc": "Share your exclusive link with restaurant owners.",
+    "step2_title": "We close",
+    "step2_desc": "Our team handles everything: demo, contract and implementation.",
+    "step3_title": "You get paid",
+    "step3_desc": "Recurring commission every month while the restaurant keeps using it.",
+    "login_title": "Already a partner?",
+    "login_email": "Email",
+    "login_password": "Password",
+    "login_btn": "Sign in",
+    "login_register": "I want to sign up"
+  },
+  "mesa": {
+    "welcome": "Welcome!",
+    "table": "Table",
+    "name_label": "Your name *",
+    "name_placeholder": "Ex: John Smith",
+    "open_tab": "Open my tab",
+    "waiting": "Please wait...",
+    "remembered": "Your last visit details were remembered",
+    "whatsapp_label": "WhatsApp",
+    "whatsapp_placeholder": "(47) 99999-9999",
+    "whatsapp_tip": "Optional — to receive order updates"
+  },
+  "cardapio": {
+    "search_placeholder": "Search the menu...",
+    "add_to_order": "Add",
+    "confirm_order": "Confirm order",
+    "empty_cart": "No items selected",
+    "observation_placeholder": "Any notes?",
+    "qty": "Qty",
+    "total": "Total",
+    "order_placed": "Order confirmed!",
+    "back_to_menu": "Back to menu",
+    "my_tab": "My tab",
+    "unavailable": "Unavailable",
+    "call_waiter": "Call waiter",
+    "waiter_called": "Waiter called!",
+    "delivery": "Delivery"
+  },
+  "conta": {
+    "title": "My tab",
+    "my_orders": "My orders",
+    "no_orders": "No orders yet",
+    "see_menu": "See menu",
+    "pay_pix": "Pay via Pix",
+    "call_waiter": "Call waiter to pay",
+    "add_items": "+ Add more items",
+    "waiter_called": "Waiter called!",
+    "waiter_coming": "Someone will be with you shortly to settle your bill.",
+    "all_delivered": "All items have been delivered",
+    "status_waiting": "Waiting",
+    "status_preparing": "Preparing",
+    "status_ready": "Ready!",
+    "status_delivered": "Delivered",
+    "coupon_placeholder": "Have a coupon? Enter here",
+    "coupon_apply": "Apply",
+    "coupon_applied": "Coupon applied",
+    "coupon_saved": "you saved",
+    "coupon_invalid": "Invalid or expired coupon",
+    "payment_informed": "Payment informed!",
+    "waiter_verify": "The waiter will verify the Pix and close your table.",
+    "developed_by": "Powered by Menuê+ Restaurant Management"
+  }
+}

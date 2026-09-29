@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useI18n } from '@/lib/i18n'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 
 /* ─── Scroll reveal hook ─────────────────────────────── */
 function useReveal() {
@@ -53,60 +55,52 @@ function Counter({ to, suffix = '' }: { to: number; suffix?: string }) {
   return <span ref={ref}>{val}{suffix}</span>
 }
 
-/* ─── Data ───────────────────────────────────────────── */
-const FEATURES = [
-  { icon: '📱', title: 'Cardápio digital por QR', desc: 'O cliente escaneia o QR na mesa, vê o cardápio e faz o pedido direto pelo celular. Sem baixar app.' },
-  { icon: '⚡', title: 'Pedidos em tempo real', desc: 'Cada pedido chega instantaneamente na estação certa — cozinha, bar ou drinks. Zero papel, zero ruído.' },
-  { icon: '🛵', title: 'Módulo Delivery', desc: 'Link próprio de delivery, cálculo de taxa por zona, painel do entregador. Sem marketplace.', badge: 'Business+' },
-  { icon: '🛎️', title: 'Painel do garçom', desc: 'O garçom vê tudo pronto para entregar e recebe chamadas em tempo real, sem precisar ficar circulando.' },
-  { icon: '💳', title: 'Saldo pré-pago', desc: 'Clientes frequentes carregam crédito antecipado. Pix, dinheiro ou cartão — tudo registrado no financeiro.' },
-  { icon: '📊', title: 'Dashboard ao vivo', desc: 'Visão completa de mesas abertas, comandas ativas e status de cada pedido — sem recarregar a página.' },
-  { icon: '👥', title: 'Controle de acesso', desc: 'Crie logins por funcionário com cargo. Cada um acessa só o que precisa.' },
-  { icon: '💰', title: 'Gestão financeira', desc: 'Faturamento, ticket médio e top clientes. Dados reais do seu restaurante, sem planilha.' },
-]
-
-const STEPS = [
-  { n: '01', title: 'QR code na mesa', desc: 'Imprime e cola. O cliente escaneia e já está no cardápio do seu restaurante.' },
-  { n: '02', title: 'Cliente faz o pedido', desc: 'Escolhe os itens, adiciona observações e confirma. Simples como mandar mensagem.' },
-  { n: '03', title: 'Cozinha recebe na hora', desc: 'O pedido aparece na tela da estação correta em segundos. Sem grito, sem confusão.' },
-  { n: '04', title: 'Garçom entrega', desc: 'Notificação automática quando o item fica pronto. Um clique para confirmar a entrega.' },
-]
-
-const DIFERENCIAIS = [
-  '🚫  Sem aplicativo para baixar',
-  '⏱️  Implantação em menos de 1 dia',
-  '📶  Funciona em qualquer celular',
-  '🔔  Notificação sonora ao ficar pronto',
-  '🧑‍🍳  Múltiplas estações independentes',
-  '📍  Chamada de garçom pelo cliente',
-  '💳  Cliente pede a conta pelo celular',
-  '📈  Ranking de clientes automático',
-  '🛵  Delivery sem comissão por pedido',
-  '💰  Saldo pré-pago para fidelização',
-]
-
-const PLANOS = [
-  {
-    nome: 'Starter', mesas: 'Até 15 mesas', preco: 397, destaque: false,
-    inclui: ['Cardápio digital QR', '2 estações', 'Painel do garçom'],
-    naoinclui: ['Delivery', 'Financeiro', 'Clientes'],
-  },
-  {
-    nome: 'Pro', mesas: 'Até 30 mesas', preco: 697, destaque: true,
-    inclui: ['Tudo do Starter', 'Estações ilimitadas', 'Financeiro', 'Clientes & saldo'],
-    naoinclui: ['Delivery'],
-  },
-  {
-    nome: 'Business', mesas: 'Até 60 mesas', preco: 1197, destaque: false,
-    inclui: ['Tudo do Pro', 'Módulo Delivery 🛵', 'Performance avançada'],
-    naoinclui: [],
-  },
-]
+const FEATURE_KEYS = ['qr', 'realtime', 'delivery', 'waiter', 'balance', 'dashboard', 'access', 'financial']
+const FEATURE_ICONS = ['📱', '⚡', '🛵', '🛎️', '💳', '📊', '👥', '💰']
+const STEP_KEYS = ['s1', 's2', 's3', 's4']
+const DIFFERENTIAL_EMOJIS = ['🚫', '⏱️', '📶', '🔔', '🧑‍🍳', '📍', '💳', '📈', '🛵', '💰']
 
 /* ─── Component ──────────────────────────────────────── */
 export default function LandingClient() {
   useReveal()
+  const { t, tArr } = useI18n()
   const whatsapp = 'https://wa.me/5547988194822?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Menu%C3%AA%2B'
+
+  const features = FEATURE_KEYS.map((key, i) => ({
+    icon: FEATURE_ICONS[i],
+    title: t(`features.items.${key}.title`),
+    desc: t(`features.items.${key}.desc`),
+    badge: key === 'delivery' ? 'Business+' : undefined,
+  }))
+
+  const steps = STEP_KEYS.map((key, i) => ({
+    n: String(i + 1).padStart(2, '0'),
+    title: t(`steps.items.${key}.title`),
+    desc: t(`steps.items.${key}.desc`),
+  }))
+
+  const diferenciais = tArr('differentials.items').map((text, i) => `${DIFFERENTIAL_EMOJIS[i]}  ${text}`)
+
+  const planos = [
+    {
+      nome: 'Starter', preco: 397, destaque: false,
+      mesas: t('plans.starter.tables'),
+      inclui: tArr('plans.starter.includes'),
+      naoinclui: tArr('plans.starter.not_includes'),
+    },
+    {
+      nome: 'Pro', preco: 697, destaque: true,
+      mesas: t('plans.pro.tables'),
+      inclui: tArr('plans.pro.includes'),
+      naoinclui: tArr('plans.pro.not_includes'),
+    },
+    {
+      nome: 'Business', preco: 1197, destaque: false,
+      mesas: t('plans.business.tables'),
+      inclui: tArr('plans.business.includes'),
+      naoinclui: tArr('plans.business.not_includes'),
+    },
+  ]
 
   return (
     <div className="min-h-screen font-sans" style={{ background: '#030d0b', color: '#e2faf7' }}>
@@ -181,21 +175,30 @@ export default function LandingClient() {
             <span className="font-bold text-lg tracking-tight text-white">Menuê+</span>
           </div>
           <div className="hidden sm:flex items-center gap-2">
+            <LanguageSwitcher />
             <Link href="/parceiros" className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
               style={{ color: 'rgba(255,255,255,0.5)' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
               onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
-              Seja parceiro
+              {t('nav.partner')}
             </Link>
             <Link href="/login" className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
               style={{ color: 'rgba(255,255,255,0.5)' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
               onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
-              Entrar
+              {t('nav.login')}
             </Link>
             <Link href="/registro" className="glow-btn flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
               style={{ background: '#1A9B8A', color: '#fff' }}>
-              Testar grátis →
+              {t('nav.trial')}
+            </Link>
+          </div>
+          {/* Mobile nav */}
+          <div className="flex sm:hidden items-center gap-2">
+            <LanguageSwitcher />
+            <Link href="/registro" className="glow-btn px-4 py-2 rounded-xl text-xs font-bold"
+              style={{ background: '#1A9B8A', color: '#fff' }}>
+              {t('nav.trial')}
             </Link>
           </div>
         </nav>
@@ -203,13 +206,6 @@ export default function LandingClient() {
         {/* Hero content */}
         <div className="relative z-10 max-w-6xl mx-auto px-6 pt-10 pb-24 grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
-
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest"
-              style={{ background: 'rgba(26,155,138,0.12)', color: '#5EEAD4', border: '1px solid rgba(26,155,138,0.25)' }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-              🚀 O seu sistema completo para Gastronomia!
-            </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.02] tracking-tight text-white">
               Gastronomia{' '}
@@ -220,19 +216,19 @@ export default function LandingClient() {
             </h1>
 
             <p className="text-lg leading-relaxed max-w-lg" style={{ color: 'rgba(226,250,247,0.6)' }}>
-              Cardápio digital via QR code, pedidos direto para cozinha e bar, delivery integrado e gestão completa — tudo em uma plataforma, sem app.
+              {t('hero.subtitle')}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/registro"
                 className="glow-btn flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-black transition-all"
                 style={{ background: '#1A9B8A', color: '#fff' }}>
-                🚀 Começar trial de 7 dias
+                🚀 {t('hero.cta_trial')}
               </Link>
               <a href="#como-funciona"
                 className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-bold transition-all"
                 style={{ color: '#5EEAD4', border: '1px solid rgba(26,155,138,0.3)' }}>
-                Ver como funciona ↓
+                {t('hero.cta_demo')} ↓
               </a>
             </div>
 
@@ -397,16 +393,16 @@ export default function LandingClient() {
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3"
               style={{ color: '#1A9B8A' }}>Fluxo completo</p>
             <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black" style={{ color: '#0d1a18' }}>
-              Do QR code ao prato na mesa
+              {t('steps.title')}
             </h2>
             <p className="reveal reveal-delay-2 text-lg mt-4 max-w-xl mx-auto"
               style={{ color: '#4a6e68' }}>
-              Quatro passos que eliminam ruído, erro e tempo perdido na operação.
+              {t('steps.subtitle')}
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {STEPS.map((step, i) => (
+            {steps.map((step, i) => (
               <div key={step.n}
                 className={`reveal reveal-delay-${i + 1} light-card relative rounded-2xl p-6 flex flex-col gap-4`}>
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center"
@@ -433,12 +429,12 @@ export default function LandingClient() {
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3"
               style={{ color: '#1A9B8A' }}>Plataforma completa</p>
             <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black" style={{ color: '#0d1a18' }}>
-              Tudo que seu restaurante precisa
+              {t('features.title')}
             </h2>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {FEATURES.map((f, i) => (
+            {features.map((f, i) => (
               <div key={f.title}
                 className={`reveal reveal-delay-${(i % 4) + 1} light-card relative rounded-2xl p-5 flex flex-col gap-3`}>
                 {f.badge && (
@@ -583,7 +579,7 @@ export default function LandingClient() {
         <div className="relative max-w-5xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
-              Por que Menuê+
+              {t('differentials.title')}
             </p>
             <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white mb-6">
               Simples para o cliente.<br />
@@ -612,8 +608,8 @@ export default function LandingClient() {
           </div>
 
           <div className="grid grid-cols-1 gap-2">
-            {DIFERENCIAIS.map((text, i) => (
-              <div key={text}
+            {diferenciais.map((text, i) => (
+              <div key={i}
                 className={`reveal reveal-delay-${Math.min(i + 1, 7)} glow-card flex items-center gap-4 rounded-xl px-5 py-3.5 transition-all`}
                 style={{ background: 'rgba(26,155,138,0.04)', border: '1px solid rgba(26,155,138,0.1)' }}>
                 <span className="font-medium text-sm" style={{ color: 'rgba(226,250,247,0.75)' }}>{text}</span>
@@ -673,11 +669,11 @@ export default function LandingClient() {
             Investimento
           </p>
           <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white mb-4">
-            Preço fixo e <span className="gradient-text">sem surpresa</span> no mês!
+            {t('plans.title')}
           </h2>
           <p className="reveal reveal-delay-2 text-lg max-w-xl mx-auto mb-4"
             style={{ color: 'rgba(226,250,247,0.5)' }}>
-            Sem taxa por pedido, sem comissão no delivery, sem cobrança por usuário.
+            {t('plans.subtitle')}
           </p>
 
           <div className="reveal reveal-delay-3 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold mb-16"
@@ -687,7 +683,7 @@ export default function LandingClient() {
 
           {/* Planos */}
           <div className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
-            {PLANOS.map((p, i) => (
+            {planos.map((p, i) => (
               <div key={p.nome}
                 className={`reveal reveal-delay-${i + 1} glow-card relative rounded-2xl p-7 text-left transition-all`}
                 style={{
@@ -704,7 +700,7 @@ export default function LandingClient() {
                 <p className="text-xs mb-4" style={{ color: 'rgba(94,234,212,0.4)' }}>{p.mesas} · usuários ilimitados</p>
                 <div className="flex items-baseline gap-1 mb-5">
                   <span className="text-white font-black text-3xl">R$ {p.preco}</span>
-                  <span className="text-sm" style={{ color: 'rgba(94,234,212,0.4)' }}>/mês</span>
+                  <span className="text-sm" style={{ color: 'rgba(94,234,212,0.4)' }}>{t('plans.per_month')}</span>
                 </div>
                 <ul className="space-y-2">
                   {p.inclui.map((item) => (
@@ -722,7 +718,7 @@ export default function LandingClient() {
             ))}
           </div>
 
-          {/* Configuração e treinamento — ancorado APÓS os planos */}
+          {/* Configuração e treinamento */}
           <div className="reveal max-w-4xl mx-auto rounded-2xl p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-5"
             style={{ background: 'rgba(26,155,138,0.06)', border: '1px solid rgba(26,155,138,0.18)' }}>
             <div className="shrink-0 flex flex-col items-center justify-center rounded-xl px-5 py-3 text-center"
@@ -736,7 +732,7 @@ export default function LandingClient() {
                 A gente coloca seu restaurante pra rodar: plataforma configurada, produtos cadastrados, QR codes prontos e equipe treinada. Você não levanta um dedo.
               </p>
               <p className="text-xs mt-2 font-semibold" style={{ color: 'rgba(94,234,212,0.4)' }}>
-                ✓ Cobrado apenas se continuar após os 7 dias grátis
+                ✓ {t('plans.implementation')}
               </p>
             </div>
           </div>
@@ -762,7 +758,7 @@ export default function LandingClient() {
             <Link href="/registro"
               className="glow-btn flex items-center gap-2 px-10 py-4 rounded-2xl text-base font-black transition-all"
               style={{ background: '#1A9B8A', color: '#fff' }}>
-              🚀 Começar trial de 7 dias grátis
+              🚀 {t('plans.cta')}
             </Link>
             <a href={whatsapp} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold transition-all"
@@ -773,7 +769,7 @@ export default function LandingClient() {
           <p className="mt-4 text-sm" style={{ color: 'rgba(94,234,212,0.3)' }}>
             Já tem conta?{' '}
             <Link href="/login" className="underline underline-offset-2 transition-colors" style={{ color: 'rgba(94,234,212,0.6)' }}>
-              Entrar
+              {t('nav.login')}
             </Link>
           </p>
         </div>
@@ -787,17 +783,16 @@ export default function LandingClient() {
           style={{ background: 'radial-gradient(ellipse 70% 70% at 50% 50%, rgba(26,155,138,0.1) 0%, transparent 70%)' }} />
         <div className="relative max-w-2xl mx-auto text-center space-y-8">
           <h2 className="reveal text-4xl sm:text-5xl font-black text-white">
-            Pronto para modernizar<br />
-            <span className="gradient-text">seu restaurante?</span>
+            {t('cta_section.title')}
           </h2>
           <p className="reveal reveal-delay-1 text-lg" style={{ color: 'rgba(226,250,247,0.5)' }}>
-            Crie sua conta agora e teste por 7 dias sem custo. Ou fale com a gente para uma demonstração ao vivo.
+            {t('cta_section.subtitle')}
           </p>
           <div className="reveal reveal-delay-2 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/registro"
               className="glow-btn inline-flex items-center gap-3 px-10 py-5 rounded-2xl text-lg font-black text-white transition-all"
               style={{ background: '#1A9B8A' }}>
-              🚀 Testar grátis por 7 dias
+              🚀 {t('cta_section.btn')}
             </Link>
             <a href={whatsapp} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-3 px-8 py-5 rounded-2xl text-base font-bold transition-all"
@@ -826,13 +821,13 @@ export default function LandingClient() {
             </div>
             <div className="flex items-center gap-6 text-xs" style={{ color: 'rgba(94,234,212,0.35)' }}>
               <Link href="/parceiros" className="hover:text-teal-300 transition-colors">Programa de Parceiros</Link>
-              <Link href="/termos" className="hover:text-teal-300 transition-colors">Termos de Uso</Link>
-              <Link href="/login" className="hover:text-teal-300 transition-colors">Entrar</Link>
+              <Link href="/termos" className="hover:text-teal-300 transition-colors">{t('footer.terms')}</Link>
+              <Link href="/login" className="hover:text-teal-300 transition-colors">{t('nav.login')}</Link>
             </div>
           </div>
           <div className="pt-6 text-center" style={{ borderTop: '1px solid rgba(26,155,138,0.08)' }}>
             <p className="text-xs" style={{ color: 'rgba(94,234,212,0.2)' }}>
-              © {new Date().getFullYear()} Menuê+ · Cardápio digital e gestão de pedidos para restaurantes brasileiros
+              © {new Date().getFullYear()} Menuê+ · {t('footer.rights')}
             </p>
           </div>
         </div>

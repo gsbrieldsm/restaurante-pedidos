@@ -1,0 +1,163 @@
+{
+  "nav": {
+    "partner": "Seja parceiro",
+    "login": "Entrar",
+    "trial": "Testar grátis →"
+  },
+  "hero": {
+    "badge": "Novo: Marketing, Cupons e Controle de Equipe",
+    "title1": "Seu restaurante",
+    "title2": "no próximo nível",
+    "subtitle": "Cardápio digital por QR, pedidos em tempo real, painel do garçom e muito mais. Sem app para baixar.",
+    "cta_trial": "Começar trial gratuito",
+    "cta_demo": "Ver demonstração",
+    "social_proof": "Mais de 50 restaurantes já usam",
+    "stat_orders": "pedidos/mês",
+    "stat_time": "setup",
+    "stat_app": "Sem app"
+  },
+  "features": {
+    "title": "Tudo que seu restaurante precisa",
+    "subtitle": "Uma plataforma completa, do cardápio ao financeiro.",
+    "items": {
+      "qr": { "title": "Cardápio digital por QR", "desc": "O cliente escaneia o QR na mesa, vê o cardápio e faz o pedido direto pelo celular. Sem baixar app." },
+      "realtime": { "title": "Pedidos em tempo real", "desc": "Cada pedido chega instantaneamente na estação certa — cozinha, bar ou drinks. Zero papel, zero ruído." },
+      "delivery": { "title": "Módulo Delivery", "desc": "Link próprio de delivery, cálculo de taxa por zona, painel do entregador. Sem marketplace.", "badge": "Business+" },
+      "waiter": { "title": "Painel do garçom", "desc": "O garçom vê tudo pronto para entregar e recebe chamadas em tempo real, sem precisar ficar circulando." },
+      "balance": { "title": "Saldo pré-pago", "desc": "Clientes frequentes carregam crédito antecipado. Pix, dinheiro ou cartão — tudo registrado no financeiro." },
+      "dashboard": { "title": "Dashboard ao vivo", "desc": "Visão completa de mesas abertas, comandas ativas e status de cada pedido — sem recarregar a página." },
+      "access": { "title": "Controle de acesso", "desc": "Crie logins por funcionário com cargo. Cada um acessa só o que precisa." },
+      "financial": { "title": "Gestão financeira", "desc": "Faturamento, ticket médio e top clientes. Dados reais do seu restaurante, sem planilha." }
+    }
+  },
+  "steps": {
+    "title": "Como funciona",
+    "subtitle": "Em 4 passos simples, seu restaurante já está operando com o Menuê+.",
+    "items": {
+      "s1": { "title": "QR code na mesa", "desc": "Imprime e cola. O cliente escaneia e já está no cardápio do seu restaurante." },
+      "s2": { "title": "Cliente faz o pedido", "desc": "Escolhe os itens, adiciona observações e confirma. Simples como mandar mensagem." },
+      "s3": { "title": "Cozinha recebe na hora", "desc": "O pedido aparece na tela da estação correta em segundos. Sem grito, sem confusão." },
+      "s4": { "title": "Garçom entrega", "desc": "Notificação automática quando o item fica pronto. Um clique para confirmar a entrega." }
+    }
+  },
+  "differentials": {
+    "title": "Por que o Menuê+?",
+    "items": [
+      "Sem aplicativo para baixar",
+      "Implantação em menos de 1 dia",
+      "Funciona em qualquer celular",
+      "Notificação sonora ao ficar pronto",
+      "Múltiplas estações independentes",
+      "Chamada de garçom pelo cliente",
+      "Cliente pede a conta pelo celular",
+      "Ranking de clientes automático",
+      "Delivery sem comissão por pedido",
+      "Saldo pré-pago para fidelização"
+    ]
+  },
+  "plans": {
+    "title": "Planos simples, sem surpresa",
+    "subtitle": "14 dias grátis em qualquer plano. Cancele quando quiser.",
+    "per_month": "/mês",
+    "up_to": "Até",
+    "tables": "mesas",
+    "includes": "Inclui",
+    "not_includes": "Não inclui",
+    "cta": "Começar agora",
+    "implementation": "Implementação única de R$ 2.000 (cobrada só se continuar após o trial)",
+    "starter": {
+      "tables": "Até 15 mesas",
+      "includes": ["Cardápio digital QR", "2 estações", "Painel do garçom"],
+      "not_includes": ["Delivery", "Financeiro", "Clientes"]
+    },
+    "pro": {
+      "tables": "Até 30 mesas",
+      "includes": ["Tudo do Starter", "Estações ilimitadas", "Financeiro", "Clientes & saldo"],
+      "not_includes": ["Delivery"]
+    },
+    "business": {
+      "tables": "Até 60 mesas",
+      "includes": ["Tudo do Pro", "Módulo Delivery 🛵", "Performance avançada"],
+      "not_includes": []
+    }
+  },
+  "cta_section": {
+    "title": "Pronto para transformar seu restaurante?",
+    "subtitle": "14 dias gratuitos. Sem cartão de crédito.",
+    "btn": "Começar agora — é grátis"
+  },
+  "footer": {
+    "rights": "Todos os direitos reservados.",
+    "terms": "Termos",
+    "support": "Suporte"
+  },
+  "partner": {
+    "hero_title": "Ganhe comissão indicando o Menuê+",
+    "hero_subtitle": "Você indica, nós fechamos, você recebe. Simples assim.",
+    "hero_cta": "Quero ser parceiro",
+    "how_title": "Como funciona",
+    "step1_title": "Você indica",
+    "step1_desc": "Compartilha seu link exclusivo com donos de restaurante.",
+    "step2_title": "Nós fechamos",
+    "step2_desc": "Nossa equipe cuida de tudo: demo, contrato e implementação.",
+    "step3_title": "Você recebe",
+    "step3_desc": "Comissão recorrente todo mês enquanto o restaurante usar.",
+    "login_title": "Já é parceiro?",
+    "login_email": "E-mail",
+    "login_password": "Senha",
+    "login_btn": "Entrar",
+    "login_register": "Quero me cadastrar"
+  },
+  "mesa": {
+    "welcome": "Bem-vindo!",
+    "table": "Mesa",
+    "name_label": "Seu nome *",
+    "name_placeholder": "Ex: João Silva",
+    "open_tab": "Abrir minha comanda",
+    "waiting": "Aguarde...",
+    "remembered": "Dados do seu último acesso foram lembrados",
+    "whatsapp_label": "WhatsApp",
+    "whatsapp_placeholder": "(47) 99999-9999",
+    "whatsapp_tip": "Opcional — para receber atualizações do pedido"
+  },
+  "cardapio": {
+    "search_placeholder": "Buscar no cardápio...",
+    "add_to_order": "Adicionar",
+    "confirm_order": "Confirmar pedido",
+    "empty_cart": "Nenhum item selecionado",
+    "observation_placeholder": "Alguma observação?",
+    "qty": "Qtd",
+    "total": "Total",
+    "order_placed": "Pedido confirmado!",
+    "back_to_menu": "Voltar ao cardápio",
+    "my_tab": "Minha conta",
+    "unavailable": "Indisponível",
+    "call_waiter": "Chamar garçom",
+    "waiter_called": "Garçom chamado!",
+    "delivery": "Delivery"
+  },
+  "conta": {
+    "title": "Minha conta",
+    "my_orders": "Meus pedidos",
+    "no_orders": "Nenhum pedido ainda",
+    "see_menu": "Ver cardápio",
+    "pay_pix": "Pagar via Pix",
+    "call_waiter": "Chamar garçom para pagar",
+    "add_items": "+ Adicionar mais itens",
+    "waiter_called": "Garçom chamado!",
+    "waiter_coming": "Alguém chegará em breve para acertar sua conta.",
+    "all_delivered": "Todos os itens foram entregues",
+    "status_waiting": "Aguardando",
+    "status_preparing": "Preparando",
+    "status_ready": "Pronto!",
+    "status_delivered": "Entregue",
+    "coupon_placeholder": "Tem cupom? Digite aqui",
+    "coupon_apply": "Aplicar",
+    "coupon_applied": "Cupom aplicado",
+    "coupon_saved": "economizou",
+    "coupon_invalid": "Cupom inválido ou expirado",
+    "payment_informed": "Pagamento informado!",
+    "waiter_verify": "O garçom verificará o PIX e encerrará sua mesa.",
+    "developed_by": "Desenvolvido por Menuê+ Sistemas de Gestão"
+  }
+}
