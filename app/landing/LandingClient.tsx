@@ -208,11 +208,10 @@ export default function LandingClient() {
           <div className="space-y-8">
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.02] tracking-tight text-white">
-              Gastronomia{' '}
-              <span className="gradient-text">sem filas,</span>{' '}
-              sem papel{' '}
-              <br className="hidden lg:block" />e{' '}
-              <span className="gradient-text">sem erros!</span>
+              <span className="gradient-text">{t('hero.tagline1', 'Gastronomia sem filas,')}</span>{' '}
+              {t('hero.tagline2', 'sem papel')}{' '}
+              <br className="hidden lg:block" />
+              <span className="gradient-text">{t('hero.tagline3', 'e sem erros!')}</span>
             </h1>
 
             <p className="text-lg leading-relaxed max-w-lg" style={{ color: 'rgba(226,250,247,0.6)' }}>
@@ -233,23 +232,21 @@ export default function LandingClient() {
             </div>
 
             <p className="text-sm" style={{ color: 'rgba(94,234,212,0.4)' }}>
-              Sem cartão de crédito · 7 dias grátis · Cancele quando quiser.{' '}
+              {t('hero.no_cc')}{' '}
               <Link href="/login" className="underline underline-offset-2 transition-colors" style={{ color: 'rgba(94,234,212,0.7)' }}>
-                Já tenho conta
+                {t('hero.already_account')}
               </Link>
             </p>
 
             {/* Stats */}
             <div className="flex items-center gap-8 pt-2">
               {[
-                { to: 7, suffix: ' dias', label: 'trial grátis' },
-                { to: 1, suffix: ' dia',  label: 'de implantação' },
-                { to: 0, suffix: ' apps', label: 'para instalar' },
-              ].map(({ to, suffix, label }) => (
+                { val: t('hero.stat1_val'), label: t('hero.stat1_label') },
+                { val: t('hero.stat2_val'), label: t('hero.stat2_label') },
+                { val: t('hero.stat3_val'), label: t('hero.stat3_label') },
+              ].map(({ val, label }) => (
                 <div key={label}>
-                  <p className="font-black text-2xl text-white">
-                    <Counter to={to} suffix={suffix} />
-                  </p>
+                  <p className="font-black text-2xl text-white">{val}</p>
                   <p className="text-xs mt-0.5" style={{ color: 'rgba(94,234,212,0.4)' }}>{label}</p>
                 </div>
               ))}
@@ -297,11 +294,11 @@ export default function LandingClient() {
         <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-12 reveal">
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
-              Painel administrativo
+              {t('dashboard.label')}
             </p>
             <h2 className="text-3xl sm:text-4xl font-black" style={{ color: '#0d1a18' }}>
-              Visão completa da sua operação,{' '}
-              <span className="gradient-text-dark">em tempo real</span>
+              {t('dashboard.title')}{' '}
+              <span className="gradient-text-dark">{t('dashboard.title2')}</span>
             </h2>
           </div>
 
@@ -361,16 +358,16 @@ export default function LandingClient() {
         <div className="max-w-5xl mx-auto">
           <p className="text-center text-xs font-bold uppercase tracking-widest mb-8 reveal"
             style={{ color: '#1A9B8A' }}>
-            Feito para qualquer operação de food service
+            {t('for_who.label')}
           </p>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
             {[
-              { emoji: '🍽️', label: 'Restaurantes' },
-              { emoji: '🍺', label: 'Bares' },
-              { emoji: '🍔', label: 'Hamburguerias' },
-              { emoji: '🍕', label: 'Pizzarias' },
-              { emoji: '🥗', label: 'Lanchonetes' },
-              { emoji: '🚚', label: 'Food Trucks' },
+              { emoji: '🍽️', label: t('for_who.r1') },
+              { emoji: '🍺', label: t('for_who.r2') },
+              { emoji: '🍔', label: t('for_who.r3') },
+              { emoji: '🍕', label: t('for_who.r4') },
+              { emoji: '🥗', label: t('for_who.r5') },
+              { emoji: '🚚', label: t('for_who.r6') },
             ].map(({ emoji, label }, i) => (
               <div key={label}
                 className={`reveal reveal-delay-${i + 1} flex flex-col items-center gap-2 py-5 px-2 rounded-2xl transition-all cursor-default light-card`}
@@ -391,7 +388,7 @@ export default function LandingClient() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-20">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3"
-              style={{ color: '#1A9B8A' }}>Fluxo completo</p>
+              style={{ color: '#1A9B8A' }}>{t('steps.flow_label')}</p>
             <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black" style={{ color: '#0d1a18' }}>
               {t('steps.title')}
             </h2>
@@ -427,7 +424,7 @@ export default function LandingClient() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-20">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3"
-              style={{ color: '#1A9B8A' }}>Plataforma completa</p>
+              style={{ color: '#1A9B8A' }}>{t('steps.platform_label')}</p>
             <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black" style={{ color: '#0d1a18' }}>
               {t('features.title')}
             </h2>
@@ -470,14 +467,14 @@ export default function LandingClient() {
           {/* Header */}
           <div className="text-center mb-16">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
-              Painel de gestão
+              {t('management.label')}
             </p>
             <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white">
-              Você no controle da operação inteira —{' '}
-              <span className="gradient-text">em tempo real</span>
+              {t('management.title')}{' '}
+              <span className="gradient-text">{t('management.title_accent')}</span>
             </h2>
             <p className="reveal reveal-delay-2 text-lg mt-4 max-w-2xl mx-auto" style={{ color: 'rgba(226,250,247,0.55)' }}>
-              Enquanto o cliente pede pelo celular, você acompanha tudo de um lugar só: o que está vendendo, se a cozinha está no prazo e quanto entrou no caixa. Sem planilha, sem achismo.
+              {t('management.subtitle')}
             </p>
           </div>
 
@@ -487,26 +484,10 @@ export default function LandingClient() {
             {/* Cards 2x2 */}
             <div className="grid sm:grid-cols-2 gap-4">
               {[
-                {
-                  icon: '👁️',
-                  title: 'Visão ao vivo do salão',
-                  desc: 'Comandas abertas, pedidos em preparo e prontos pra entrega numa tela só, atualizada na hora. Bate o olho e sabe exatamente como está a casa agora.',
-                },
-                {
-                  icon: '⏱️',
-                  title: 'Sua cozinha está no prazo?',
-                  desc: 'O Menuê+ compara o tempo real de preparo com o estimado de cada prato. Descubra quais itens atrasam — e por quê — antes do cliente reclamar.',
-                },
-                {
-                  icon: '📈',
-                  title: 'Custo, margem e o que mais vende',
-                  desc: 'Veja a margem de cada item, o ranking dos mais vendidos e o ticket médio. Saiba o que dá lucro de verdade e o que só ocupa o cardápio.',
-                },
-                {
-                  icon: '💰',
-                  title: 'Financeiro sem planilha',
-                  desc: 'Faturamento por hora, por estação e por forma de pagamento. Feche o dia sabendo quanto entrou e de onde veio — em segundos.',
-                },
+                { icon: '👁️', title: t('management.c1_title'), desc: t('management.c1_desc') },
+                { icon: '⏱️', title: t('management.c2_title'), desc: t('management.c2_desc') },
+                { icon: '📈', title: t('management.c3_title'), desc: t('management.c3_desc') },
+                { icon: '💰', title: t('management.c4_title'), desc: t('management.c4_desc') },
               ].map((card, i) => (
                 <div key={card.title}
                   className={`reveal reveal-delay-${i + 1} rounded-2xl p-6 flex flex-col gap-3 transition-all`}
@@ -559,12 +540,12 @@ export default function LandingClient() {
           {/* Fecho + CTA */}
           <div className="reveal mt-12 text-center space-y-5">
             <p className="text-sm" style={{ color: 'rgba(226,250,247,0.45)' }}>
-              Tudo isso no computador ou no celular, acessível pra cada funcionário só no que ele precisa ver.
+              {t('management.footnote')}
             </p>
             <Link href="/registro"
               className="glow-btn inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-black text-white transition-all"
               style={{ background: '#1A9B8A' }}>
-              🚀 Iniciar meu teste grátis
+              🚀 {t('management.cta')}
             </Link>
           </div>
 
@@ -579,22 +560,22 @@ export default function LandingClient() {
         <div className="relative max-w-5xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
-              {t('differentials.title')}
+              {t('differentials.section_label')}
             </p>
             <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white mb-6">
-              Simples para o cliente.<br />
-              <span className="gradient-text">Poderoso para você.</span>
+              {t('differentials.heading1')}<br />
+              <span className="gradient-text">{t('differentials.heading2')}</span>
             </h2>
             <p className="reveal reveal-delay-2 text-lg leading-relaxed" style={{ color: 'rgba(226,250,247,0.5)' }}>
-              Desenvolvido para a realidade dos restaurantes brasileiros — sem complicação, sem hardware caro, sem taxa por pedido, sem comissão no delivery.
+              {t('differentials.desc')}
             </p>
 
             {/* Métricas */}
             <div className="reveal reveal-delay-3 grid grid-cols-3 gap-4 mt-10">
               {[
-                { n: 0, suffix: '%', label: 'comissão no delivery' },
-                { n: 7,  suffix: 'd', label: 'trial grátis' },
-                { n: 1,  suffix: 'd', label: 'para implantar' },
+                { n: 0, suffix: '%', label: t('differentials.m1_label') },
+                { n: 7, suffix: 'd', label: t('differentials.m2_label') },
+                { n: 1, suffix: 'd', label: t('differentials.m3_label') },
               ].map(({ n, suffix, label }) => (
                 <div key={label} className="rounded-2xl p-4 text-center"
                   style={{ background: 'rgba(26,155,138,0.07)', border: '1px solid rgba(26,155,138,0.15)' }}>
@@ -627,22 +608,22 @@ export default function LandingClient() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-20">
             <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
-              Operação em tempo real
+              {t('stations.label')}
             </p>
             <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black" style={{ color: '#0d1a18' }}>
-              Cada estação no seu ritmo
+              {t('stations.title')}
             </h2>
             <p className="reveal reveal-delay-2 text-lg mt-4 max-w-xl mx-auto" style={{ color: '#4a6e68' }}>
-              Cozinha, bar, drinks e chopeira recebem somente os pedidos que são deles.
+              {t('stations.subtitle')}
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { emoji: '🍳', label: 'Cozinha',  desc: 'Pratos, entradas e tudo que sai do fogão'  },
-              { emoji: '🍺', label: 'Bar',      desc: 'Cervejas, doses e bebidas simples'         },
-              { emoji: '🍹', label: 'Drinks',   desc: 'Coquetéis e bebidas elaboradas'            },
-              { emoji: '🍻', label: 'Chopeira', desc: 'Controle dedicado para chope'              },
+              { emoji: '🍳', label: t('stations.s1'), desc: t('stations.s1_desc') },
+              { emoji: '🍺', label: t('stations.s2'), desc: t('stations.s2_desc') },
+              { emoji: '🍹', label: t('stations.s3'), desc: t('stations.s3_desc') },
+              { emoji: '🍻', label: t('stations.s4'), desc: t('stations.s4_desc') },
             ].map((e, i) => (
               <div key={e.label}
                 className={`reveal reveal-delay-${i + 1} light-card rounded-2xl p-7 text-center`}>
@@ -666,19 +647,19 @@ export default function LandingClient() {
 
         <div className="relative max-w-5xl mx-auto text-center">
           <p className="reveal text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1A9B8A' }}>
-            Investimento
+            {t('plans.investment_label')}
           </p>
           <h2 className="reveal reveal-delay-1 text-4xl sm:text-5xl font-black text-white mb-4">
-            {t('plans.title')}
+            {t('plans.price_title')} <span className="gradient-text">{t('plans.price_title2')}</span> {t('plans.price_title3')}
           </h2>
           <p className="reveal reveal-delay-2 text-lg max-w-xl mx-auto mb-4"
             style={{ color: 'rgba(226,250,247,0.5)' }}>
-            {t('plans.subtitle')}
+            {t('plans.price_subtitle')}
           </p>
 
           <div className="reveal reveal-delay-3 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold mb-16"
             style={{ background: 'rgba(26,155,138,0.1)', color: '#5EEAD4', border: '1px solid rgba(26,155,138,0.2)' }}>
-            🎁 Todos os planos incluem 7 dias grátis · Sem cartão de crédito
+            🎁 {t('plans.free_badge')}
           </div>
 
           {/* Planos */}
@@ -693,11 +674,11 @@ export default function LandingClient() {
                 {p.destaque && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-white text-xs font-bold"
                     style={{ background: '#1A9B8A' }}>
-                    mais popular
+                    {t('plans.popular')}
                   </div>
                 )}
                 <p className="text-white font-black text-lg mb-0.5">{p.nome}</p>
-                <p className="text-xs mb-4" style={{ color: 'rgba(94,234,212,0.4)' }}>{p.mesas} · usuários ilimitados</p>
+                <p className="text-xs mb-4" style={{ color: 'rgba(94,234,212,0.4)' }}>{p.mesas} · {t('plans.unlimited_users')}</p>
                 <div className="flex items-baseline gap-1 mb-5">
                   <span className="text-white font-black text-3xl">R$ {p.preco}</span>
                   <span className="text-sm" style={{ color: 'rgba(94,234,212,0.4)' }}>{t('plans.per_month')}</span>
@@ -723,13 +704,13 @@ export default function LandingClient() {
             style={{ background: 'rgba(26,155,138,0.06)', border: '1px solid rgba(26,155,138,0.18)' }}>
             <div className="shrink-0 flex flex-col items-center justify-center rounded-xl px-5 py-3 text-center"
               style={{ background: 'rgba(26,155,138,0.12)', border: '1px solid rgba(26,155,138,0.25)', minWidth: '120px' }}>
-              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(94,234,212,0.7)' }}>uma vez só</p>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: 'rgba(94,234,212,0.7)' }}>{t('plans.setup_once')}</p>
               <p className="text-white font-black text-2xl leading-none">R$ 2.000</p>
             </div>
             <div className="flex-1">
-              <p className="text-white font-black text-base mb-1">Configuração e treinamento</p>
+              <p className="text-white font-black text-base mb-1">{t('plans.setup_title')}</p>
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(226,250,247,0.6)' }}>
-                A gente coloca seu restaurante pra rodar: plataforma configurada, produtos cadastrados, QR codes prontos e equipe treinada. Você não levanta um dedo.
+                {t('plans.setup_desc')}
               </p>
               <p className="text-xs mt-2 font-semibold" style={{ color: 'rgba(94,234,212,0.4)' }}>
                 ✓ {t('plans.implementation')}
@@ -741,15 +722,15 @@ export default function LandingClient() {
           <div className="reveal max-w-4xl mx-auto rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 mb-12"
             style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(26,155,138,0.2)' }}>
             <div className="text-left">
-              <p className="text-white font-bold text-sm">Mais de 60 mesas ou precisa de algo sob medida?</p>
+              <p className="text-white font-bold text-sm">{t('plans.enterprise_title')}</p>
               <p className="text-xs mt-0.5" style={{ color: 'rgba(94,234,212,0.4)' }}>
-                Redes, franquias e grandes operações — montamos um plano personalizado.
+                {t('plans.enterprise_subtitle')}
               </p>
             </div>
             <a href={whatsapp} target="_blank" rel="noopener noreferrer"
               className="shrink-0 glow-btn px-6 py-3 rounded-xl text-sm font-bold text-white transition-all"
               style={{ background: 'rgba(26,155,138,0.15)', border: '1px solid rgba(26,155,138,0.3)' }}>
-              📲 Falar com a gente
+              📲 {t('plans.talk_us')}
             </a>
           </div>
 
@@ -763,11 +744,11 @@ export default function LandingClient() {
             <a href={whatsapp} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold transition-all"
               style={{ color: '#5EEAD4', border: '1px solid rgba(26,155,138,0.25)' }}>
-              📲 Falar com consultor
+              📲 {t('plans.talk_consultant')}
             </a>
           </div>
           <p className="mt-4 text-sm" style={{ color: 'rgba(94,234,212,0.3)' }}>
-            Já tem conta?{' '}
+            {t('plans.have_account')}{' '}
             <Link href="/login" className="underline underline-offset-2 transition-colors" style={{ color: 'rgba(94,234,212,0.6)' }}>
               {t('nav.login')}
             </Link>
@@ -786,22 +767,22 @@ export default function LandingClient() {
             {t('cta_section.title')}
           </h2>
           <p className="reveal reveal-delay-1 text-lg" style={{ color: 'rgba(226,250,247,0.5)' }}>
-            {t('cta_section.subtitle')}
+            {t('cta_section.subtitle2')}
           </p>
           <div className="reveal reveal-delay-2 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/registro"
               className="glow-btn inline-flex items-center gap-3 px-10 py-5 rounded-2xl text-lg font-black text-white transition-all"
               style={{ background: '#1A9B8A' }}>
-              🚀 {t('cta_section.btn')}
+              🚀 {t('cta_section.btn_trial')}
             </Link>
             <a href={whatsapp} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-3 px-8 py-5 rounded-2xl text-base font-bold transition-all"
               style={{ color: '#5EEAD4', border: '1px solid rgba(26,155,138,0.25)' }}>
-              📲 Falar no WhatsApp
+              📲 {t('cta_section.btn_whatsapp')}
             </a>
           </div>
           <p className="reveal reveal-delay-3 text-sm" style={{ color: 'rgba(94,234,212,0.3)' }}>
-            Sem cartão de crédito · Implantação em até 1 dia útil · Suporte incluído
+            {t('cta_section.footnote')}
           </p>
         </div>
       </section>
@@ -820,7 +801,7 @@ export default function LandingClient() {
               <span className="font-bold text-white">Menuê+</span>
             </div>
             <div className="flex items-center gap-6 text-xs" style={{ color: 'rgba(94,234,212,0.35)' }}>
-              <Link href="/parceiros" className="hover:text-teal-300 transition-colors">Programa de Parceiros</Link>
+              <Link href="/parceiros" className="hover:text-teal-300 transition-colors">{t('footer.partner_program')}</Link>
               <Link href="/termos" className="hover:text-teal-300 transition-colors">{t('footer.terms')}</Link>
               <Link href="/login" className="hover:text-teal-300 transition-colors">{t('nav.login')}</Link>
             </div>

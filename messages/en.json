@@ -8,13 +8,67 @@
     "badge": "New: Marketing, Coupons & Team Control",
     "title1": "Take your restaurant",
     "title2": "to the next level",
+    "tagline1": "Gastronomy without queues,",
+    "tagline2": "without paper",
+    "tagline3": "and without mistakes!",
     "subtitle": "Digital menu via QR code, real-time orders, waiter panel and much more. No app required.",
     "cta_trial": "Start free trial",
     "cta_demo": "Watch demo",
     "social_proof": "Over 50 restaurants already using it",
     "stat_orders": "orders/month",
     "stat_time": "setup",
-    "stat_app": "No app"
+    "stat_app": "No app",
+    "no_cc": "No credit card · 7 days free · Cancel anytime.",
+    "already_account": "I already have an account",
+    "stat1_val": "7 days",
+    "stat1_label": "free trial",
+    "stat2_val": "1 day",
+    "stat2_label": "to set up",
+    "stat3_val": "0 apps",
+    "stat3_label": "to install"
+  },
+  "dashboard": {
+    "label": "Admin panel",
+    "title": "Full view of your operation,",
+    "title2": "in real time"
+  },
+  "for_who": {
+    "label": "Built for any food service operation",
+    "r1": "Restaurants",
+    "r2": "Bars",
+    "r3": "Burger Joints",
+    "r4": "Pizzerias",
+    "r5": "Snack Bars",
+    "r6": "Food Trucks"
+  },
+  "management": {
+    "label": "Management panel",
+    "title": "You in control of the entire operation —",
+    "title_accent": "in real time",
+    "subtitle": "While customers order from their phones, you monitor everything in one place: what's selling, whether the kitchen is on time, and how much revenue came in. No spreadsheet, no guesswork.",
+    "footnote": "All of this on desktop or mobile, accessible to each employee only for what they need.",
+    "cta": "Start my free trial",
+    "c1_title": "Live view of the floor",
+    "c1_desc": "Open tabs, orders being prepared, and items ready to deliver — all on one screen, updated instantly. One glance tells you exactly how the house is doing right now.",
+    "c2_title": "Is your kitchen on schedule?",
+    "c2_desc": "Menuê+ compares actual prep time against the estimated time for each dish. Find out which items are running late — and why — before the customer complains.",
+    "c3_title": "Cost, margin, and top sellers",
+    "c3_desc": "See the margin on each item, the best-seller ranking, and the average ticket. Know what truly makes money and what just fills the menu.",
+    "c4_title": "Finances without spreadsheets",
+    "c4_desc": "Revenue by hour, by station, and by payment method. Close the day knowing exactly how much came in and where it came from — in seconds."
+  },
+  "stations": {
+    "label": "Real-time operation",
+    "title": "Each station at its own pace",
+    "subtitle": "Kitchen, bar, drinks, and draft beer stations receive only the orders that belong to them.",
+    "s1": "Kitchen",
+    "s1_desc": "Dishes, starters, and everything that comes off the stove",
+    "s2": "Bar",
+    "s2_desc": "Beers, spirits, and simple drinks",
+    "s3": "Drinks",
+    "s3_desc": "Cocktails and elaborate beverages",
+    "s4": "Draft Beer",
+    "s4_desc": "Dedicated draft beer control"
   },
   "features": {
     "title": "Everything your restaurant needs",
@@ -31,6 +85,8 @@
     }
   },
   "steps": {
+    "flow_label": "Complete flow",
+    "platform_label": "Complete platform",
     "title": "How it works",
     "subtitle": "In 4 simple steps, your restaurant is already running with Menuê+.",
     "items": {
@@ -42,6 +98,13 @@
   },
   "differentials": {
     "title": "Why Menuê+?",
+    "section_label": "Why Menuê+",
+    "heading1": "Simple for the customer.",
+    "heading2": "Powerful for you.",
+    "desc": "Built for the reality of restaurants — no complexity, no expensive hardware, no per-order fee, no delivery commission.",
+    "m1_label": "delivery commission",
+    "m2_label": "free trial",
+    "m3_label": "to set up",
     "items": [
       "No app to download",
       "Setup in less than 1 day",
@@ -64,6 +127,22 @@
     "includes": "Includes",
     "not_includes": "Does not include",
     "cta": "Get started",
+    "investment_label": "Pricing",
+    "price_title": "Fixed price,",
+    "price_title2": "no surprises",
+    "price_title3": "every month!",
+    "price_subtitle": "No per-order fee, no delivery commission, no per-user charge.",
+    "free_badge": "All plans include 7 days free · No credit card required",
+    "popular": "most popular",
+    "unlimited_users": "unlimited users",
+    "setup_once": "one time only",
+    "setup_title": "Setup and training",
+    "setup_desc": "We get your restaurant up and running: platform configured, products added, QR codes ready, and team trained. You don't lift a finger.",
+    "enterprise_title": "More than 60 tables or need something custom?",
+    "enterprise_subtitle": "Chains, franchises, and large operations — we build a personalized plan.",
+    "talk_us": "Talk to us",
+    "talk_consultant": "Talk to a consultant",
+    "have_account": "Already have an account?",
     "implementation": "One-time setup fee of R$ 2,000 (charged only if you continue after the trial)",
     "starter": {
       "tables": "Up to 15 tables",
@@ -83,13 +162,19 @@
   },
   "cta_section": {
     "title": "Ready to transform your restaurant?",
+    "title2": "your restaurant?",
     "subtitle": "14 days free. No credit card required.",
-    "btn": "Get started — it's free"
+    "subtitle2": "Create your account now and test for 7 days at no cost. Or chat with us for a live demo.",
+    "btn": "Get started — it's free",
+    "btn_trial": "Try free for 7 days",
+    "btn_whatsapp": "Chat on WhatsApp",
+    "footnote": "No credit card · Setup in 1 business day · Support included"
   },
   "footer": {
     "rights": "All rights reserved.",
     "terms": "Terms",
-    "support": "Support"
+    "support": "Support",
+    "partner_program": "Partner Program"
   },
   "partner": {
     "hero_title": "Earn commission by referring Menuê+",

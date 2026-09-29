@@ -8,13 +8,67 @@
     "badge": "Novo: Marketing, Cupons e Controle de Equipe",
     "title1": "Seu restaurante",
     "title2": "no próximo nível",
+    "tagline1": "Gastronomia sem filas,",
+    "tagline2": "sem papel",
+    "tagline3": "e sem erros!",
     "subtitle": "Cardápio digital por QR, pedidos em tempo real, painel do garçom e muito mais. Sem app para baixar.",
     "cta_trial": "Começar trial gratuito",
     "cta_demo": "Ver demonstração",
     "social_proof": "Mais de 50 restaurantes já usam",
     "stat_orders": "pedidos/mês",
     "stat_time": "setup",
-    "stat_app": "Sem app"
+    "stat_app": "Sem app",
+    "no_cc": "Sem cartão de crédito · 7 dias grátis · Cancele quando quiser.",
+    "already_account": "Já tenho conta",
+    "stat1_val": "7 dias",
+    "stat1_label": "trial grátis",
+    "stat2_val": "1 dia",
+    "stat2_label": "de implantação",
+    "stat3_val": "0 apps",
+    "stat3_label": "para instalar"
+  },
+  "dashboard": {
+    "label": "Painel administrativo",
+    "title": "Visão completa da sua operação,",
+    "title2": "em tempo real"
+  },
+  "for_who": {
+    "label": "Feito para qualquer operação de food service",
+    "r1": "Restaurantes",
+    "r2": "Bares",
+    "r3": "Hamburguerias",
+    "r4": "Pizzarias",
+    "r5": "Lanchonetes",
+    "r6": "Food Trucks"
+  },
+  "management": {
+    "label": "Painel de gestão",
+    "title": "Você no controle da operação inteira —",
+    "title_accent": "em tempo real",
+    "subtitle": "Enquanto o cliente pede pelo celular, você acompanha tudo de um lugar só: o que está vendendo, se a cozinha está no prazo e quanto entrou no caixa. Sem planilha, sem achismo.",
+    "footnote": "Tudo isso no computador ou no celular, acessível pra cada funcionário só no que ele precisa ver.",
+    "cta": "Iniciar meu teste grátis",
+    "c1_title": "Visão ao vivo do salão",
+    "c1_desc": "Comandas abertas, pedidos em preparo e prontos pra entrega numa tela só, atualizada na hora. Bate o olho e sabe exatamente como está a casa agora.",
+    "c2_title": "Sua cozinha está no prazo?",
+    "c2_desc": "O Menuê+ compara o tempo real de preparo com o estimado de cada prato. Descubra quais itens atrasam — e por quê — antes do cliente reclamar.",
+    "c3_title": "Custo, margem e o que mais vende",
+    "c3_desc": "Veja a margem de cada item, o ranking dos mais vendidos e o ticket médio. Saiba o que dá lucro de verdade e o que só ocupa o cardápio.",
+    "c4_title": "Financeiro sem planilha",
+    "c4_desc": "Faturamento por hora, por estação e por forma de pagamento. Feche o dia sabendo quanto entrou e de onde veio — em segundos."
+  },
+  "stations": {
+    "label": "Operação em tempo real",
+    "title": "Cada estação no seu ritmo",
+    "subtitle": "Cozinha, bar, drinks e chopeira recebem somente os pedidos que são deles.",
+    "s1": "Cozinha",
+    "s1_desc": "Pratos, entradas e tudo que sai do fogão",
+    "s2": "Bar",
+    "s2_desc": "Cervejas, doses e bebidas simples",
+    "s3": "Drinks",
+    "s3_desc": "Coquetéis e bebidas elaboradas",
+    "s4": "Chopeira",
+    "s4_desc": "Controle dedicado para chope"
   },
   "features": {
     "title": "Tudo que seu restaurante precisa",
@@ -31,6 +85,8 @@
     }
   },
   "steps": {
+    "flow_label": "Fluxo completo",
+    "platform_label": "Plataforma completa",
     "title": "Como funciona",
     "subtitle": "Em 4 passos simples, seu restaurante já está operando com o Menuê+.",
     "items": {
@@ -42,6 +98,13 @@
   },
   "differentials": {
     "title": "Por que o Menuê+?",
+    "section_label": "Por que Menuê+",
+    "heading1": "Simples para o cliente.",
+    "heading2": "Poderoso para você.",
+    "desc": "Desenvolvido para a realidade dos restaurantes brasileiros — sem complicação, sem hardware caro, sem taxa por pedido, sem comissão no delivery.",
+    "m1_label": "comissão no delivery",
+    "m2_label": "trial grátis",
+    "m3_label": "para implantar",
     "items": [
       "Sem aplicativo para baixar",
       "Implantação em menos de 1 dia",
@@ -64,6 +127,22 @@
     "includes": "Inclui",
     "not_includes": "Não inclui",
     "cta": "Começar agora",
+    "investment_label": "Investimento",
+    "price_title": "Preço fixo e",
+    "price_title2": "sem surpresa",
+    "price_title3": "no mês!",
+    "price_subtitle": "Sem taxa por pedido, sem comissão no delivery, sem cobrança por usuário.",
+    "free_badge": "Todos os planos incluem 7 dias grátis · Sem cartão de crédito",
+    "popular": "mais popular",
+    "unlimited_users": "usuários ilimitados",
+    "setup_once": "uma vez só",
+    "setup_title": "Configuração e treinamento",
+    "setup_desc": "A gente coloca seu restaurante pra rodar: plataforma configurada, produtos cadastrados, QR codes prontos e equipe treinada. Você não levanta um dedo.",
+    "enterprise_title": "Mais de 60 mesas ou precisa de algo sob medida?",
+    "enterprise_subtitle": "Redes, franquias e grandes operações — montamos um plano personalizado.",
+    "talk_us": "Falar com a gente",
+    "talk_consultant": "Falar com consultor",
+    "have_account": "Já tem conta?",
     "implementation": "Implementação única de R$ 2.000 (cobrada só se continuar após o trial)",
     "starter": {
       "tables": "Até 15 mesas",
@@ -83,13 +162,19 @@
   },
   "cta_section": {
     "title": "Pronto para transformar seu restaurante?",
+    "title2": "seu restaurante?",
     "subtitle": "14 dias gratuitos. Sem cartão de crédito.",
-    "btn": "Começar agora — é grátis"
+    "subtitle2": "Crie sua conta agora e teste por 7 dias sem custo. Ou fale com a gente para uma demonstração ao vivo.",
+    "btn": "Começar agora — é grátis",
+    "btn_trial": "Testar grátis por 7 dias",
+    "btn_whatsapp": "Falar no WhatsApp",
+    "footnote": "Sem cartão de crédito · Implantação em até 1 dia útil · Suporte incluído"
   },
   "footer": {
     "rights": "Todos os direitos reservados.",
     "terms": "Termos",
-    "support": "Suporte"
+    "support": "Suporte",
+    "partner_program": "Programa de Parceiros"
   },
   "partner": {
     "hero_title": "Ganhe comissão indicando o Menuê+",

@@ -8,13 +8,24 @@
     "badge": "Nuevo: Marketing, Cupones y Control de Equipo",
     "title1": "Lleva tu restaurante",
     "title2": "al siguiente nivel",
+    "tagline1": "Gastronomía sin filas,",
+    "tagline2": "sin papel",
+    "tagline3": "¡y sin errores!",
     "subtitle": "Menú digital por QR, pedidos en tiempo real, panel del mesero y mucho más. Sin descargar app.",
     "cta_trial": "Iniciar prueba gratuita",
     "cta_demo": "Ver demostración",
     "social_proof": "Más de 50 restaurantes ya lo usan",
     "stat_orders": "pedidos/mes",
     "stat_time": "configuración",
-    "stat_app": "Sin app"
+    "stat_app": "Sin app",
+    "no_cc": "Sin tarjeta · 7 días gratis · Cancela cuando quieras.",
+    "already_account": "Ya tengo cuenta",
+    "stat1_val": "7 días",
+    "stat1_label": "prueba gratis",
+    "stat2_val": "1 día",
+    "stat2_label": "para instalar",
+    "stat3_val": "0 apps",
+    "stat3_label": "para descargar"
   },
   "features": {
     "title": "Todo lo que tu restaurante necesita",
@@ -31,6 +42,8 @@
     }
   },
   "steps": {
+    "flow_label": "Flujo completo",
+    "platform_label": "Plataforma completa",
     "title": "Cómo funciona",
     "subtitle": "En 4 pasos simples, tu restaurante ya opera con Menuê+.",
     "items": {
@@ -40,8 +53,58 @@
       "s4": { "title": "El mesero entrega", "desc": "Notificación automática cuando el ítem está listo. Un clic para confirmar la entrega." }
     }
   },
+  "dashboard": {
+    "label": "Panel administrativo",
+    "title": "Visión completa de tu operación,",
+    "title2": "en tiempo real"
+  },
+  "for_who": {
+    "label": "Hecho para cualquier operación de food service",
+    "r1": "Restaurantes",
+    "r2": "Bares",
+    "r3": "Hamburgueserías",
+    "r4": "Pizzerías",
+    "r5": "Snack Bars",
+    "r6": "Food Trucks"
+  },
+  "management": {
+    "label": "Panel de gestión",
+    "title": "Tú en control de toda la operación —",
+    "title_accent": "en tiempo real",
+    "subtitle": "Mientras el cliente pide desde su celular, tú monitoreas todo en un solo lugar: qué se está vendiendo, si la cocina está al día y cuánto entró en caja. Sin planilla, sin suposiciones.",
+    "footnote": "Todo esto en la computadora o en el celular, accesible para cada empleado solo con lo que necesita ver.",
+    "cta": "Iniciar mi prueba gratis",
+    "c1_title": "Vista en vivo del salón",
+    "c1_desc": "Comandas abiertas, pedidos en preparación y listos para entregar, en una sola pantalla actualizada al instante. Una mirada y ya sabes exactamente cómo está el local ahora.",
+    "c2_title": "¿Tu cocina está al día?",
+    "c2_desc": "Menuê+ compara el tiempo real de preparación con el estimado de cada plato. Descubre qué ítems se atrasan — y por qué — antes de que el cliente se queje.",
+    "c3_title": "Costo, margen y lo más vendido",
+    "c3_desc": "Ve el margen de cada ítem, el ranking de los más vendidos y el ticket promedio. Sabe qué da ganancias de verdad y qué solo ocupa el menú.",
+    "c4_title": "Finanzas sin planilla",
+    "c4_desc": "Facturación por hora, por estación y por forma de pago. Cierra el día sabiendo cuánto entró y de dónde — en segundos."
+  },
+  "stations": {
+    "label": "Operación en tiempo real",
+    "title": "Cada estación a su ritmo",
+    "subtitle": "Cocina, bar, drinks y chopeira reciben solo los pedidos que les corresponden.",
+    "s1": "Cocina",
+    "s1_desc": "Platos, entradas y todo lo que sale del fuego",
+    "s2": "Bar",
+    "s2_desc": "Cervezas, tragos y bebidas simples",
+    "s3": "Drinks",
+    "s3_desc": "Cócteles y bebidas elaboradas",
+    "s4": "Chopeira",
+    "s4_desc": "Control dedicado para chope"
+  },
   "differentials": {
     "title": "¿Por qué Menuê+?",
+    "section_label": "¿Por qué Menuê+?",
+    "heading1": "Simple para el cliente.",
+    "heading2": "Poderoso para ti.",
+    "desc": "Desarrollado para la realidad de los restaurantes — sin complicación, sin hardware caro, sin tarifa por pedido, sin comisión en delivery.",
+    "m1_label": "comisión en delivery",
+    "m2_label": "prueba gratis",
+    "m3_label": "para instalar",
     "items": [
       "Sin app para descargar",
       "Configuración en menos de 1 día",
@@ -64,6 +127,22 @@
     "includes": "Incluye",
     "not_includes": "No incluye",
     "cta": "Empezar ahora",
+    "investment_label": "Inversión",
+    "price_title": "Precio fijo,",
+    "price_title2": "sin sorpresas",
+    "price_title3": "¡cada mes!",
+    "price_subtitle": "Sin tarifa por pedido, sin comisión en delivery, sin cobro por usuario.",
+    "free_badge": "Todos los planes incluyen 7 días gratis · Sin tarjeta de crédito",
+    "popular": "más popular",
+    "unlimited_users": "usuarios ilimitados",
+    "setup_once": "solo una vez",
+    "setup_title": "Configuración y capacitación",
+    "setup_desc": "Ponemos tu restaurante a funcionar: plataforma configurada, productos cargados, QR codes listos y equipo capacitado. Tú no mueves un dedo.",
+    "enterprise_title": "¿Más de 60 mesas o necesitas algo a medida?",
+    "enterprise_subtitle": "Cadenas, franquicias y grandes operaciones — armamos un plan personalizado.",
+    "talk_us": "Hablar con nosotros",
+    "talk_consultant": "Hablar con consultor",
+    "have_account": "¿Ya tienes cuenta?",
     "implementation": "Implementación única de R$ 2.000 (cobrada solo si continúas después del trial)",
     "starter": {
       "tables": "Hasta 15 mesas",
@@ -83,13 +162,19 @@
   },
   "cta_section": {
     "title": "¿Listo para transformar tu restaurante?",
+    "title2": "¿tu restaurante?",
     "subtitle": "14 días gratuitos. Sin tarjeta de crédito.",
-    "btn": "Empezar ahora — es gratis"
+    "subtitle2": "Crea tu cuenta ahora y prueba 7 días sin costo. O chatea con nosotros para una demo en vivo.",
+    "btn": "Empezar ahora — es gratis",
+    "btn_trial": "Probar gratis 7 días",
+    "btn_whatsapp": "Hablar por WhatsApp",
+    "footnote": "Sin tarjeta de crédito · Instalación en 1 día hábil · Soporte incluido"
   },
   "footer": {
     "rights": "Todos los derechos reservados.",
     "terms": "Términos",
-    "support": "Soporte"
+    "support": "Soporte",
+    "partner_program": "Programa de Socios"
   },
   "partner": {
     "hero_title": "Gana comisión recomendando Menuê+",
